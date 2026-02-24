@@ -17,6 +17,7 @@ jobs:
         host: ${{ secrets.SERVER_IP }}
         username: ${{ secrets.SERVER_USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22222
         script: |
           cd /home/magnetcrmak/htdocs/api.magnetcrm.com
           
