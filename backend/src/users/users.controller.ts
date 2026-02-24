@@ -1,0 +1,62 @@
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Request } from '@nestjs/common';
+import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from './user.entity';
+
+@Controller('users')
+@UseGuards(JwtAuthGuard, RolesGuard)
+export class UsersController {
+    constructor(private readonly usersService: UsersService) { }
+
+    @Post()
+    @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN, UserRole.ADMIN)
+    create(@Body() createUserDto: CreateUserDto) {
+        return this.usersService.create(createUserDto);
+    }
+
+    @Get()
+    @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN, UserRole.ADMIN, UserRole.MANAGER)
+    findAll(@Query('companyId') companyId: string, @Query('role') role: UserRole, @Request() req) {
+        // Enforce company isolation for non-Super Admins team
+        const isSuperadminTeam = req.user.role === UserRole.SUPER_ADMIN ||
+                                 req.user.role === UserRole.SUPERADMIN_ADMIN ||
+                                 req.user.role === UserRole.SUPERADMIN_STAFF;
+        if (!isSuperadminTeam) {
+            return this.usersService.findAll(req.user.companyId, role);
+        }
+        return this.usersService.findAll(companyId, role);
+    }
+
+    // ⚠️ 'me/password' MUST come BEFORE ':id' routes
+    @Patch('me/password')
+    changePassword(@Request() req, @Body() body: { oldPassword: string; newPassword: string }) {
+        return this.usersService.changePassword(req.user.userId, body.oldPassword, body.newPassword);
+    }
+
+    @Get(':id')
+    @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN, UserRole.ADMIN)
+    async findOne(@Param('id') id: string) {
+        return this.usersService.findById(id);
+    }
+
+    @Patch(':id')
+    @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN, UserRole.ADMIN)
+    update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+        return this.usersService.update(id, updateUserDto);
+    }
+
+    @Patch(':id/deactivate')
+    @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN, UserRole.ADMIN)
+    deactivate(@Param('id') id: string) {
+        return this.usersService.deactivate(id);
+    }
+    @Delete(':id')
+    @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN, UserRole.ADMIN, UserRole.MANAGER)
+    remove(@Param('id') id: string, @Request() req) {
+        return this.usersService.remove(id, req.user);
+    }
+}

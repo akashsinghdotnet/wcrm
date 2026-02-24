@@ -1,0 +1,42 @@
+
+import urllib.request
+import json
+import ssl
+
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
+
+def login():
+    url = "http://localhost:3000/api/auth/login"
+    data = json.dumps({"email": "admin@magnethq.com", "password": "password123"}).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, context=ctx) as response:
+        return json.loads(response.read().decode())["access_token"]
+
+def create_user(token):
+    url = "http://localhost:3000/api/users"
+    data = json.dumps({
+        "email": "python_test_admin@magnethq.com",
+        "password": "password123",
+        "role": "admin",
+        "companyId": "53f723d6-50ce-4535-afe3-4627402ac259"
+    }).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers={
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}"
+    })
+    try:
+        with urllib.request.urlopen(req, context=ctx) as response:
+            print("User created successfully")
+            print(response.read().decode())
+    except urllib.error.HTTPError as e:
+        print(f"Failed to create user: {e.code}")
+        print(e.read().decode())
+
+try:
+    token = login()
+    print("Logged in successfully")
+    create_user(token)
+except Exception as e:
+    print(f"Error: {e}")
