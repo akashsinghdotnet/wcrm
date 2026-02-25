@@ -57,7 +57,7 @@ export default function EmailSettings() {
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1.5">SMTP Host</label>
                         <div className="relative">
@@ -82,7 +82,7 @@ export default function EmailSettings() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1.5">Username / Email</label>
                         <div className="relative">
@@ -119,7 +119,7 @@ export default function EmailSettings() {
 
                 <div className="pt-4 border-t border-slate-800">
                     <h3 className="text-sm font-medium text-white mb-4">Sender Details</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-slate-300 mb-1.5">From Name</label>
                             <input

@@ -160,11 +160,11 @@ export default function WhatsAppSettings() {
                         />
                     </div>
 
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
                         <button
                             type="submit"
                             disabled={saving}
-                            className="flex-1 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-xl font-medium transition-all disabled:opacity-50 shadow-lg shadow-green-600/25 cursor-pointer"
+                            className="w-full sm:flex-1 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-xl font-medium transition-all disabled:opacity-50 shadow-lg shadow-green-600/25 cursor-pointer justify-center flex items-center"
                         >
                             {saving ? 'Saving...' : 'Save Configuration'}
                         </button>
@@ -172,7 +172,7 @@ export default function WhatsAppSettings() {
                             type="button"
                             onClick={handleTestConnection}
                             disabled={testing || !form.phoneNumberId || !form.accessToken}
-                            className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 rounded-xl font-medium transition-all disabled:opacity-40 cursor-pointer flex items-center gap-2"
+                            className="w-full sm:w-auto px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 rounded-xl font-medium transition-all disabled:opacity-40 cursor-pointer flex items-center justify-center gap-2"
                         >
                             {testing ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
                             Test

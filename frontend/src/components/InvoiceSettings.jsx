@@ -130,15 +130,15 @@ export default function InvoiceSettings() {
             <form onSubmit={handleSave} className="space-y-4">
                 <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1.5">Company Logo</label>
-                    <div className="flex gap-4 items-start">
-                        <div className="flex-1 space-y-2">
+                    <div className="flex flex-col sm:flex-row gap-4 items-start">
+                        <div className="w-full sm:flex-1 space-y-2">
                             <input
                                 value={form.logoUrl?.startsWith('data:') ? '' : (form.logoUrl || '')}
                                 onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
                                 className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="https://example.com/logo.png"
                             />
-                            <label className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 border-dashed rounded-xl text-slate-400 hover:text-white hover:border-indigo-500 cursor-pointer transition-all text-sm">
+                            <label className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 border-dashed rounded-xl text-slate-400 hover:text-white hover:border-indigo-500 cursor-pointer transition-all text-sm w-full justify-center sm:justify-start">
                                 <Upload className="w-4 h-4" />
                                 Upload Logo (max 5MB)
                                 <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
@@ -258,15 +258,15 @@ export default function InvoiceSettings() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-1.5">UPI QR Code</label>
-                                <div className="flex gap-4 items-start">
-                                    <div className="flex-1 space-y-2">
+                                <div className="flex flex-col sm:flex-row gap-4 items-start">
+                                    <div className="w-full sm:flex-1 space-y-2">
                                         <input
                                             value={form.upiQrUrl?.startsWith('data:') ? '' : (form.upiQrUrl || '')}
                                             onChange={(e) => setForm({ ...form, upiQrUrl: e.target.value })}
                                             className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                             placeholder="https://example.com/qr.png"
                                         />
-                                        <label className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 border-dashed rounded-xl text-slate-400 hover:text-white hover:border-indigo-500 cursor-pointer transition-all text-sm">
+                                        <label className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 border-dashed rounded-xl text-slate-400 hover:text-white hover:border-indigo-500 cursor-pointer transition-all text-sm w-full justify-center sm:justify-start">
                                             <Upload className="w-4 h-4" />
                                             Upload QR (max 5MB)
                                             <input type="file" accept="image/*" onChange={handleQrUpload} className="hidden" />

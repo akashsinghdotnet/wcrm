@@ -31,6 +31,18 @@ export const ConfigProvider = ({ children }) => {
         fetchConfig();
     }, []);
 
+    useEffect(() => {
+        if (config?.favicon_url) {
+            let link = document.querySelector("link[rel~='icon']");
+            if (!link) {
+                link = document.createElement('link');
+                link.rel = 'icon';
+                document.head.appendChild(link);
+            }
+            link.href = config.favicon_url;
+        }
+    }, [config?.favicon_url]);
+
     if (loading) {
         return <div className="min-h-screen bg-slate-950 flex items-center justify-center">
             <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />

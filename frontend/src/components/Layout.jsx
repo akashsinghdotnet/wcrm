@@ -70,8 +70,8 @@ export default function Layout() {
 
     const handleLogout = () => {
         const isSuperadminTeam = user?.role === 'super_admin' ||
-                                 user?.role === 'superadmin_admin' ||
-                                 user?.role === 'superadmin_staff';
+            user?.role === 'superadmin_admin' ||
+            user?.role === 'superadmin_staff';
         const redirectTo = isSuperadminTeam ? '/army' : '/login';
         logout();
         navigate(redirectTo);
@@ -191,9 +191,9 @@ export default function Layout() {
             </aside>
 
             {/* Main content */}
-            <div className="flex-1 flex flex-col min-h-screen">
+            <div className="flex-1 flex flex-col min-h-screen min-w-0">
                 {/* Top bar */}
-                <header className="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm flex items-center px-6 sticky top-0 z-30">
+                <header className="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm flex items-center px-4 lg:px-6 sticky top-0 z-30">
                     <button
                         onClick={() => setSidebarOpen(true)}
                         className="lg:hidden mr-4 p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
@@ -210,7 +210,7 @@ export default function Layout() {
                 </header>
 
                 {/* Page content */}
-                <main className="flex-1 p-6 overflow-auto">
+                <main className="flex-1 p-4 lg:p-6 overflow-auto">
                     <Outlet />
                 </main>
             </div>

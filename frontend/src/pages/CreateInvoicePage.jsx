@@ -33,6 +33,7 @@ export default function CreateInvoicePage() {
         status: 'pending',
         notes: '',
         taxRate: 18,
+        invoiceNumber: '',
     });
 
     const [items, setItems] = useState([
@@ -127,6 +128,9 @@ export default function CreateInvoicePage() {
             // Add client GST if provided
             if (form.clientGst) {
                 invoiceData.clientGst = form.clientGst;
+            }
+            if (form.invoiceNumber) {
+                invoiceData.invoiceNumber = form.invoiceNumber;
             }
 
             // Add client data based on entry method
@@ -268,6 +272,19 @@ export default function CreateInvoicePage() {
 
                         <div className="space-y-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
                             <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1.5 flex items-center gap-2">
+                                        <FileText className="w-4 h-4" /> Invoice Number
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={form.invoiceNumber}
+                                        onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })}
+                                        className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        placeholder="Auto-generated if empty"
+                                    />
+                                </div>
+                                <div className="hidden"></div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-1.5 flex items-center gap-2">
                                         <Calendar className="w-4 h-4" /> Invoice Date

@@ -18,8 +18,21 @@ export class BillingService {
         private companyRepo: Repository<Company>,
     ) { }
 
-    create(dto: CreateInvoiceDto): Promise<Invoice> {
-        const invoice = this.invoiceRepo.create(dto);
+    async create(dto: CreateInvoiceDto): Promise<Invoice> {
+        let invoiceNumber = dto.invoiceNumber;
+
+        // Auto-generate invoice number if missing
+        if (!invoiceNumber) {
+            const settings = await this.getSettings(dto.companyId);
+            const prefix = settings?.prefix || 'INV-';
+            const count = await this.invoiceRepo.count({
+                where: { companyId: dto.companyId, isSystem: false }
+            });
+            // Example: INV-0001
+            invoiceNumber = `${prefix}${(count + 1).toString().padStart(4, '0')}`;
+        }
+
+        const invoice = this.invoiceRepo.create({ ...dto, invoiceNumber });
         return this.invoiceRepo.save(invoice);
     }
 

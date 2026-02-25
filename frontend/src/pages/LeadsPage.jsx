@@ -515,7 +515,7 @@ export default function LeadsPage() {
                                         placeholder="Lead name"
                                     />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-300 mb-1.5">Phone</label>
                                         <input
@@ -536,7 +536,7 @@ export default function LeadsPage() {
                                         />
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-300 mb-1.5">Source</label>
                                         <select
@@ -567,7 +567,7 @@ export default function LeadsPage() {
                                         </select>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-300 mb-1.5">Assign To</label>
                                         <select

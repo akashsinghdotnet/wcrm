@@ -133,7 +133,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Tabs */}
-            <div className="border-b border-slate-800 flex gap-6">
+            <div className="border-b border-slate-800 flex gap-6 overflow-x-auto whitespace-nowrap scrollbar-hide pb-2">
                 {[
                     { id: 'general', label: 'General', icon: User },
                     { id: 'security', label: 'Security', icon: Lock },
@@ -147,10 +147,10 @@ export default function SettingsPage() {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 pb-4 text-sm font-medium transition-colors relative ${activeTab === tab.id ? 'text-indigo-400' : 'text-slate-400 hover:text-white'
+                        className={`flex items-center gap-2 pb-2 text-sm font-medium transition-colors relative ${activeTab === tab.id ? 'text-indigo-400' : 'text-slate-400 hover:text-white'
                             }`}
                     >
-                        <tab.icon className="w-4 h-4" />
+                        <tab.icon className="w-4 h-4 shrink-0" />
                         {tab.label}
                         {activeTab === tab.id && (
                             <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500 rounded-t-full" />
@@ -254,7 +254,7 @@ export default function SettingsPage() {
                                 <h3 className="text-lg font-semibold text-white">Two-Factor Authentication</h3>
                             </div>
 
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div>
                                     <p className="text-sm text-slate-300">
                                         {user.isTwoFactorEnabled ? 'Two-factor authentication is enabled.' : 'Add an extra layer of security to your account.'}
@@ -507,7 +507,7 @@ function CompanyForm({ companyId }) {
                     className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-xl text-slate-400 cursor-not-allowed"
                 />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1.5">Address</label>
                     <input
@@ -557,6 +557,9 @@ function GeneralSystemSettings() {
     const [sidebarPaddingY, setSidebarPaddingY] = useState('24'); // Default 24px (p-6)
     const [sidebarLogoLink, setSidebarLogoLink] = useState('');
 
+    // Favicon Settings
+    const [faviconUrl, setFaviconUrl] = useState('');
+
     useEffect(() => {
         // Initialize with existing values or defaults
         if (config.login_logo_url !== undefined) setLoginLogoUrl(config.login_logo_url);
@@ -576,6 +579,8 @@ function GeneralSystemSettings() {
         if (config.sidebar_padding_vertical) setSidebarPaddingY(config.sidebar_padding_vertical);
         if (config.sidebar_logo_link) setSidebarLogoLink(config.sidebar_logo_link);
 
+        if (config.favicon_url !== undefined) setFaviconUrl(config.favicon_url);
+
     }, [config]);
 
     const handleLogoUpload = (e, type) => {
@@ -593,10 +598,12 @@ function GeneralSystemSettings() {
             const base64String = reader.result;
             if (type === 'login') {
                 setLoginLogoUrl(base64String);
-            } else {
+            } else if (type === 'sidebar') {
                 setSidebarLogoUrl(base64String);
+            } else if (type === 'favicon') {
+                setFaviconUrl(base64String);
             }
-            toast.success('Logo uploaded. Click Save to apply changes.');
+            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} logo uploaded. Click Save to apply changes.`);
         };
         reader.readAsDataURL(file);
     };
@@ -617,6 +624,7 @@ function GeneralSystemSettings() {
                 sidebar_text_content: sidebarText,
                 sidebar_padding_vertical: sidebarPaddingY,
                 sidebar_logo_link: sidebarLogoLink,
+                favicon_url: faviconUrl,
                 // Keep app_logo synced with login logo for backward compatibility if needed, or just leave it
                 app_logo: loginLogoUrl
             };
@@ -781,6 +789,45 @@ function GeneralSystemSettings() {
                             placeholder="https://yourwebsite.com"
                         />
                         <p className="text-xs text-slate-500 mt-1">Click on logo will redirect to this URL</p>
+                    </div>
+
+                    <div className="border-t border-slate-800 my-4"></div>
+
+                    {/* Favicon Settings */}
+                    <div className="space-y-4">
+                        <h4 className="text-md font-medium text-indigo-400 uppercase tracking-wider text-xs">Favicon Customization</h4>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Website Favicon</label>
+                            <div className="space-y-3">
+                                <div className="flex gap-2 items-start">
+                                    <input
+                                        value={faviconUrl}
+                                        onChange={(e) => setFaviconUrl(e.target.value)}
+                                        className="flex-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        placeholder="https://example.com/favicon.ico or upload below"
+                                    />
+                                    {faviconUrl && (
+                                        <div className="w-12 h-12 bg-slate-800 rounded-lg border border-slate-700 flex items-center justify-center p-1">
+                                            <img src={faviconUrl} alt="Favicon Preview" className="max-w-full max-h-full object-contain" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex gap-2">
+                                    <label className="flex-1 cursor-pointer">
+                                        <div className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm text-slate-300 text-center transition-colors">
+                                            📤 Upload Favicon (Max 2MB)
+                                        </div>
+                                        <input
+                                            type="file"
+                                            accept="image/x-icon,image/png,image/jpeg,image/svg+xml"
+                                            onChange={(e) => handleLogoUpload(e, 'favicon')}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
 

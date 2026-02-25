@@ -1,9 +1,19 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { X, Download, Printer } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
+import api from '../services/api';
 
 export default function SubscriptionInvoiceModal({ invoice, company, onClose }) {
     const componentRef = useRef(null);
+    const [settings, setSettings] = useState(null);
+
+    useEffect(() => {
+        if (invoice) {
+            api.get('/billing/settings/super-admin')
+                .then(res => setSettings(res.data))
+                .catch(console.error);
+        }
+    }, [invoice]);
 
     const handlePrint = useReactToPrint({
         contentRef: componentRef,
@@ -40,22 +50,36 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                     <div className="flex justify-between items-start mb-12">
                         <div>
                             <div className="flex items-center gap-2 mb-4">
-                                <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                                    M
-                                </div>
-                                <span className="text-2xl font-bold text-indigo-900">MagnetCRM</span>
+                                {settings?.logoUrl ? (
+                                    <img src={settings.logoUrl} alt="Logo" className="h-10 object-contain" />
+                                ) : (
+                                    <>
+                                        <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                                            M
+                                        </div>
+                                        <span className="text-2xl font-bold text-indigo-900">MagnetCRM</span>
+                                    </>
+                                )}
                             </div>
                             <div className="text-sm text-slate-500 space-y-1">
-                                <p>123 Tech Park, Sector 5</p>
-                                <p>Bangalore, Karnataka 560001</p>
-                                <p>India</p>
-                                <p>GSTIN: 29AAAAA0000A1Z5</p>
+                                {settings?.address ? (
+                                    <div className="whitespace-pre-wrap">{settings.address}</div>
+                                ) : (
+                                    <>
+                                        <p>123 Tech Park, Sector 5</p>
+                                        <p>Bangalore, Karnataka 560001</p>
+                                        <p>India</p>
+                                    </>
+                                )}
+                                {settings?.gstNo && <p>GSTIN: {settings.gstNo}</p>}
                                 <p>support@magnetcrm.com</p>
                             </div>
                         </div>
                         <div className="text-right">
                             <h1 className="text-4xl font-light text-indigo-900 mb-2">INVOICE</h1>
-                            <p className="text-slate-500 font-medium">#{invoice.invoiceNumber}</p>
+                            <p className="text-slate-500 font-medium">
+                                #{invoice.invoiceNumber?.startsWith(settings?.prefix || 'INV-') ? invoice.invoiceNumber : `${settings?.prefix || 'INV-'}${invoice.invoiceNumber}`}
+                            </p>
                             <div className="mt-4 space-y-1 text-sm">
                                 <p><span className="text-slate-400 w-24 inline-block">Date:</span> {new Date(invoice.date).toLocaleDateString('en-IN')}</p>
                                 <p><span className="text-slate-400 w-24 inline-block">Status:</span> <span className="text-emerald-600 font-bold uppercase text-xs bg-emerald-100 px-2 py-0.5 rounded">Paid</span></p>
@@ -124,7 +148,11 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                     {/* Footer */}
                     <div className="border-t border-slate-100 pt-8 text-center text-xs text-slate-400">
                         <p className="mb-2">Thank you for your business!</p>
-                        <p>MagnetCRM Solutions Pvt Ltd • Bangalore, India</p>
+                        {settings?.accountHolderName ? (
+                            <p>{settings.accountHolderName}</p>
+                        ) : (
+                            <p>MagnetCRM Solutions Pvt Ltd • Bangalore, India</p>
+                        )}
                     </div>
                 </div>
             </div>

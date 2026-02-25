@@ -117,7 +117,7 @@ export default function PipelinePage() {
             </div>
 
             {/* Kanban Board */}
-            <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 'calc(100vh - 12rem)' }}>
+            <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-14rem)] sm:h-[calc(100vh-12rem)] min-h-[500px]">
                 {COLUMNS.map((col) => {
                     const colLeads = getLeadsByStatus(col.status);
                     const isOver = dragOverCol === col.status;
