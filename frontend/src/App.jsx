@@ -30,6 +30,9 @@ import CouponsPage from './pages/CouponsPage';
 import EmailHistoryPage from './pages/EmailHistoryPage';
 import MarketingPage from './pages/MarketingPage';
 import WhatsAppChatsPage from './pages/WhatsAppChatsPage';
+import TicketsPage from './pages/TicketsPage';
+import TicketDetailsPage from './pages/TicketDetailsPage';
+import AnnouncementsAdminPage from './pages/AnnouncementsAdminPage';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -168,6 +171,21 @@ export default function App() {
           <Route path="whatsapp-chats" element={
             <ProtectedRoute roles={['admin', 'manager', 'staff']}>
               <WhatsAppChatsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="tickets" element={
+            <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin', 'manager']}>
+              <TicketsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="tickets/:id" element={
+            <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin', 'manager']}>
+              <TicketDetailsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="announcements" element={
+            <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'superadmin_staff']}>
+              <AnnouncementsAdminPage />
             </ProtectedRoute>
           } />
           <Route

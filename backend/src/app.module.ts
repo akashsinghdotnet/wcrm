@@ -17,6 +17,8 @@ import { SettingsModule } from './settings/settings.module';
 import { MarketingModule } from './marketing/marketing.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
+import { TicketsModule } from './tickets/tickets.module';
+import { AnnouncementsModule } from './announcements/announcements.module';
 
 @Module({
   imports: [
@@ -51,6 +53,8 @@ import { WhatsAppModule } from './whatsapp/whatsapp.module';
     MarketingModule,
     IntegrationsModule,
     WhatsAppModule,
+    TicketsModule,
+    AnnouncementsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

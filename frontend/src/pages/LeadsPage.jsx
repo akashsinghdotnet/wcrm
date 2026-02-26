@@ -112,7 +112,7 @@ export default function LeadsPage() {
             const payload = {
                 ...form,
                 companyId: user.companyId,
-                assignedTo: form.assignedTo || undefined,
+                assignedTo: form.assignedTo || null,
                 followUpDate: form.followUpDate || undefined,
             };
 
@@ -178,7 +178,7 @@ export default function LeadsPage() {
             if (!value) return;
             const payload = { ids: selectedIds, updates: {} };
             if (type === 'status') payload.updates.status = value;
-            if (type === 'assign') payload.updates.assignedTo = value;
+            if (type === 'assign') payload.updates.assignedTo = value === 'unassigned' ? null : value;
 
             await api.patch('/leads/bulk', payload);
             toast.success(`Updated ${selectedIds.length} leads`);
@@ -462,6 +462,7 @@ export default function LeadsPage() {
                                 value=""
                             >
                                 <option value="" disabled>Assign To</option>
+                                <option value="unassigned">Unassigned</option>
                                 {users.map(u => (
                                     <option key={u.id} value={u.id}>{u.email}</option>
                                 ))}

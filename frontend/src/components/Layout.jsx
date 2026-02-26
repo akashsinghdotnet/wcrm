@@ -24,6 +24,8 @@ import {
     Mail,
     Receipt,
     MessageCircle,
+    Ticket,
+    Megaphone,
 } from 'lucide-react';
 
 const navItems = [
@@ -44,6 +46,8 @@ const navItems = [
     { to: '/payment-settings', label: 'Payment Settings', icon: CreditCard, roles: ['super_admin'] },
     { to: '/coupons', label: 'Coupons', icon: Gift, roles: ['super_admin', 'superadmin_admin'] },
     { to: '/reports', label: 'Reports', icon: BarChart3, roles: ['admin'] },
+    { to: '/tickets', label: 'Support', icon: Ticket, roles: ['super_admin', 'superadmin_admin', 'admin', 'manager'] },
+    { to: '/announcements', label: 'Announcements', icon: Megaphone, roles: ['super_admin', 'superadmin_admin', 'superadmin_staff'] },
     { to: '/settings', label: 'Settings', icon: Settings },
     // Notifications removed as per user request
     // { to: '/notifications', label: 'Notifications', icon: Mail, roles: ['admin'] },

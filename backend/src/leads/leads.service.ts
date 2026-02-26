@@ -122,8 +122,11 @@ export class LeadsService {
             }));
         }
 
-        this.leadsRepository.merge(lead, updateLeadDto);
-        return this.leadsRepository.save(lead);
+        // Remove TypeORM relation cache conflict by directly patching the DB row
+        if (Object.keys(updateLeadDto).length > 0) {
+            await this.leadsRepository.update(id, updateLeadDto);
+        }
+        return this.findOne(id);
     }
 
     async remove(id: string): Promise<Lead> {
