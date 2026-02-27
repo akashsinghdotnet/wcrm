@@ -24,6 +24,11 @@ export default function WhatsAppChatPage() {
     const bottomRef = useRef(null);
     const inputRef = useRef(null);
     const fileInputRef = useRef(null);
+    const leadRef = useRef(null);
+
+    useEffect(() => {
+        leadRef.current = lead;
+    }, [lead]);
 
     useEffect(() => {
         fetchLead();
@@ -31,14 +36,16 @@ export default function WhatsAppChatPage() {
 
     useEffect(() => {
         if (lead) fetchMessages();
+    }, [lead]);
 
-        // Polling for real-time updates
+    // Polling for real-time updates — uses ref to avoid stale closure
+    useEffect(() => {
         const interval = setInterval(() => {
-            if (lead) fetchMessages(true); // silent fetch
+            if (leadRef.current) fetchMessages(true);
         }, 5000);
 
         return () => clearInterval(interval);
-    }, [lead]);
+    }, [leadId]);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
