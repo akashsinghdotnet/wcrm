@@ -11,7 +11,7 @@ export class WhatsAppConfig {
     @Column()
     phoneNumberId: string;
 
-    @Column()
+    @Column({ type: 'text' })
     accessToken: string;
 
     @Column({ nullable: true })
