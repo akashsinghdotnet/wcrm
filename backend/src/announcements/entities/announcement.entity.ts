@@ -12,7 +12,7 @@ export class Announcement {
     @Column({ type: 'text' })
     content: string;
 
-    @Column()
+    @Column({ nullable: true })
     authorId: string;
 
     @ManyToOne(() => User, { onDelete: 'SET NULL' })

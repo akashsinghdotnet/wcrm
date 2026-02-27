@@ -36,6 +36,11 @@ import { AnnouncementsModule } from './announcements/announcements.module';
         database: configService.get<string>('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true, // Auto-create tables (disable in production)
+        extra: {
+          max: 40, // max connection pool size
+          connectionTimeoutMillis: 5000,
+          idleTimeoutMillis: 30000,
+        },
       }),
       inject: [ConfigService],
     }),

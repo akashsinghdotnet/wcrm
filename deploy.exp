@@ -1,0 +1,57 @@
+#!/usr/bin/expect -f
+
+set timeout -1
+spawn ssh -o StrictHostKeyChecking=no magnetcrmak@104.223.38.95
+
+expect "password:"
+send "T80XjfOttGImBB2gKz97\r"
+
+expect "$ "
+send "cd /home/magnetcrmak/htdocs/api.magnetcrm.com\r"
+
+expect "$ "
+send "git reset --hard\r"
+
+expect "$ "
+send "git pull origin main\r"
+
+expect "$ "
+send "export NVM_DIR=\"/home/magnetcrmak/.nvm\"\r"
+
+expect "$ "
+send "\[ -s \"\$NVM_DIR/nvm.sh\" \] && \\. \"\$NVM_DIR/nvm.sh\"\r"
+
+expect "$ "
+send "cd backend\r"
+
+expect "$ "
+send "npm install\r"
+
+expect "$ "
+send "npm run build\r"
+
+expect "$ "
+send "cd ../frontend\r"
+
+expect "$ "
+send "npm install\r"
+
+expect "$ "
+send "npm run build\r"
+
+expect "$ "
+send "rm -rf /home/magnetcrmak/htdocs/app.magnetcrm.com/*\r"
+
+expect "$ "
+send "cp -r dist/* /home/magnetcrmak/htdocs/app.magnetcrm.com/\r"
+
+expect "$ "
+send "cd ..\r"
+
+expect "$ "
+send "npx pm2 restart magnet-backend || npx pm2 start dist/main.js --name \"magnet-backend\"\r"
+
+expect "$ "
+send "exit\r"
+
+expect eof

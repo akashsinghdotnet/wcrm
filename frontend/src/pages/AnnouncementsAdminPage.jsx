@@ -3,8 +3,8 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Plus, X, Megaphone, Trash2, Edit } from 'lucide-react';
 import toast from 'react-hot-toast';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 export default function AnnouncementsAdminPage() {
     const { user } = useAuth();
