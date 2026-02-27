@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { MessageCircle, Search, Phone, Clock, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
-import WhatsAppChat from '../components/WhatsAppChat';
 
 export default function WhatsAppChatsPage() {
+    const navigate = useNavigate();
     const [conversations, setConversations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedLead, setSelectedLead] = useState(null);
@@ -12,18 +13,24 @@ export default function WhatsAppChatsPage() {
 
     useEffect(() => {
         fetchConversations();
+
+        // Polling to keep recent messages/conversations list fresh
+        const interval = setInterval(() => {
+            fetchConversations(true);
+        }, 8000);
+        return () => clearInterval(interval);
     }, []);
 
-    const fetchConversations = async () => {
+    const fetchConversations = async (silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const res = await api.get('/whatsapp/conversations');
             setConversations(res.data);
         } catch {
             // No config or no messages yet
             setConversations([]);
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -105,7 +112,7 @@ export default function WhatsAppChatsPage() {
                     {filtered.map((conv) => (
                         <button
                             key={conv.lead.id}
-                            onClick={() => setSelectedLead(conv.lead)}
+                            onClick={() => navigate(`/whatsapp-chats/${conv.lead.id}`)}
                             className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-800/50 transition-colors text-left cursor-pointer"
                         >
                             {/* Avatar */}
@@ -138,7 +145,7 @@ export default function WhatsAppChatsPage() {
                                                     <ArrowDownLeft size={12} className="text-blue-400 flex-shrink-0" />
                                                 )}
                                                 <p className="text-xs text-slate-400 truncate">
-                                                    {conv.lastMessage.content}
+                                                    {conv.lastMessage.content?.includes('(Media)') ? 'Media attached' : conv.lastMessage.content}
                                                 </p>
                                             </>
                                         )}
@@ -165,17 +172,6 @@ export default function WhatsAppChatsPage() {
                         </button>
                     ))}
                 </div>
-            )}
-
-            {/* WhatsApp Chat Modal */}
-            {selectedLead && (
-                <WhatsAppChat
-                    lead={selectedLead}
-                    onClose={() => {
-                        setSelectedLead(null);
-                        fetchConversations(); // Refresh list after closing chat
-                    }}
-                />
             )}
         </div>
     );

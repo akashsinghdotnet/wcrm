@@ -20,7 +20,7 @@ export class WhatsAppService {
         private leadRepo: Repository<Lead>,
         @InjectRepository(Activity)
         private activityRepo: Repository<Activity>,
-    ) {}
+    ) { }
 
     async getConfig(companyId: string): Promise<WhatsAppConfig | null> {
         return this.configRepo.findOne({ where: { companyId } });
@@ -44,7 +44,9 @@ export class WhatsAppService {
         companyId: string,
         leadId: string,
         to: string,
-        message: string,
+        message: string | undefined,
+        type: string = 'text',
+        mediaId?: string,
         userId?: string,
     ): Promise<WhatsAppMessage> {
         const config = await this.configRepo.findOne({ where: { companyId } });
@@ -60,6 +62,20 @@ export class WhatsAppService {
         let status = MessageStatus.SENT;
 
         try {
+            const payload: any = {
+                messaging_product: 'whatsapp',
+                to: phone,
+                type: type,
+            };
+
+            if (type === 'text') {
+                payload.text = { body: message || '' };
+            } else if (type === 'image') {
+                payload.image = { id: mediaId, caption: message || '' };
+            } else if (type === 'document') {
+                payload.document = { id: mediaId, caption: message || '' };
+            }
+
             const response = await fetch(
                 `https://graph.facebook.com/v21.0/${config.phoneNumberId}/messages`,
                 {
@@ -68,12 +84,7 @@ export class WhatsAppService {
                         'Authorization': `Bearer ${config.accessToken}`,
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        messaging_product: 'whatsapp',
-                        to: phone,
-                        type: 'text',
-                        text: { body: message },
-                    }),
+                    body: JSON.stringify(payload),
                 },
             );
 
@@ -109,8 +120,8 @@ export class WhatsAppService {
                 userId,
                 type: ActivityType.WHATSAPP,
                 content: status === MessageStatus.FAILED
-                    ? `WhatsApp message failed to send: "${message}"`
-                    : `WhatsApp message sent: "${message}"`,
+                    ? `WhatsApp message failed to send${message ? `: "${message}"` : ' (Media)'}`
+                    : `WhatsApp message sent${message ? `: "${message}"` : ' (Media)'}`,
             });
             await this.activityRepo.save(activity);
         } catch (err) {
@@ -118,6 +129,52 @@ export class WhatsAppService {
         }
 
         return msg;
+    }
+
+    async uploadMedia(companyId: string, file: any): Promise<any> {
+        const config = await this.configRepo.findOne({ where: { companyId } });
+        if (!config) {
+            throw new BadRequestException('WhatsApp Business API is not configured');
+        }
+
+        const formData = new FormData();
+        const blob = new Blob([file.buffer], { type: file.mimetype });
+        formData.append('file', blob, file.originalname);
+        formData.append('messaging_product', 'whatsapp');
+
+        try {
+            const response = await fetch(
+                `https://graph.facebook.com/v21.0/${config.phoneNumberId}/media`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${config.accessToken}`,
+                    },
+                    body: formData,
+                },
+            );
+
+            const data = await response.json();
+            if (!response.ok) {
+                this.logger.error(`Media upload error: ${JSON.stringify(data)}`);
+                throw new BadRequestException('Failed to upload media to WhatsApp');
+            }
+            return { mediaId: data.id };
+        } catch (error) {
+            this.logger.error(`Media upload failed: ${error.message}`);
+            throw new BadRequestException('Failed to upload media');
+        }
+    }
+
+    async getGlobalUnreadCount(companyId: string): Promise<{ count: number }> {
+        const count = await this.messageRepo.count({
+            where: {
+                companyId,
+                direction: MessageDirection.INBOUND,
+                status: MessageStatus.DELIVERED,
+            },
+        });
+        return { count };
     }
 
     async getMessages(companyId: string, leadId: string): Promise<WhatsAppMessage[]> {

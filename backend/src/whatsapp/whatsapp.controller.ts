@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { WhatsAppService } from './whatsapp.service';
 import { SaveWhatsAppConfigDto } from './dto/save-config.dto';
 import { SendMessageDto } from './dto/send-message.dto';
@@ -9,7 +10,7 @@ import { UserRole } from '../users/user.entity';
 
 @Controller('whatsapp')
 export class WhatsAppController {
-    constructor(private readonly whatsappService: WhatsAppService) {}
+    constructor(private readonly whatsappService: WhatsAppService) { }
 
     @Get('config')
     @UseGuards(JwtAuthGuard, RolesGuard)
@@ -34,8 +35,28 @@ export class WhatsAppController {
             dto.leadId,
             dto.to,
             dto.message,
+            dto.type,
+            dto.mediaId,
             req.user.userId,
         );
+    }
+
+    @Post('media')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF)
+    @UseInterceptors(FileInterceptor('file'))
+    async uploadMedia(@UploadedFile() file: any, @Request() req) {
+        if (!file) {
+            throw new BadRequestException('No file uploaded');
+        }
+        return this.whatsappService.uploadMedia(req.user.companyId, file);
+    }
+
+    @Get('unread-count')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF)
+    getGlobalUnreadCount(@Request() req) {
+        return this.whatsappService.getGlobalUnreadCount(req.user.companyId);
     }
 
     @Get('conversations')

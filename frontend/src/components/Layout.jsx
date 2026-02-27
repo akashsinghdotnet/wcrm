@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 
@@ -71,6 +72,23 @@ export default function Layout() {
     const { config } = useConfig();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [unreadWhatsApp, setUnreadWhatsApp] = useState(0);
+
+    useEffect(() => {
+        // Only run for company roles
+        if (!user || ['super_admin', 'superadmin_admin', 'superadmin_staff'].includes(user.role)) return;
+
+        const fetchUnread = async () => {
+            try {
+                const res = await api.get('/whatsapp/unread-count');
+                setUnreadWhatsApp(res.data.count || 0);
+            } catch (err) { }
+        };
+
+        fetchUnread();
+        const interval = setInterval(fetchUnread, 15000); // 15s
+        return () => clearInterval(interval);
+    }, [user]);
 
     const handleLogout = () => {
         const isSuperadminTeam = user?.role === 'super_admin' ||
@@ -166,7 +184,12 @@ export default function Layout() {
                             }
                         >
                             <item.icon className="w-5 h-5" />
-                            {item.label}
+                            <span className="flex-1">{item.label}</span>
+                            {item.to === '/whatsapp-chats' && unreadWhatsApp > 0 && (
+                                <span className="px-2 py-0.5 text-[10px] font-bold bg-green-500 text-white rounded-full">
+                                    {unreadWhatsApp > 99 ? '99+' : unreadWhatsApp}
+                                </span>
+                            )}
                         </NavLink>
                     ))}
                 </nav>

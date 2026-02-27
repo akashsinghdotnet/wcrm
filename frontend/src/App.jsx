@@ -30,6 +30,7 @@ import CouponsPage from './pages/CouponsPage';
 import EmailHistoryPage from './pages/EmailHistoryPage';
 import MarketingPage from './pages/MarketingPage';
 import WhatsAppChatsPage from './pages/WhatsAppChatsPage';
+import WhatsAppChatPage from './pages/WhatsAppChatPage';
 import TicketsPage from './pages/TicketsPage';
 import TicketDetailsPage from './pages/TicketDetailsPage';
 import AnnouncementsAdminPage from './pages/AnnouncementsAdminPage';
@@ -171,6 +172,11 @@ export default function App() {
           <Route path="whatsapp-chats" element={
             <ProtectedRoute roles={['admin', 'manager', 'staff']}>
               <WhatsAppChatsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="whatsapp-chats/:leadId" element={
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+              <WhatsAppChatPage />
             </ProtectedRoute>
           } />
           <Route path="tickets" element={
