@@ -164,9 +164,15 @@ export default function WhatsAppChatsPage() {
                                             <Phone size={9} /> {conv.lead.phone}
                                         </span>
                                     )}
-                                    <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                                        <Clock size={9} /> {conv.messageCount} messages
-                                    </span>
+                                    {conv.unreadCount > 0 ? (
+                                        <span className="flex items-center gap-1 text-[10px] text-green-400 font-medium">
+                                            <Clock size={9} /> {conv.unreadCount} unread
+                                        </span>
+                                    ) : (
+                                        <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                                            <Clock size={9} /> {conv.messageCount} messages
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </button>

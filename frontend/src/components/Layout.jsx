@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -73,6 +73,39 @@ export default function Layout() {
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [unreadWhatsApp, setUnreadWhatsApp] = useState(0);
+    const prevUnreadRef = useRef(0);
+    const audioRef = useRef(null);
+    const notifPermissionRef = useRef(false);
+
+    // Request notification permission on mount
+    useEffect(() => {
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission().then((perm) => {
+                notifPermissionRef.current = perm === 'granted';
+            });
+        } else if ('Notification' in window) {
+            notifPermissionRef.current = Notification.permission === 'granted';
+        }
+    }, []);
+
+    const playNotificationSound = useCallback(() => {
+        try {
+            if (!audioRef.current) {
+                // Create a short notification beep using AudioContext
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 880;
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.5);
+            }
+        } catch (e) { /* ignore audio errors */ }
+    }, []);
 
     useEffect(() => {
         // Only run for company roles
@@ -81,14 +114,33 @@ export default function Layout() {
         const fetchUnread = async () => {
             try {
                 const res = await api.get('/whatsapp/unread-count');
-                setUnreadWhatsApp(res.data.count || 0);
+                const newCount = res.data.count || 0;
+
+                // If unread count increased, play sound + show notification
+                if (newCount > prevUnreadRef.current && prevUnreadRef.current >= 0) {
+                    playNotificationSound();
+
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        const diff = newCount - prevUnreadRef.current;
+                        new Notification('New WhatsApp Message', {
+                            body: `You have ${diff} new unread message${diff > 1 ? 's' : ''}`,
+                            icon: '/vite.svg',
+                            tag: 'whatsapp-notification',
+                        });
+                    }
+                }
+
+                prevUnreadRef.current = newCount;
+                setUnreadWhatsApp(newCount);
             } catch (err) { }
         };
 
+        // Set initial ref to -1 so first fetch doesn't trigger notification
+        prevUnreadRef.current = -1;
         fetchUnread();
-        const interval = setInterval(fetchUnread, 15000); // 15s
+        const interval = setInterval(fetchUnread, 10000); // 10s
         return () => clearInterval(interval);
-    }, [user]);
+    }, [user, playNotificationSound]);
 
     const handleLogout = () => {
         const isSuperadminTeam = user?.role === 'super_admin' ||

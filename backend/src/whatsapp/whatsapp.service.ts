@@ -185,6 +185,14 @@ export class WhatsAppService {
         });
     }
 
+    async markMessagesAsRead(companyId: string, leadId: string): Promise<{ updated: number }> {
+        const result = await this.messageRepo.update(
+            { companyId, leadId, direction: MessageDirection.INBOUND, status: MessageStatus.DELIVERED },
+            { status: MessageStatus.READ },
+        );
+        return { updated: result.affected || 0 };
+    }
+
     async getConversations(companyId: string) {
         // Get all leads that have WhatsApp messages, with last message info
         const conversations = await this.messageRepo

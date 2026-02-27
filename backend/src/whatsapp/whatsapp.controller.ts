@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { WhatsAppService } from './whatsapp.service';
 import { SaveWhatsAppConfigDto } from './dto/save-config.dto';
@@ -66,6 +66,15 @@ export class WhatsAppController {
         return this.whatsappService.getConversations(req.user.companyId);
     }
 
+    // Mark all messages for a lead as read
+    @Patch('messages/:leadId/read')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF)
+    markAsRead(@Param('leadId') leadId: string, @Request() req) {
+        return this.whatsappService.markMessagesAsRead(req.user.companyId, leadId);
+    }
+
+    // This must come AFTER all specific GET routes to avoid catching them
     @Get('messages/:leadId')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF)
@@ -86,8 +95,6 @@ export class WhatsAppController {
         @Query('hub.verify_token') token: string,
         @Query('hub.challenge') challenge: string,
     ) {
-        // The verify token should match what you set in Meta Developer Portal
-        // For now, accept any verification request
         if (mode === 'subscribe') {
             return parseInt(challenge);
         }

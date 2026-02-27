@@ -35,7 +35,11 @@ export default function WhatsAppChatPage() {
     }, [leadId]);
 
     useEffect(() => {
-        if (lead) fetchMessages();
+        if (lead) {
+            fetchMessages();
+            // Mark messages as read when opening chat
+            api.patch(`/whatsapp/messages/${leadId}/read`).catch(() => {});
+        }
     }, [lead]);
 
     // Polling for real-time updates — uses ref to avoid stale closure
