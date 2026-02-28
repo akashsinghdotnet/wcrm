@@ -38,25 +38,26 @@ const INTEGRATIONS = [
     {
         id: 'meta',
         name: 'Meta / Facebook Ads',
-        description: 'Capture leads from Facebook & Instagram ad forms automatically.',
+        description: 'Capture leads from Facebook & Instagram ad forms automatically via direct webhook.',
         color: 'from-blue-600 to-indigo-600',
         iconBg: 'bg-blue-500/10 border-blue-500/20',
         iconColor: 'text-blue-400',
         webhookPath: '/api/webhooks/meta',
-        fields: [
-            { name: 'companyId', required: true, description: 'Your Company ID (auto-included)' },
-            { name: 'name', required: false, description: 'Full name of the lead' },
-            { name: 'phone', required: false, description: 'Phone number' },
-            { name: 'email', required: false, description: 'Email address' },
-        ],
+        fields: [],
         setupSteps: [
-            'Go to your Facebook Business Manager → Events Manager',
-            'Select your Lead Ad form or create a new one',
-            'Navigate to CRM Integration → Webhooks',
-            'Paste the Webhook URL shown below',
-            'Map the form fields: full_name → name, phone_number → phone, email → email',
-            'Add a custom field "companyId" with your Company ID value',
-            'Test the webhook by submitting a test lead',
+            'Go to developers.facebook.com and create a Facebook App (type: Business)',
+            'In your App Dashboard, go to Add Products → find "Webhooks" and click Set Up',
+            'Also add the "Facebook Login" product for permissions',
+            'Go to Webhooks settings → select "Page" from dropdown',
+            'Click "Subscribe to this topic" → paste the Webhook URL shown below',
+            'Set Verify Token to: magnet-crm',
+            'Click "Verify and Save" — Facebook will verify your webhook',
+            'After verification, subscribe to the "leadgen" field',
+            'Go to App Settings → Basic → copy your App ID and App Secret, enter them below',
+            'Go to Graph API Explorer → select your App → generate a Page Access Token with leads_retrieval and pages_manage_ads permissions',
+            'Convert to a long-lived token: Use the Access Token Debugger tool → click "Extend Access Token"',
+            'Enter the Page Access Token, Page ID, and App details in the credentials below',
+            'Create a Lead Ad campaign — leads will automatically appear in your CRM!',
         ],
     },
     {
@@ -501,6 +502,28 @@ fetch("${baseUrl}/api/webhooks/website", {
                                                     {user.companyId}
                                                 </p>
                                             </div>
+
+                                            {/* Show Verify Token for Meta integration */}
+                                            {integration.id === 'meta' && (
+                                                <div className="bg-black/30 rounded-xl p-3 md:col-span-2">
+                                                    <div className="flex items-center justify-between mb-1.5">
+                                                        <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">Verify Token (for Facebook Webhook setup)</span>
+                                                        <button
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText('magnet-crm');
+                                                                toast.success('Verify token copied');
+                                                            }}
+                                                            className="text-indigo-400 hover:text-indigo-300 transition-colors"
+                                                            title="Copy verify token"
+                                                        >
+                                                            <Copy className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                    <p className="text-xs text-slate-300 font-mono">
+                                                        magnet-crm
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
@@ -527,6 +550,8 @@ fetch("${baseUrl}/api/webhooks/website", {
 
                                             {/* Accepted Fields */}
                                             <div>
+                                                {integration.fields.length > 0 && (
+                                                <>
                                                 <h5 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
                                                     <Shield className="w-4 h-4 text-indigo-400" />
                                                     Accepted Fields
@@ -557,9 +582,23 @@ fetch("${baseUrl}/api/webhooks/website", {
                                                         </tbody>
                                                     </table>
                                                 </div>
+                                                </>
+                                                )}
+                                                {integration.id === 'meta' && (
+                                                    <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4">
+                                                        <h5 className="text-sm font-semibold text-blue-400 mb-2">How it works</h5>
+                                                        <p className="text-xs text-slate-400 leading-relaxed">
+                                                            Facebook sends lead events directly to your CRM webhook. When someone fills your Lead Ad form,
+                                                            Facebook notifies your CRM with the lead ID. Your CRM then fetches the complete lead details
+                                                            (name, phone, email) using the Facebook Graph API and your Page Access Token.
+                                                            The lead is automatically created and assigned via round-robin. No middleware needed!
+                                                        </p>
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            {/* Sample Payload */}
+                                            {/* Sample Payload (hidden for Meta since it uses native webhook) */}
+                                            {integration.fields.length > 0 && (
                                             <div>
                                                 <div className="flex items-center justify-between mb-3">
                                                     <h5 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -578,6 +617,7 @@ fetch("${baseUrl}/api/webhooks/website", {
                                                     {getSamplePayload(integration)}
                                                 </pre>
                                             </div>
+                                            )}
 
                                             {/* Website-specific code sample */}
                                             {integration.id === 'website' && (

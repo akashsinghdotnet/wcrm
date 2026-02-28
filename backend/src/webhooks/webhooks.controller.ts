@@ -1,8 +1,8 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, Query, Logger } from '@nestjs/common';
 import { LeadsService } from '../leads/leads.service';
 import { LeadSource, LeadStatus } from '../leads/lead.entity';
 import { NotificationsService } from '../notifications/notifications.service';
-import { WebhookMetaDto } from './dto/webhook-meta.dto';
+import { IntegrationsService } from '../integrations/integrations.service';
 import { WebhookGoogleDto } from './dto/webhook-google.dto';
 import { WebhookJustdialDto } from './dto/webhook-justdial.dto';
 import { WebhookIndiamartDto } from './dto/webhook-indiamart.dto';
@@ -16,9 +16,12 @@ import { WebhookWebsiteDto } from './dto/webhook-website.dto';
  */
 @Controller('webhooks')
 export class WebhooksController {
+    private readonly logger = new Logger(WebhooksController.name);
+
     constructor(
         private readonly leadsService: LeadsService,
         private readonly notifications: NotificationsService,
+        private readonly integrationsService: IntegrationsService,
     ) { }
 
     private async notifyNewLead(lead: any, source: string) {
@@ -32,26 +35,78 @@ export class WebhooksController {
     }
 
     /**
-     * Meta / Facebook Ads Lead
+     * Meta / Facebook Lead Ads — Webhook Verification
+     * GET /api/webhooks/meta
+     * Facebook sends hub.mode, hub.verify_token, hub.challenge for verification
+     */
+    @Get('meta')
+    verifyMetaWebhook(
+        @Query('hub.mode') mode: string,
+        @Query('hub.verify_token') token: string,
+        @Query('hub.challenge') challenge: string,
+    ) {
+        const VERIFY_TOKEN = 'magnet-crm';
+        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+            this.logger.log('Meta webhook verification successful');
+            return parseInt(challenge);
+        }
+        this.logger.warn(`Meta webhook verification failed: mode=${mode}, token=${token}`);
+        return 'Verification failed';
+    }
+
+    /**
+     * Meta / Facebook Lead Ads — Incoming Leadgen Events
      * POST /api/webhooks/meta
+     * Facebook sends: { object: "page", entry: [{ id: pageId, changes: [{ field: "leadgen", value: { leadgen_id, page_id, ... } }] }] }
      */
     @Post('meta')
-    @HttpCode(HttpStatus.CREATED)
-    async handleMeta(@Body() dto: WebhookMetaDto) {
-        const assignedTo = await this.leadsService.getNextAssignee(dto.companyId);
+    @HttpCode(HttpStatus.OK)
+    async handleMeta(@Body() body: any) {
+        this.logger.log(`Meta webhook received: ${JSON.stringify(body).substring(0, 500)}`);
 
-        const lead = await this.leadsService.create({
-            companyId: dto.companyId,
-            name: dto.name || dto.full_name || 'Unknown (Meta)',
-            phone: dto.phone || dto.phone_number,
-            email: dto.email,
-            source: LeadSource.META_ADS,
-            status: LeadStatus.NEW,
-            assignedTo: assignedTo || undefined,
-        });
+        // Handle Facebook's native leadgen webhook format
+        if (body?.object === 'page' && body?.entry) {
+            for (const entry of body.entry) {
+                const pageId = entry.id?.toString();
+                const changes = entry.changes || [];
 
-        this.notifyNewLead(lead, 'Meta Ads');
-        return { success: true, leadId: lead.id, assignedTo };
+                for (const change of changes) {
+                    if (change.field === 'leadgen') {
+                        const leadgenId = change.value?.leadgen_id;
+                        const leadPageId = change.value?.page_id?.toString() || pageId;
+
+                        if (!leadgenId) {
+                            this.logger.warn('Meta leadgen event missing leadgen_id');
+                            continue;
+                        }
+
+                        // Process asynchronously so we respond to Facebook quickly
+                        this.integrationsService.processMetaLeadgenEvent(leadgenId, leadPageId)
+                            .catch(err => this.logger.error(`Failed to process Meta lead ${leadgenId}: ${err.message}`));
+                    }
+                }
+            }
+            return { status: 'ok' };
+        }
+
+        // Fallback: handle legacy/direct format with companyId in body
+        if (body?.companyId) {
+            const assignedTo = await this.leadsService.getNextAssignee(body.companyId);
+            const lead = await this.leadsService.create({
+                companyId: body.companyId,
+                name: body.name || body.full_name || 'Unknown (Meta)',
+                phone: body.phone || body.phone_number,
+                email: body.email,
+                source: LeadSource.META_ADS,
+                status: LeadStatus.NEW,
+                assignedTo: assignedTo || undefined,
+            });
+            this.notifyNewLead(lead, 'Meta Ads');
+            return { success: true, leadId: lead.id, assignedTo };
+        }
+
+        this.logger.warn(`Unrecognized Meta webhook format: ${JSON.stringify(body).substring(0, 300)}`);
+        return { status: 'ok' };
     }
 
     /**

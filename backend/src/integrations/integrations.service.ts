@@ -202,6 +202,106 @@ export class IntegrationsService {
         }
     }
 
+    /**
+     * Process a Facebook Lead Ads leadgen event.
+     * Facebook sends only the leadgen_id and page_id — we need to:
+     * 1. Find the company by matching pageId in stored Meta integration credentials
+     * 2. Use the stored access token to fetch the actual lead data from Graph API
+     * 3. Create the lead in our system
+     */
+    async processMetaLeadgenEvent(leadgenId: string, pageId: string) {
+        this.logger.log(`Processing Meta leadgen event: leadgenId=${leadgenId}, pageId=${pageId}`);
+
+        // Find the company config that has this pageId
+        const allMetaConfigs = await this.configRepo.find({
+            where: { platform: IntegrationPlatform.META, isActive: true },
+        });
+
+        const config = allMetaConfigs.find(c => c.credentials?.pageId === pageId);
+        if (!config) {
+            this.logger.warn(`No active Meta integration found for pageId ${pageId}`);
+            return;
+        }
+
+        const { accessToken } = config.credentials;
+        if (!accessToken) {
+            this.logger.warn(`Meta integration for company ${config.companyId} has no access token`);
+            return;
+        }
+
+        // Fetch lead data from Facebook Graph API
+        try {
+            const graphUrl = `https://graph.facebook.com/v21.0/${leadgenId}?access_token=${accessToken}`;
+            const response = await fetch(graphUrl);
+            const data = await response.json();
+
+            if (data.error) {
+                this.logger.error(`Facebook Graph API error for lead ${leadgenId}: ${JSON.stringify(data.error)}`);
+                return;
+            }
+
+            // Extract lead fields from Facebook's field_data format
+            // Facebook returns: { field_data: [{ name: "full_name", values: ["John Doe"] }, ...] }
+            const fieldData = data.field_data || [];
+            const getField = (fieldName: string): string | undefined => {
+                const field = fieldData.find((f: any) =>
+                    f.name === fieldName || f.name === fieldName.toLowerCase()
+                );
+                return field?.values?.[0];
+            };
+
+            const name = getField('full_name') || getField('name') || getField('first_name') || 'Unknown (Meta Ads)';
+            const phone = getField('phone_number') || getField('phone');
+            const email = getField('email');
+
+            if (!phone && !email) {
+                this.logger.warn(`Meta lead ${leadgenId} has no phone or email, skipping`);
+                return;
+            }
+
+            // Check for duplicate leads
+            const existingLead = await this.leadsService.findByPhoneOrEmail(config.companyId, phone, email);
+            if (existingLead) {
+                this.logger.log(`Meta lead ${leadgenId} already exists (duplicate phone/email), skipping`);
+                return;
+            }
+
+            const assignedTo = await this.leadsService.getNextAssignee(config.companyId);
+
+            // Build notes from additional fields
+            const additionalFields = fieldData
+                .filter((f: any) => !['full_name', 'name', 'first_name', 'phone_number', 'phone', 'email'].includes(f.name))
+                .map((f: any) => `${f.name}: ${f.values?.[0] || ''}`)
+                .filter(Boolean);
+            const notes = additionalFields.length > 0 ? additionalFields.join(', ') : undefined;
+
+            await this.leadsService.create({
+                companyId: config.companyId,
+                name,
+                phone,
+                email,
+                source: LeadSource.META_ADS,
+                status: LeadStatus.NEW,
+                assignedTo: assignedTo || undefined,
+                notes,
+            });
+
+            try {
+                const msg = this.notificationsService.formatLeadMessage({
+                    name,
+                    phone,
+                    email,
+                    source: 'Meta Ads',
+                });
+                await this.notificationsService.sendWhatsApp(msg);
+            } catch { }
+
+            this.logger.log(`Successfully imported Meta lead ${leadgenId} for company ${config.companyId}`);
+        } catch (error: any) {
+            this.logger.error(`Error fetching Meta lead ${leadgenId}: ${error.message}`);
+        }
+    }
+
     // Auto-fetch TradeIndia leads every 15 minutes for all active integrations
     @Cron('0 */15 * * * *')
     async autoFetchTradeIndiaLeads() {
