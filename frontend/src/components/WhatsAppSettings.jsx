@@ -18,7 +18,7 @@ export default function WhatsAppSettings() {
     const apiBase = import.meta.env.VITE_API_URL || '/api';
     const apiOrigin = apiBase.replace(/\/api\/?$/, '') || window.location.origin;
     const webhookUrl = `${apiOrigin}/api/whatsapp/webhook`;
-    const verifyToken = 'magnetcrm_whatsapp_verify';
+    const verifyToken = 'magnet-crm';
 
     const copyToClipboard = (text, field) => {
         navigator.clipboard.writeText(text);
