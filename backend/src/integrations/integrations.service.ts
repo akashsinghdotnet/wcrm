@@ -1,4 +1,4 @@
-import { Injectable, forwardRef, Inject } from '@nestjs/common';
+import { Injectable, forwardRef, Inject, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IntegrationConfig, IntegrationPlatform } from './integration-config.entity';
@@ -6,9 +6,12 @@ import { SaveIntegrationDto } from './dto/save-integration.dto';
 import { LeadsService } from '../leads/leads.service';
 import { LeadSource, LeadStatus } from '../leads/lead.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class IntegrationsService {
+    private readonly logger = new Logger(IntegrationsService.name);
+
     constructor(
         @InjectRepository(IntegrationConfig)
         private configRepo: Repository<IntegrationConfig>,
@@ -73,59 +76,90 @@ export class IntegrationsService {
         }
 
         try {
-            // Fetch for the last 7 days as an example, since TradeIndia requires from_date and to_date
             const toDate = new Date();
             const fromDate = new Date();
             fromDate.setDate(toDate.getDate() - 7);
 
             const formatDate = (date: Date) => date.toISOString().split('T')[0]; // YYYY-MM-DD
 
-            const url = `https://www.tradeindia.com/utils/my_buy_leads.html?userid=${userid}&profile_id=${profile_id}&key=${key}&from_date=${formatDate(fromDate)}&to_date=${formatDate(toDate)}&limit=50&page_no=1`;
+            // Try both TradeIndia API endpoints - my_inquiry (received inquiries) and my_buy_leads (purchased leads)
+            const endpoints = [
+                `https://www.tradeindia.com/utils/my_inquiry.html?userid=${userid}&profile_id=${profile_id}&key=${key}&from_date=${formatDate(fromDate)}&to_date=${formatDate(toDate)}&limit=50&page_no=1`,
+                `https://www.tradeindia.com/utils/my_buy_leads.html?userid=${userid}&profile_id=${profile_id}&key=${key}&from_date=${formatDate(fromDate)}&to_date=${formatDate(toDate)}&limit=50&page_no=1`,
+            ];
 
-            const response = await fetch(url);
+            let allLeads: any[] = [];
 
-            // TradeIndia might return JSON or XML depending on the endpoint, usually JSON if it's the newer API
-            const textResponse = await response.text();
+            for (const url of endpoints) {
+                try {
+                    const response = await fetch(url);
+                    const textResponse = await response.text();
 
-            let data;
-            try {
-                data = JSON.parse(textResponse);
-            } catch (e) {
-                return { success: false, message: 'Failed to parse TradeIndia response. Check credentials.', rawResponse: textResponse.substring(0, 200) };
+                    this.logger.log(`TradeIndia response from ${url.split('?')[0]}: status=${response.status}, length=${textResponse.length}`);
+
+                    if (!textResponse || textResponse.trim().length === 0) continue;
+
+                    let data;
+                    try {
+                        data = JSON.parse(textResponse);
+                    } catch {
+                        this.logger.warn(`TradeIndia non-JSON response from ${url.split('?')[0]}: ${textResponse.substring(0, 300)}`);
+                        continue;
+                    }
+
+                    // Handle error responses from TradeIndia API
+                    if (data && data.error) {
+                        this.logger.warn(`TradeIndia API error: ${JSON.stringify(data.error)}`);
+                        continue;
+                    }
+
+                    // Extract leads from various response structures
+                    let leadsList: any[] = [];
+                    if (Array.isArray(data)) {
+                        leadsList = data;
+                    } else if (data && data.DATA && Array.isArray(data.DATA)) {
+                        leadsList = data.DATA;
+                    } else if (data && data.response && Array.isArray(data.response)) {
+                        leadsList = data.response;
+                    } else if (data && typeof data === 'object') {
+                        // TradeIndia sometimes returns { "0": {...}, "1": {...}, ... } format
+                        const values = Object.values(data).filter(
+                            item => typeof item === 'object' && item !== null && !Array.isArray(item)
+                        );
+                        if (values.length > 0 && values.every((v: any) => v.sender_name || v.sender_mobile || v.sender_email || v.rfi_id)) {
+                            leadsList = values;
+                        }
+                    }
+
+                    allLeads.push(...leadsList);
+                } catch (fetchErr: any) {
+                    this.logger.warn(`Failed to fetch from ${url.split('?')[0]}: ${fetchErr.message}`);
+                }
             }
 
-            // TradeIndia typical JSON response structure:
-            // return value is an array or object containing array
-            let leadsList: any[] = [];
-            if (Array.isArray(data)) leadsList = data;
-            else if (data && data.DATA && Array.isArray(data.DATA)) leadsList = data.DATA;
-            else if (data && data.response && Array.isArray(data.response)) leadsList = data.response;
-            else if (data && typeof data === 'object') {
-                // sometimes returns object with indexed keys
-                leadsList = Object.values(data).filter(item => typeof item === 'object' && item !== null);
-            }
-
-            if (leadsList.length === 0) {
+            if (allLeads.length === 0) {
                 return { success: true, message: 'No new leads found in the specified date range.', count: 0 };
             }
 
+            // Deduplicate by checking existing leads with same phone/email from TradeIndia source
             let importCount = 0;
-            for (const item of leadsList as any[]) {
-                // Map TradeIndia fields
+            for (const item of allLeads) {
                 const name = item.sender_name || item.sender || item.name || 'Unknown (TradeIndia)';
                 const phone = item.sender_mobile || item.sender_phone || item.mobile || item.phone;
                 const email = item.sender_email || item.email;
                 const subject = item.subject || item.product_name || item.category;
                 const city = item.sender_city || item.city;
                 const message = item.message || item.query_message || item.description;
+                const rfiId = item.rfi_id || item.inquiry_id || item.id;
 
-                // Skip if no contact info
                 if (!phone && !email) continue;
 
-                // Simple deduplication (TradeIndia specific query_id could be used if saved, but checking phone/email for now)
-                // In a production app, we should check against a unique source_id to prevent duplicates across multiple fetches
+                // Check for duplicate leads (by phone or email from same source)
+                const existingLead = await this.leadsService.findByPhoneOrEmail(companyId, phone, email);
+                if (existingLead) continue;
 
                 const notes = [
+                    rfiId ? `TradeIndia ID: ${rfiId}` : null,
                     subject ? `Subject: ${subject}` : null,
                     city ? `City: ${city}` : null,
                     message ? `Message: ${message}` : null,
@@ -133,7 +167,7 @@ export class IntegrationsService {
 
                 const assignedTo = await this.leadsService.getNextAssignee(companyId);
 
-                const lead = await this.leadsService.create({
+                await this.leadsService.create({
                     companyId,
                     name,
                     phone,
@@ -144,14 +178,15 @@ export class IntegrationsService {
                     notes: notes || undefined,
                 });
 
-                // Send notification
-                const msg = this.notificationsService.formatLeadMessage({
-                    name,
-                    phone,
-                    email,
-                    source: 'Trade India',
-                });
-                await this.notificationsService.sendWhatsApp(msg);
+                try {
+                    const msg = this.notificationsService.formatLeadMessage({
+                        name,
+                        phone,
+                        email,
+                        source: 'Trade India',
+                    });
+                    await this.notificationsService.sendWhatsApp(msg);
+                } catch { }
 
                 importCount++;
             }
@@ -162,7 +197,27 @@ export class IntegrationsService {
                 count: importCount
             };
         } catch (error: any) {
+            this.logger.error(`Error fetching TradeIndia leads: ${error.message}`);
             return { success: false, message: `Error fetching from TradeIndia: ${error.message}` };
+        }
+    }
+
+    // Auto-fetch TradeIndia leads every 15 minutes for all active integrations
+    @Cron('0 */15 * * * *')
+    async autoFetchTradeIndiaLeads() {
+        const activeConfigs = await this.configRepo.find({
+            where: { platform: IntegrationPlatform.TRADEINDIA, isActive: true },
+        });
+
+        for (const config of activeConfigs) {
+            try {
+                const result = await this.fetchTradeIndiaLeads(config.companyId);
+                if (result.count && result.count > 0) {
+                    this.logger.log(`Auto-fetched ${result.count} TradeIndia leads for company ${config.companyId}`);
+                }
+            } catch (err: any) {
+                this.logger.error(`Auto-fetch TradeIndia failed for company ${config.companyId}: ${err.message}`);
+            }
         }
     }
 }

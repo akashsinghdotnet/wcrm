@@ -186,6 +186,14 @@ export class LeadsService {
         return staff[nextIndex].id;
     }
 
+    async findByPhoneOrEmail(companyId: string, phone?: string, email?: string): Promise<Lead | null> {
+        if (!phone && !email) return null;
+        const conditions: any[] = [];
+        if (phone) conditions.push({ companyId, phone });
+        if (email) conditions.push({ companyId, email });
+        return this.leadsRepository.findOne({ where: conditions });
+    }
+
     // ------- Dashboard helper methods -------
 
     async countAll(companyId: string): Promise<number> {

@@ -19,12 +19,14 @@ import { IntegrationsModule } from './integrations/integrations.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
