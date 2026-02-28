@@ -51,8 +51,13 @@ export class AuthService {
             renewalDate.setMonth(renewalDate.getMonth() + 1);
         }
 
+        const addressParts = [dto.streetAddress, dto.city, dto.state, dto.postcode, dto.country].filter(Boolean);
         const company = await this.companiesService.create({
             companyName: dto.companyName,
+            email: dto.email,
+            phone: dto.phone,
+            address: addressParts.length > 0 ? addressParts.join(', ') : undefined,
+            gstNo: dto.taxId,
             planId: plan.id,
             subscriptionStatus: isBankTransfer ? 'pending_payment' : 'active',
             subscriptionPeriod: dto.billingPeriod,

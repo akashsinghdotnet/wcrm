@@ -27,4 +27,32 @@ export class RegisterSubscriptionDto {
     @IsOptional()
     @IsIn(['razorpay', 'paypal', 'bank_transfer'])
     paymentMethod?: 'razorpay' | 'paypal' | 'bank_transfer';
+
+    @IsOptional()
+    @IsString()
+    phone?: string;
+
+    @IsOptional()
+    @IsString()
+    streetAddress?: string;
+
+    @IsOptional()
+    @IsString()
+    city?: string;
+
+    @IsOptional()
+    @IsString()
+    state?: string;
+
+    @IsOptional()
+    @IsString()
+    postcode?: string;
+
+    @IsOptional()
+    @IsString()
+    country?: string;
+
+    @IsOptional()
+    @IsString()
+    taxId?: string;
 }

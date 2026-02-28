@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { ArrowLeft, Building2, User, Plus, Trash2, Mail, Phone, MapPin, Calendar, CreditCard, ShieldCheck, ShieldAlert, Send } from 'lucide-react';
+import { ArrowLeft, Building2, User, Plus, Trash2, Mail, Phone, MapPin, Calendar, CreditCard, ShieldCheck, ShieldAlert, Send, Edit } from 'lucide-react';
 import toast from 'react-hot-toast';
 import CompanyForm from '../components/CompanyForm';
 
@@ -20,6 +20,9 @@ export default function CompanyDetailsPage() {
         companyName: '', email: '', phone: '', address: '',
         planId: '', subscriptionStatus: 'active', subscriptionPeriod: 'monthly', renewalDate: ''
     });
+    const [showEditUserModal, setShowEditUserModal] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
+    const [editUserForm, setEditUserForm] = useState({ name: '', phone: '', email: '', role: 'staff', canCreateInvoices: false });
     const [showEmailModal, setShowEmailModal] = useState(false);
     const [emailForm, setEmailForm] = useState({ subject: '', body: '' });
     const [sendingEmail, setSendingEmail] = useState(false);
@@ -113,6 +116,32 @@ export default function CompanyDetailsPage() {
             setUsers(res.data);
         } catch (err) {
             toast.error(err.response?.data?.message || 'Failed to create user');
+        }
+    };
+
+    const openEditUser = (user) => {
+        setEditingUser(user);
+        setEditUserForm({
+            name: user.name || '',
+            phone: user.phone || '',
+            email: user.email || '',
+            role: user.role || 'staff',
+            canCreateInvoices: user.canCreateInvoices || false,
+        });
+        setShowEditUserModal(true);
+    };
+
+    const handleEditUser = async (e) => {
+        e.preventDefault();
+        try {
+            await api.patch(`/users/${editingUser.id}`, editUserForm);
+            toast.success('User updated');
+            setShowEditUserModal(false);
+            setEditingUser(null);
+            const res = await api.get(`/users?companyId=${id}`);
+            setUsers(res.data);
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to update user');
         }
     };
 
@@ -318,26 +347,41 @@ export default function CompanyDetailsPage() {
                                     </div>
                                     <div className={`w-2 h-2 rounded-full ${user.isActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
                                 </div>
+                                {(user.name || user.phone) && (
+                                    <div className="space-y-1 mb-3">
+                                        {user.name && <p className="text-xs text-slate-400">{user.name}</p>}
+                                        {user.phone && <p className="text-xs text-slate-500 flex items-center gap-1"><Phone className="w-3 h-3" />{user.phone}</p>}
+                                    </div>
+                                )}
                                 <div className="flex items-center justify-between pt-4 border-t border-slate-800">
                                     <span className="text-xs text-slate-500">
                                         Joined {new Date(user.createdAt).toLocaleDateString()}
                                     </span>
-                                    <button
-                                        onClick={() => toggleUserStatus(user.id, user.isActive)}
-                                        className={`text-xs px-2 py-1 rounded transition-colors ${user.isActive
-                                            ? 'text-red-400 hover:bg-red-500/10'
-                                            : 'text-emerald-400 hover:bg-emerald-500/10'
-                                            }`}
-                                    >
-                                        {user.isActive ? 'Deactivate' : 'Activate'}
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteUser(user.id)}
-                                        className="text-xs px-2 py-1 rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                                        title="Delete User"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => openEditUser(user)}
+                                            className="text-xs px-2 py-1 rounded text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                                            title="Edit User"
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => toggleUserStatus(user.id, user.isActive)}
+                                            className={`text-xs px-2 py-1 rounded transition-colors ${user.isActive
+                                                ? 'text-red-400 hover:bg-red-500/10'
+                                                : 'text-emerald-400 hover:bg-emerald-500/10'
+                                                }`}
+                                        >
+                                            {user.isActive ? 'Deactivate' : 'Activate'}
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteUser(user.id)}
+                                            className="text-xs px-2 py-1 rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                            title="Delete User"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -436,6 +480,82 @@ export default function CompanyDetailsPage() {
                             isEdit={true}
                             onCancel={() => setShowEditModal(false)}
                         />
+                    </div>
+                </div>
+            )}
+
+            {/* Edit User Modal */}
+            {showEditUserModal && editingUser && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md shadow-2xl">
+                        <div className="p-6 border-b border-slate-800 flex justify-between items-center">
+                            <h3 className="text-lg font-semibold text-white">Edit Team Member</h3>
+                            <button onClick={() => { setShowEditUserModal(false); setEditingUser(null); }} className="text-slate-400 hover:text-white">
+                                <Trash2 className="w-5 h-5 rotate-45" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleEditUser} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">Full Name</label>
+                                <input
+                                    type="text"
+                                    value={editUserForm.name}
+                                    onChange={e => setEditUserForm({ ...editUserForm, name: e.target.value })}
+                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder="John Doe"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">Phone</label>
+                                <input
+                                    type="tel"
+                                    value={editUserForm.phone}
+                                    onChange={e => setEditUserForm({ ...editUserForm, phone: e.target.value })}
+                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder="+91 98765 43210"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={editUserForm.email}
+                                    onChange={e => setEditUserForm({ ...editUserForm, email: e.target.value })}
+                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">Role</label>
+                                <select
+                                    value={editUserForm.role}
+                                    onChange={e => setEditUserForm({ ...editUserForm, role: e.target.value })}
+                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                >
+                                    <option value="staff">Staff</option>
+                                    <option value="manager">Manager</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="canCreateInvoices"
+                                    checked={editUserForm.canCreateInvoices}
+                                    onChange={e => setEditUserForm({ ...editUserForm, canCreateInvoices: e.target.checked })}
+                                    className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-indigo-500 focus:ring-indigo-500"
+                                />
+                                <label htmlFor="canCreateInvoices" className="text-sm text-slate-300">Can create invoices</label>
+                            </div>
+                            <div className="pt-2">
+                                <button
+                                    type="submit"
+                                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-colors"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

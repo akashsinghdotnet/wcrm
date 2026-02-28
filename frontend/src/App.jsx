@@ -34,6 +34,7 @@ import WhatsAppChatPage from './pages/WhatsAppChatPage';
 import TicketsPage from './pages/TicketsPage';
 import TicketDetailsPage from './pages/TicketDetailsPage';
 import AnnouncementsAdminPage from './pages/AnnouncementsAdminPage';
+import AnnouncementsViewPage from './pages/AnnouncementsViewPage';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -192,6 +193,11 @@ export default function App() {
           <Route path="announcements" element={
             <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'superadmin_staff']}>
               <AnnouncementsAdminPage />
+            </ProtectedRoute>
+          } />
+          <Route path="company-announcements" element={
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+              <AnnouncementsViewPage />
             </ProtectedRoute>
           } />
           <Route

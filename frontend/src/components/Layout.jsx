@@ -27,6 +27,7 @@ import {
     MessageCircle,
     Ticket,
     Megaphone,
+    Bell,
 } from 'lucide-react';
 
 const navItems = [
@@ -142,6 +143,56 @@ export default function Layout() {
         return () => clearInterval(interval);
     }, [user, playNotificationSound]);
 
+    // Announcement notifications
+    const [unreadAnnouncements, setUnreadAnnouncements] = useState(0);
+    const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+    const [announcements, setAnnouncements] = useState([]);
+    const notifDropdownRef = useRef(null);
+
+    useEffect(() => {
+        if (!user || ['super_admin', 'superadmin_admin', 'superadmin_staff'].includes(user.role)) return;
+
+        const fetchAnnouncementCount = async () => {
+            try {
+                const res = await api.get('/announcements/unread-count');
+                setUnreadAnnouncements(res.data.count || 0);
+            } catch { }
+        };
+
+        fetchAnnouncementCount();
+        const interval = setInterval(fetchAnnouncementCount, 30000); // 30s
+        return () => clearInterval(interval);
+    }, [user]);
+
+    const openNotifDropdown = async () => {
+        setShowNotifDropdown(prev => !prev);
+        if (!showNotifDropdown) {
+            try {
+                const res = await api.get('/announcements/for-me');
+                setAnnouncements(res.data);
+            } catch { }
+        }
+    };
+
+    const handleMarkAllRead = async () => {
+        try {
+            await api.patch('/announcements/mark-all-read');
+            setUnreadAnnouncements(0);
+            setAnnouncements(prev => prev.map(a => ({ ...a, isRead: true })));
+        } catch { }
+    };
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (notifDropdownRef.current && !notifDropdownRef.current.contains(e.target)) {
+                setShowNotifDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const handleLogout = () => {
         const isSuperadminTeam = user?.role === 'super_admin' ||
             user?.role === 'superadmin_admin' ||
@@ -150,6 +201,8 @@ export default function Layout() {
         logout();
         navigate(redirectTo);
     };
+
+    const displayName = user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email;
 
     const filteredNav = navItems.filter((item) => {
         if (item.show) return item.show(user);
@@ -251,11 +304,11 @@ export default function Layout() {
                     <div className="flex items-center gap-3 px-3 py-2">
                         <div className="w-9 h-9 rounded-full bg-indigo-600/30 flex items-center justify-center">
                             <span className="text-sm font-semibold text-indigo-400">
-                                {user?.email?.[0]?.toUpperCase()}
+                                {displayName?.[0]?.toUpperCase()}
                             </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-white truncate">{user?.email}</p>
+                            <p className="text-sm font-medium text-white truncate">{displayName}</p>
                             <p className="text-xs text-slate-400">{getRoleLabel(user?.role)}</p>
                         </div>
                     </div>
@@ -280,8 +333,81 @@ export default function Layout() {
                         <Menu className="w-5 h-5" />
                     </button>
                     <div className="flex-1" />
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-slate-400 hidden sm:block">{user?.email}</span>
+                    <div className="flex items-center gap-3">
+                        {/* Notification bell - only for company users */}
+                        {!['super_admin', 'superadmin_admin', 'superadmin_staff'].includes(user?.role) && (
+                            <div className="relative" ref={notifDropdownRef}>
+                                <button
+                                    onClick={openNotifDropdown}
+                                    className="relative p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                                >
+                                    <Bell className="w-5 h-5" />
+                                    {unreadAnnouncements > 0 && (
+                                        <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold bg-red-500 text-white rounded-full">
+                                            {unreadAnnouncements > 99 ? '99+' : unreadAnnouncements}
+                                        </span>
+                                    )}
+                                </button>
+
+                                {showNotifDropdown && (
+                                    <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                                        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                                            <h4 className="text-sm font-semibold text-white">Notifications</h4>
+                                            {unreadAnnouncements > 0 && (
+                                                <button
+                                                    onClick={handleMarkAllRead}
+                                                    className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                                                >
+                                                    Mark all as read
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="max-h-80 overflow-y-auto">
+                                            {announcements.length === 0 ? (
+                                                <div className="p-6 text-center text-slate-500 text-sm">No announcements yet</div>
+                                            ) : (
+                                                announcements.slice(0, 10).map((a) => (
+                                                    <button
+                                                        key={a.id}
+                                                        onClick={() => {
+                                                            setShowNotifDropdown(false);
+                                                            navigate('/company-announcements');
+                                                        }}
+                                                        className={`w-full text-left px-4 py-3 hover:bg-slate-800/60 transition-colors border-b border-slate-800/50 ${!a.isRead ? 'bg-indigo-500/5' : ''}`}
+                                                    >
+                                                        <div className="flex items-start gap-3">
+                                                            {!a.isRead && (
+                                                                <span className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
+                                                            )}
+                                                            <div className={`flex-1 min-w-0 ${a.isRead ? 'ml-5' : ''}`}>
+                                                                <p className={`text-sm truncate ${a.isRead ? 'text-slate-400' : 'text-white font-medium'}`}>
+                                                                    {a.title}
+                                                                </p>
+                                                                <p className="text-xs text-slate-500 mt-0.5">
+                                                                    {new Date(a.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </button>
+                                                ))
+                                            )}
+                                        </div>
+                                        {announcements.length > 0 && (
+                                            <div className="p-3 border-t border-slate-800">
+                                                <button
+                                                    onClick={() => { setShowNotifDropdown(false); navigate('/company-announcements'); }}
+                                                    className="w-full text-center text-xs text-indigo-400 hover:text-indigo-300 py-1 transition-colors"
+                                                >
+                                                    View all announcements
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <span className="text-sm text-slate-400 hidden sm:block">{displayName}</span>
                         <span className="px-2.5 py-1 text-xs font-medium bg-indigo-600/20 text-indigo-400 rounded-full">
                             {getRoleLabel(user?.role)}
                         </span>

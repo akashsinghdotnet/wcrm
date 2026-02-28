@@ -17,6 +17,21 @@ export class AnnouncementsController {
         return this.announcementsService.create(createDto, req.user);
     }
 
+    @Get('unread-count')
+    getUnreadCount(@Request() req) {
+        return this.announcementsService.getUnreadCount(req.user.userId);
+    }
+
+    @Get('for-me')
+    getForMe(@Request() req) {
+        return this.announcementsService.getForUser(req.user.userId);
+    }
+
+    @Patch('mark-all-read')
+    markAllAsRead(@Request() req) {
+        return this.announcementsService.markAllAsRead(req.user.userId);
+    }
+
     @Get()
     findAll() {
         return this.announcementsService.findAll();
