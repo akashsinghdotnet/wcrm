@@ -95,7 +95,8 @@ export class WhatsAppController {
         @Query('hub.verify_token') token: string,
         @Query('hub.challenge') challenge: string,
     ) {
-        if (mode === 'subscribe') {
+        const VERIFY_TOKEN = 'magnetcrm_whatsapp_verify';
+        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
             return parseInt(challenge);
         }
         return 'OK';

@@ -173,7 +173,10 @@ export default function IntegrationsPage() {
     const [saving, setSaving] = useState(false);
     const [showPasswords, setShowPasswords] = useState({});
 
-    const baseUrl = window.location.origin;
+    // Webhook URLs must point to the backend API, not the frontend
+    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    // Extract origin from full API URL (e.g. "https://api.magnetcrm.com/api" → "https://api.magnetcrm.com")
+    const baseUrl = apiBase.replace(/\/api\/?$/, '') || window.location.origin;
 
     useEffect(() => {
         loadEmployees();

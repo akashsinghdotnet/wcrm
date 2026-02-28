@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { Eye, EyeOff, MessageCircle, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, MessageCircle, CheckCircle, XCircle, Loader2, Copy, Check } from 'lucide-react';
 
 export default function WhatsAppSettings() {
     const { user } = useAuth();
@@ -12,6 +12,20 @@ export default function WhatsAppSettings() {
     const [testing, setTesting] = useState(false);
     const [showToken, setShowToken] = useState(false);
     const [configured, setConfigured] = useState(false);
+    const [copiedField, setCopiedField] = useState(null);
+
+    // Webhook URL must point to the backend API, not the frontend
+    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    const apiOrigin = apiBase.replace(/\/api\/?$/, '') || window.location.origin;
+    const webhookUrl = `${apiOrigin}/api/whatsapp/webhook`;
+    const verifyToken = 'magnetcrm_whatsapp_verify';
+
+    const copyToClipboard = (text, field) => {
+        navigator.clipboard.writeText(text);
+        setCopiedField(field);
+        toast.success('Copied to clipboard');
+        setTimeout(() => setCopiedField(null), 2000);
+    };
 
     useEffect(() => {
         fetchConfig();
@@ -105,14 +119,49 @@ export default function WhatsAppSettings() {
                 </div>
 
                 {/* Setup Guide */}
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 space-y-2">
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 space-y-3">
                     <h4 className="text-sm font-medium text-slate-300">Setup Guide</h4>
                     <ol className="text-xs text-slate-400 space-y-1.5 list-decimal list-inside">
                         <li>Go to <span className="text-indigo-400">Meta Business Suite</span> &gt; WhatsApp &gt; API Setup</li>
                         <li>Copy your <span className="text-white font-medium">Phone Number ID</span> and <span className="text-white font-medium">Permanent Access Token</span></li>
                         <li>Optionally add your <span className="text-white font-medium">Business Account ID</span></li>
-                        <li>Set the webhook URL in Meta to: <code className="bg-slate-900 px-1.5 py-0.5 rounded text-green-400">{window.location.origin}/api/whatsapp/webhook</code></li>
+                        <li>In Meta &gt; WhatsApp &gt; Configuration, set the <span className="text-white font-medium">Callback URL</span> and <span className="text-white font-medium">Verify Token</span> shown below</li>
+                        <li>Subscribe to the <span className="text-white font-medium">messages</span> webhook field</li>
                     </ol>
+
+                    {/* Webhook URL */}
+                    <div className="mt-3 space-y-2">
+                        <div>
+                            <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wide">Callback / Webhook URL</span>
+                            <div className="flex items-center gap-2 mt-1">
+                                <code className="flex-1 bg-slate-900 border border-slate-700 px-3 py-2 rounded-lg text-green-400 text-xs break-all">{webhookUrl}</code>
+                                <button
+                                    type="button"
+                                    onClick={() => copyToClipboard(webhookUrl, 'webhook')}
+                                    className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 hover:text-white transition-colors cursor-pointer flex-shrink-0"
+                                    title="Copy webhook URL"
+                                >
+                                    {copiedField === 'webhook' ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Verify Token */}
+                        <div>
+                            <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wide">Verify Token</span>
+                            <div className="flex items-center gap-2 mt-1">
+                                <code className="flex-1 bg-slate-900 border border-slate-700 px-3 py-2 rounded-lg text-amber-400 text-xs">{verifyToken}</code>
+                                <button
+                                    type="button"
+                                    onClick={() => copyToClipboard(verifyToken, 'verify')}
+                                    className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 hover:text-white transition-colors cursor-pointer flex-shrink-0"
+                                    title="Copy verify token"
+                                >
+                                    {copiedField === 'verify' ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <form onSubmit={handleSave} className="space-y-4">
