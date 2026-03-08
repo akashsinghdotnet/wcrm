@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useConfig } from '../context/ConfigContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import {
-    IndianRupee, Globe, Building2, Check, ArrowLeft,
+    IndianRupee, Globe, Building2, Check, Magnet,
     Shield, Sparkles, Users, CreditCard, Clock, Loader2,
     User, Mail, Phone, MapPin, Lock, Eye, EyeOff, Tag, X
 } from 'lucide-react';
-
-const COUPONS_KEY = 'magnetcrm_coupons';
 
 const INDIAN_STATES = [
     '—', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -23,14 +22,16 @@ const INDIAN_STATES = [
 export default function CheckoutPage() {
     const { planSlug } = useParams();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [plan, setPlan] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedMethod, setSelectedMethod] = useState(null);
-    const [billingPeriod, setBillingPeriod] = useState('monthly');
+    const [billingPeriod, setBillingPeriod] = useState(searchParams.get('billing') === 'yearly' ? 'yearly' : 'monthly');
     const [paymentSettings, setPaymentSettings] = useState(null);
     const [processing, setProcessing] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(false);
     const { login } = useAuth();
+    const { config } = useConfig();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
 
@@ -87,42 +88,22 @@ export default function CheckoutPage() {
         } catch { }
     };
 
-    const applyCoupon = () => {
+    const applyCoupon = async () => {
         if (!couponCode.trim()) return;
         setCouponLoading(true);
-        setTimeout(() => {
-            const saved = localStorage.getItem(COUPONS_KEY);
-            let coupons = [];
-            try { coupons = saved ? JSON.parse(saved) : []; } catch { }
-
-            const found = coupons.find(c =>
-                c.code.toLowerCase() === couponCode.trim().toLowerCase() && c.isActive
-            );
-
-            if (!found) {
-                toast.error('Invalid or expired coupon code');
-                setCouponLoading(false);
-                return;
-            }
-
-            // Check expiry
-            if (found.expiresAt && new Date(found.expiresAt) < new Date()) {
-                toast.error('This coupon has expired');
-                setCouponLoading(false);
-                return;
-            }
-
-            // Check usage limit
-            if (found.maxUses && found.usedCount >= found.maxUses) {
-                toast.error('This coupon has reached its usage limit');
-                setCouponLoading(false);
-                return;
-            }
-
+        try {
+            const res = await api.post('/coupons/validate', {
+                code: couponCode.trim(),
+                billingCycle: billingPeriod,
+            });
+            const found = res.data;
             setAppliedCoupon(found);
             toast.success(`Coupon applied! ${found.type === 'percentage' ? `${found.value}% off` : `₹${found.value} off`}`);
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Invalid or expired coupon code');
+        } finally {
             setCouponLoading(false);
-        }, 800);
+        }
     };
 
     const removeCoupon = () => {
@@ -151,7 +132,10 @@ export default function CheckoutPage() {
     };
 
     const GST_RATE = 18;
+    // For yearly: originalPrice = monthly × 12 (full rate), basePrice = yearly (discounted)
+    const originalPrice = plan ? (billingPeriod === 'yearly' ? Number(plan.priceMonthly) * 12 : Number(plan.priceMonthly)) : 0;
     const basePrice = plan ? Number(billingPeriod === 'monthly' ? plan.priceMonthly : plan.priceYearly) : 0;
+    const annualSavings = billingPeriod === 'yearly' && plan ? originalPrice - basePrice : 0;
     const discount = appliedCoupon
         ? appliedCoupon.type === 'percentage'
             ? parseFloat((basePrice * appliedCoupon.value / 100).toFixed(2))
@@ -201,6 +185,67 @@ export default function CheckoutPage() {
 
     const strength = getPasswordStrength(form.password);
 
+    const loadRazorpayScript = () => {
+        return new Promise((resolve) => {
+            if (document.getElementById('razorpay-script')) { resolve(true); return; }
+            const script = document.createElement('script');
+            script.id = 'razorpay-script';
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
+    const openRazorpayCheckout = async (orderData) => {
+        const loaded = await loadRazorpayScript();
+        if (!loaded) { toast.error('Failed to load Razorpay. Please try again.'); return; }
+
+        const options = {
+            key: orderData.keyId,
+            amount: orderData.amount,
+            currency: orderData.currency,
+            name: config?.login_text_content || 'Magnet CRM',
+            description: `${plan.name} Plan - ${billingPeriod}`,
+            order_id: orderData.orderId,
+            prefill: orderData.prefill,
+            theme: { color: '#4F46E5' },
+            handler: async (response) => {
+                // Payment successful — verify on backend
+                try {
+                    toast.loading('Verifying payment...', { id: 'verify' });
+                    const verifyRes = await api.post('/auth/verify-payment', {
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                        companyId: orderData.companyId,
+                        userId: orderData.userId,
+                        couponCode: orderData.couponCode || undefined,
+                    });
+                    toast.dismiss('verify');
+
+                    if (verifyRes.data.access_token) {
+                        login(verifyRes.data.user, verifyRes.data.access_token);
+                        toast.success('Payment successful! Welcome to Magnet CRM.');
+                        setTimeout(() => navigate('/'), 1000);
+                    }
+                } catch (err) {
+                    toast.dismiss('verify');
+                    toast.error(err.response?.data?.message || 'Payment verification failed. Contact support.');
+                }
+            },
+            modal: {
+                ondismiss: () => {
+                    toast.error('Payment was cancelled. Your account is pending — please complete payment to activate.');
+                    setProcessing(false);
+                },
+            },
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+    };
+
     const handlePay = async () => {
         if (!form.firstName || !form.email || !form.companyName) { toast.error('Please fill in all required fields'); return; }
         if (!form.password || form.password.length < 6) { toast.error('Password must be at least 6 characters'); return; }
@@ -225,17 +270,20 @@ export default function CheckoutPage() {
                 planId: plan.id,
                 billingPeriod,
                 paymentMethod: selectedMethod,
+                couponCode: appliedCoupon?.code || undefined,
             });
 
             if (res.data.status === 'pending_payment') {
                 // Bank transfer - show success screen (no auto-login)
                 setOrderSuccess(true);
                 toast.success('Order placed! Check your email for bank details.');
+            } else if (res.data.status === 'razorpay_order_created') {
+                // Open Razorpay checkout modal
+                await openRazorpayCheckout(res.data);
             } else if (res.data.access_token) {
-                // Online payment - auto-login
+                // Direct login (fallback)
                 login(res.data.user, res.data.access_token);
                 toast.success('Account created successfully!');
-                toast.success(`Redirecting to ${selectedMethod === 'razorpay' ? 'Razorpay' : 'PayPal'}... (Simulation)`);
                 setTimeout(() => navigate('/'), 1500);
             }
         } catch (err) {
@@ -308,10 +356,24 @@ export default function CheckoutPage() {
         <div className="min-h-screen bg-slate-950">
             {/* Top bar */}
             <div className="bg-slate-900 border-b border-slate-800">
-                <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
-                        <ArrowLeft className="w-4 h-4" /> Back
-                    </button>
+                <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        {(config?.login_logo_url || config?.app_logo) ? (
+                            <img
+                                src={config.login_logo_url || config.app_logo}
+                                alt="Logo"
+                                className="object-contain"
+                                style={{ height: '36px', width: 'auto' }}
+                            />
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                                    <Magnet className="w-4 h-4 text-white" />
+                                </div>
+                                <span className="text-white font-semibold text-sm">{config?.login_text_content || 'MagnetCRM'}</span>
+                            </div>
+                        )}
+                    </div>
                     <div className="flex items-center gap-2 text-slate-400 text-xs">
                         <Shield className="w-3.5 h-3.5" /> Secured Checkout
                     </div>
@@ -319,14 +381,13 @@ export default function CheckoutPage() {
             </div>
 
             <div className="max-w-5xl mx-auto px-6 py-10">
+                <div className="mb-6">
+                    <h1 className="text-2xl font-bold text-white">Complete Your Purchase</h1>
+                    <p className="text-slate-400 mt-1">Subscribe to the <span className="text-white font-medium">{plan.name}</span> plan</p>
+                </div>
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                     {/* Left – Form (3 cols) */}
                     <div className="lg:col-span-3 space-y-6">
-                        <div>
-                            <h1 className="text-2xl font-bold text-white">Complete Your Purchase</h1>
-                            <p className="text-slate-400 mt-1">Subscribe to the <span className="text-white font-medium">{plan.name}</span> plan</p>
-                        </div>
-
                         {/* ─── Personal Information ─── */}
                         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
                             <h3 className="text-base font-semibold text-indigo-400 mb-4 flex items-center gap-2">
@@ -602,13 +663,13 @@ export default function CheckoutPage() {
                             {/* Price Breakdown */}
                             <div className="space-y-3 mb-5">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-slate-400">{plan.name} ({billingPeriod})</span>
-                                    <span className="text-white">{fmt(basePrice)}</span>
+                                    <span className="text-slate-400">{plan.name} ({billingPeriod === 'yearly' ? 'yearly' : 'monthly'})</span>
+                                    <span className="text-white">{fmt(billingPeriod === 'yearly' ? originalPrice : basePrice)}</span>
                                 </div>
-                                {billingPeriod === 'yearly' && (
+                                {billingPeriod === 'yearly' && annualSavings > 0 && (
                                     <div className="flex justify-between text-sm">
                                         <span className="text-emerald-400">Annual savings</span>
-                                        <span className="text-emerald-400">-{fmt(plan.priceMonthly * 12 - plan.priceYearly)}</span>
+                                        <span className="text-emerald-400">-{fmt(annualSavings)}</span>
                                     </div>
                                 )}
                                 {appliedCoupon && (

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { Eye, EyeOff, MessageCircle, CheckCircle, XCircle, Loader2, Copy, Check } from 'lucide-react';
+import { Eye, EyeOff, MessageCircle, CheckCircle, XCircle, Loader2, Copy, Check, Zap, RefreshCw } from 'lucide-react';
 
 export default function WhatsAppSettings() {
     const { user } = useAuth();
@@ -13,6 +13,19 @@ export default function WhatsAppSettings() {
     const [showToken, setShowToken] = useState(false);
     const [configured, setConfigured] = useState(false);
     const [copiedField, setCopiedField] = useState(null);
+
+    // Auto-reply state
+    const [autoReply, setAutoReply] = useState({
+        autoReplyEnabled: false,
+        autoReplyTemplateName: '',
+        autoReplyTemplateLanguage: '',
+        autoReplyVariableMapping: {},
+        autoReplyDelaySec: 0,
+    });
+    const [templates, setTemplates] = useState([]);
+    const [loadingTemplates, setLoadingTemplates] = useState(false);
+    const [savingAutoReply, setSavingAutoReply] = useState(false);
+    const [selectedTemplate, setSelectedTemplate] = useState(null);
 
     // Webhook URL must point to the backend API, not the frontend
     const apiBase = import.meta.env.VITE_API_URL || '/api';
@@ -39,6 +52,13 @@ export default function WhatsAppSettings() {
                     phoneNumberId: res.data.phoneNumberId || '',
                     accessToken: res.data.accessToken || '',
                     businessAccountId: res.data.businessAccountId || '',
+                });
+                setAutoReply({
+                    autoReplyEnabled: res.data.autoReplyEnabled || false,
+                    autoReplyTemplateName: res.data.autoReplyTemplateName || '',
+                    autoReplyTemplateLanguage: res.data.autoReplyTemplateLanguage || '',
+                    autoReplyVariableMapping: res.data.autoReplyVariableMapping || {},
+                    autoReplyDelaySec: res.data.autoReplyDelaySec || 0,
                 });
                 setConfigured(true);
             }
@@ -96,12 +116,86 @@ export default function WhatsAppSettings() {
         }
     };
 
+    const fetchTemplates = async () => {
+        if (!form.businessAccountId) {
+            toast.error('Business Account ID is required to fetch templates');
+            return;
+        }
+        setLoadingTemplates(true);
+        try {
+            const res = await api.get('/whatsapp/templates');
+            setTemplates(res.data || []);
+            if (res.data?.length === 0) {
+                toast('No approved templates found', { icon: '📋' });
+            } else {
+                toast.success(`Found ${res.data.length} approved templates`);
+            }
+            // If auto-reply already has a template set, find it
+            if (autoReply.autoReplyTemplateName) {
+                const found = (res.data || []).find(
+                    t => t.name === autoReply.autoReplyTemplateName && t.language === autoReply.autoReplyTemplateLanguage
+                );
+                if (found) setSelectedTemplate(found);
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to fetch templates');
+        } finally {
+            setLoadingTemplates(false);
+        }
+    };
+
+    const handleSelectTemplate = (template) => {
+        setSelectedTemplate(template);
+        setAutoReply(prev => ({
+            ...prev,
+            autoReplyTemplateName: template.name,
+            autoReplyTemplateLanguage: template.language,
+            autoReplyVariableMapping: {},
+        }));
+    };
+
+    const handleSaveAutoReply = async () => {
+        if (autoReply.autoReplyEnabled && !autoReply.autoReplyTemplateName) {
+            toast.error('Please select a template before enabling auto-reply');
+            return;
+        }
+        setSavingAutoReply(true);
+        try {
+            await api.patch('/whatsapp/auto-reply', autoReply);
+            toast.success('Auto-reply settings saved');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to save auto-reply settings');
+        } finally {
+            setSavingAutoReply(false);
+        }
+    };
+
+    // Get template body text for preview
+    const getTemplateBody = (template) => {
+        if (!template?.components) return '';
+        const body = template.components.find(c => c.type === 'BODY');
+        return body?.text || '';
+    };
+
+    // Count variables in template body ({{1}}, {{2}}, etc.)
+    const getTemplateVariables = (template) => {
+        const body = getTemplateBody(template);
+        const matches = body.match(/\{\{(\d+)\}\}/g);
+        return matches ? [...new Set(matches)].map(m => m.replace(/[{}]/g, '')) : [];
+    };
+
+    const VARIABLE_OPTIONS = [
+        { value: 'lead_name', label: 'Lead Name' },
+        { value: 'company_name', label: 'Company Name' },
+    ];
+
     if (loading) {
         return <div className="text-slate-400 text-sm p-8 text-center">Loading WhatsApp settings...</div>;
     }
 
     return (
         <div className="max-w-2xl space-y-6">
+            {/* WhatsApp Business API Config */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
                 <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 bg-green-600/20 rounded-xl flex items-center justify-center">
@@ -199,7 +293,7 @@ export default function WhatsAppSettings() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Business Account ID <span className="text-slate-600">(Optional)</span></label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Business Account ID <span className="text-amber-400 text-xs">(Required for Auto-Reply)</span></label>
                         <input
                             type="text"
                             value={form.businessAccountId}
@@ -229,6 +323,187 @@ export default function WhatsAppSettings() {
                     </div>
                 </form>
             </div>
+
+            {/* Auto-Reply Settings */}
+            {configured && (
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 bg-amber-600/20 rounded-xl flex items-center justify-center">
+                            <Zap className="w-5 h-5 text-amber-400" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold text-white">Auto-Reply to New Leads</h3>
+                            <p className="text-xs text-slate-500">Automatically send a WhatsApp template message when a new lead is created</p>
+                        </div>
+                        {/* Toggle */}
+                        <button
+                            onClick={() => {
+                                const newVal = !autoReply.autoReplyEnabled;
+                                setAutoReply(prev => ({ ...prev, autoReplyEnabled: newVal }));
+                            }}
+                            className={`ml-auto relative w-12 h-6 rounded-full transition-colors cursor-pointer ${autoReply.autoReplyEnabled ? 'bg-green-500' : 'bg-slate-700'}`}
+                        >
+                            <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${autoReply.autoReplyEnabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                        </button>
+                    </div>
+
+                    {/* Template Selection */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={fetchTemplates}
+                                disabled={loadingTemplates || !form.businessAccountId}
+                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-xl font-medium transition-all disabled:opacity-40 cursor-pointer flex items-center gap-2"
+                            >
+                                {loadingTemplates ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                                {templates.length > 0 ? 'Refresh Templates' : 'Fetch My Templates'}
+                            </button>
+                            {!form.businessAccountId && (
+                                <span className="text-xs text-amber-400">Add Business Account ID above first</span>
+                            )}
+                        </div>
+
+                        {/* Templates List */}
+                        {templates.length > 0 && (
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-slate-300">Select Template</label>
+                                <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
+                                    {templates.map((t, i) => {
+                                        const isSelected = autoReply.autoReplyTemplateName === t.name && autoReply.autoReplyTemplateLanguage === t.language;
+                                        const body = getTemplateBody(t);
+                                        return (
+                                            <button
+                                                key={`${t.name}-${t.language}-${i}`}
+                                                onClick={() => handleSelectTemplate(t)}
+                                                className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer ${
+                                                    isSelected
+                                                        ? 'bg-green-500/10 border-green-500/40 ring-1 ring-green-500/20'
+                                                        : 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                                                        isSelected ? 'border-green-400 bg-green-400' : 'border-slate-600'
+                                                    }`}>
+                                                        {isSelected && <Check size={10} className="text-slate-900" />}
+                                                    </span>
+                                                    <span className="text-sm font-medium text-white">{t.name}</span>
+                                                    <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 text-slate-400 rounded">{t.language}</span>
+                                                    <span className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-400 rounded ml-auto">{t.category}</span>
+                                                </div>
+                                                {body && (
+                                                    <p className="text-xs text-slate-400 mt-1.5 ml-6 line-clamp-2">{body}</p>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Selected Template Preview & Variable Mapping */}
+                        {selectedTemplate && (
+                            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 space-y-3">
+                                <h4 className="text-sm font-medium text-slate-300">Template Preview</h4>
+                                <div className="bg-slate-900 border border-slate-700 rounded-lg p-3">
+                                    <p className="text-sm text-green-300 whitespace-pre-wrap">{getTemplateBody(selectedTemplate)}</p>
+                                </div>
+
+                                {/* Variable Mapping */}
+                                {getTemplateVariables(selectedTemplate).length > 0 && (
+                                    <div className="space-y-2">
+                                        <h5 className="text-xs font-medium text-slate-400 uppercase tracking-wide">Map Template Variables</h5>
+                                        {getTemplateVariables(selectedTemplate).map(varNum => (
+                                            <div key={varNum} className="flex items-center gap-3">
+                                                <span className="text-xs text-amber-400 font-mono w-12 flex-shrink-0">{`{{${varNum}}}`}</span>
+                                                <select
+                                                    value={autoReply.autoReplyVariableMapping?.[varNum] || ''}
+                                                    onChange={(e) => {
+                                                        setAutoReply(prev => ({
+                                                            ...prev,
+                                                            autoReplyVariableMapping: {
+                                                                ...prev.autoReplyVariableMapping,
+                                                                [varNum]: e.target.value,
+                                                            },
+                                                        }));
+                                                    }}
+                                                    className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer"
+                                                >
+                                                    <option value="">-- Select field --</option>
+                                                    {VARIABLE_OPTIONS.map(opt => (
+                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                    ))}
+                                                    <option value="_custom">Custom Text</option>
+                                                </select>
+                                                {autoReply.autoReplyVariableMapping?.[varNum] === '_custom' && (
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Enter text..."
+                                                        className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                                        onChange={(e) => {
+                                                            setAutoReply(prev => ({
+                                                                ...prev,
+                                                                autoReplyVariableMapping: {
+                                                                    ...prev.autoReplyVariableMapping,
+                                                                    [varNum]: e.target.value || '_custom',
+                                                                },
+                                                            }));
+                                                        }}
+                                                    />
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Delay */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Send Delay</label>
+                            <select
+                                value={autoReply.autoReplyDelaySec}
+                                onChange={(e) => setAutoReply(prev => ({ ...prev, autoReplyDelaySec: Number(e.target.value) }))}
+                                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer"
+                            >
+                                <option value={0}>Instantly</option>
+                                <option value={10}>After 10 seconds</option>
+                                <option value={30}>After 30 seconds</option>
+                                <option value={60}>After 1 minute</option>
+                                <option value={120}>After 2 minutes</option>
+                                <option value={300}>After 5 minutes</option>
+                            </select>
+                        </div>
+
+                        {/* Save Auto-Reply */}
+                        <button
+                            onClick={handleSaveAutoReply}
+                            disabled={savingAutoReply}
+                            className="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-medium transition-all disabled:opacity-50 shadow-lg shadow-amber-600/25 cursor-pointer flex items-center justify-center gap-2"
+                        >
+                            {savingAutoReply ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
+                            {savingAutoReply ? 'Saving...' : 'Save Auto-Reply Settings'}
+                        </button>
+
+                        {/* Status indicator */}
+                        {autoReply.autoReplyEnabled && autoReply.autoReplyTemplateName && (
+                            <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
+                                <CheckCircle size={14} className="text-green-400 flex-shrink-0" />
+                                <p className="text-xs text-green-300">
+                                    Auto-reply is <span className="font-semibold">active</span>. Template "<span className="font-medium">{autoReply.autoReplyTemplateName}</span>" will be sent to every new lead with a phone number{autoReply.autoReplyDelaySec > 0 ? ` after ${autoReply.autoReplyDelaySec >= 60 ? `${autoReply.autoReplyDelaySec / 60} minute(s)` : `${autoReply.autoReplyDelaySec} seconds`}` : ' instantly'}.
+                                </p>
+                            </div>
+                        )}
+
+                        {autoReply.autoReplyEnabled && !autoReply.autoReplyTemplateName && (
+                            <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                                <XCircle size={14} className="text-amber-400 flex-shrink-0" />
+                                <p className="text-xs text-amber-300">Auto-reply is enabled but no template is selected. Fetch your templates and select one above.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

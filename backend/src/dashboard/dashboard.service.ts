@@ -17,12 +17,12 @@ export class DashboardService {
      * Admin dashboard — company-wide stats
      */
     async getAdminStats(companyId: string) {
-        const [totalLeads, leadsToday, conversionRate, totalRevenue, totalClients, billing] = await Promise.all([
+        const [totalLeads, leadsToday, conversionRate, totalRevenue, convertedLeads, billing] = await Promise.all([
             this.leadsService.countAll(companyId),
             this.leadsService.countToday(companyId),
             this.leadsService.conversionRate(companyId),
             this.clientsService.totalRevenue(companyId),
-            this.clientsService.countByCompany(companyId),
+            this.leadsService.countConverted(companyId),
             this.billingService.billingStats(companyId).catch(() => ({ totalPending: 0, totalPaid: 0 })),
         ]);
 
@@ -36,7 +36,7 @@ export class DashboardService {
             totalLeads,
             leadsToday,
             conversionRate,
-            totalClients,
+            convertedLeads,
             totalRevenue,
             paidRevenue: billing.totalPaid,
             pendingAmount: billing.totalPending,

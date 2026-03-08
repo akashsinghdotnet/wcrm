@@ -46,6 +46,9 @@ export class InvoiceSettings {
     @Column({ type: 'text', nullable: true })
     upiQrUrl: string;
 
+    @Column({ type: 'text', nullable: true })
+    signatureUrl: string;
+
     @CreateDateColumn()
     createdAt: Date;
 

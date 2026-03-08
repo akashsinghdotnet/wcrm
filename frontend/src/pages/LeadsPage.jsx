@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Pencil, Trash2, X, Filter, Download, Upload, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Filter, Download, Upload, ChevronLeft, ChevronRight, MessageCircle, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 import LeadDetailDrawer from '../components/LeadDetailDrawer';
 import WhatsAppChat from '../components/WhatsAppChat';
+import BrowserDialer from '../components/BrowserDialer';
 
 const statusColors = {
     new: 'bg-blue-500/20 text-blue-400',
@@ -43,7 +44,10 @@ export default function LeadsPage() {
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [form, setForm] = useState(emptyForm);
-    const [filters, setFilters] = useState({ status: '', source: '' });
+    const [filters, setFilters] = useState({ status: '', source: '', dateRange: '' });
+    const [customDateFrom, setCustomDateFrom] = useState('');
+    const [customDateTo, setCustomDateTo] = useState('');
+    const [activeSources, setActiveSources] = useState([]);
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const [total, setTotal] = useState(0);
@@ -51,10 +55,73 @@ export default function LeadsPage() {
     const [selectedIds, setSelectedIds] = useState([]);
     const [bulkAction, setBulkAction] = useState(null); // { type: 'status' | 'assign', value: '' }
     const [whatsAppLead, setWhatsAppLead] = useState(null);
+    const [callingLead, setCallingLead] = useState(null);
+
+    // Fetch active integration sources on mount
+    useEffect(() => {
+        const fetchActiveSources = async () => {
+            try {
+                const res = await api.get('/integrations/status').catch(() => null);
+                if (res?.data) {
+                    const sources = [{ key: 'manual', label: 'Manual' }];
+                    if (res.data.meta) sources.push({ key: 'meta_ads', label: 'Meta Ads' });
+                    if (res.data.google) sources.push({ key: 'google_ads', label: 'Google Ads' });
+                    if (res.data.indiamart) sources.push({ key: 'indiamart', label: 'IndiaMart' });
+                    if (res.data.tradeindia) sources.push({ key: 'tradeindia', label: 'Trade India' });
+                    if (res.data.justdial) sources.push({ key: 'justdial', label: 'JustDial' });
+                    sources.push({ key: 'website', label: 'Website' });
+                    setActiveSources(sources);
+                }
+            } catch {
+                // Fallback to all sources
+                setActiveSources([
+                    { key: 'manual', label: 'Manual' },
+                    { key: 'meta_ads', label: 'Meta Ads' },
+                    { key: 'google_ads', label: 'Google Ads' },
+                    { key: 'indiamart', label: 'IndiaMart' },
+                    { key: 'tradeindia', label: 'Trade India' },
+                    { key: 'justdial', label: 'JustDial' },
+                    { key: 'website', label: 'Website' },
+                ]);
+            }
+        };
+        fetchActiveSources();
+    }, []);
 
     useEffect(() => {
         loadData();
-    }, [filters, page, limit]);
+    }, [filters, page, limit, customDateFrom, customDateTo]);
+
+    const getDateRange = () => {
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+
+        switch (filters.dateRange) {
+            case 'today': {
+                return { dateFrom: todayStr, dateTo: todayStr };
+            }
+            case 'yesterday': {
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yStr = yesterday.toISOString().split('T')[0];
+                return { dateFrom: yStr, dateTo: yStr };
+            }
+            case 'this_week': {
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - today.getDay());
+                return { dateFrom: startOfWeek.toISOString().split('T')[0], dateTo: todayStr };
+            }
+            case 'this_month': {
+                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                return { dateFrom: startOfMonth.toISOString().split('T')[0], dateTo: todayStr };
+            }
+            case 'custom': {
+                return { dateFrom: customDateFrom || undefined, dateTo: customDateTo || undefined };
+            }
+            default:
+                return {};
+        }
+    };
 
     const loadData = async () => {
         try {
@@ -63,6 +130,10 @@ export default function LeadsPage() {
             params.set('limit', limit);
             if (filters.status) params.set('status', filters.status);
             if (filters.source) params.set('source', filters.source);
+
+            const dateRange = getDateRange();
+            if (dateRange.dateFrom) params.set('dateFrom', dateRange.dateFrom);
+            if (dateRange.dateTo) params.set('dateTo', dateRange.dateTo);
 
             const [leadsRes, usersRes] = await Promise.all([
                 api.get(`/leads?${params.toString()}`).catch(() => ({ data: { data: [], total: 0 } })),
@@ -294,17 +365,42 @@ export default function LeadsPage() {
                     className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                     <option value="">All Sources</option>
-                    <option value="meta_ads">Meta Ads</option>
-                    <option value="google_ads">Google Ads</option>
-                    <option value="justdial">JustDial</option>
-                    <option value="indiamart">IndiaMart</option>
-                    <option value="tradeindia">Trade India</option>
-                    <option value="website">Website</option>
-                    <option value="manual">Manual</option>
+                    {activeSources.map(s => (
+                        <option key={s.key} value={s.key}>{s.label}</option>
+                    ))}
                 </select>
-                {(filters.status || filters.source) && (
+                <select
+                    value={filters.dateRange}
+                    onChange={(e) => { setFilters({ ...filters, dateRange: e.target.value }); setPage(1); }}
+                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                    <option value="">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="yesterday">Yesterday</option>
+                    <option value="this_week">This Week</option>
+                    <option value="this_month">This Month</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+                {filters.dateRange === 'custom' && (
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="date"
+                            value={customDateFrom}
+                            onChange={(e) => { setCustomDateFrom(e.target.value); setPage(1); }}
+                            className="px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                        <span className="text-slate-500 text-xs">to</span>
+                        <input
+                            type="date"
+                            value={customDateTo}
+                            onChange={(e) => { setCustomDateTo(e.target.value); setPage(1); }}
+                            className="px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                    </div>
+                )}
+                {(filters.status || filters.source || filters.dateRange) && (
                     <button
-                        onClick={() => { setFilters({ status: '', source: '' }); setPage(1); }}
+                        onClick={() => { setFilters({ status: '', source: '', dateRange: '' }); setCustomDateFrom(''); setCustomDateTo(''); setPage(1); }}
                         className="text-xs text-slate-400 hover:text-white px-3 py-2 bg-slate-800 rounded-xl"
                     >
                         Clear
@@ -375,13 +471,22 @@ export default function LeadsPage() {
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             {lead.phone && (
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); setWhatsAppLead(lead); }}
-                                                    className="p-2 text-slate-400 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all cursor-pointer"
-                                                    title="WhatsApp Chat"
-                                                >
-                                                    <MessageCircle className="w-4 h-4" />
-                                                </button>
+                                                <>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setCallingLead(lead); }}
+                                                        className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all cursor-pointer"
+                                                        title="Call"
+                                                    >
+                                                        <Phone className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setWhatsAppLead(lead); }}
+                                                        className="p-2 text-slate-400 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all cursor-pointer"
+                                                        title="WhatsApp Chat"
+                                                    >
+                                                        <MessageCircle className="w-4 h-4" />
+                                                    </button>
+                                                </>
                                             )}
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); openEdit(lead); }}
@@ -640,6 +745,11 @@ export default function LeadsPage() {
             {/* WhatsApp In-CRM Chat */}
             {whatsAppLead && (
                 <WhatsAppChat lead={whatsAppLead} onClose={() => setWhatsAppLead(null)} />
+            )}
+
+            {/* Browser Dialer */}
+            {callingLead && (
+                <BrowserDialer lead={callingLead} onClose={() => setCallingLead(null)} />
             )}
         </div >
     );

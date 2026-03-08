@@ -118,8 +118,11 @@ export default function BillingSettings() {
                                         </td>
                                         <td className="px-6 py-4 text-white font-mono text-sm">{fmt(inv.amount)}</td>
                                         <td className="px-6 py-4">
-                                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                                PAID
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${inv.status === 'paid'
+                                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                                }`}>
+                                                {inv.status === 'paid' ? 'PAID' : 'PENDING'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">

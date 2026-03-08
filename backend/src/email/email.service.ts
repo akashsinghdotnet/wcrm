@@ -100,20 +100,51 @@ export class EmailService {
 
     async sendEmail(to: string, subject: string, html: string, triggeredBy: string = 'system') {
         try {
-            const transporter = await this.getTransporter();
-
-            // Determine 'from' address
-            let from = '"Magnet CRM" <noreply@magnetcrm.com>';
+            // Determine transporter and 'from' address together to avoid mismatch
+            let transporter: any;
+            let from = `"Magnet CRM" <noreply@magnetcrm.com>`;
 
             const config = await this.configRepo.findOne({ where: {} });
             if (config) {
-                from = `"${config.fromName}" <${config.fromEmail || config.user}>`;
+                transporter = nodemailer.createTransport({
+                    host: config.host,
+                    port: config.port,
+                    secure: config.isSecure,
+                    auth: { user: config.user, pass: config.pass },
+                });
+                // Use fromEmail if set, otherwise MUST use the SMTP user to avoid mismatch
+                const fromEmail = config.fromEmail || config.user;
+                from = `"${config.fromName || 'Magnet CRM'}" <${fromEmail}>`;
             } else {
                 const systemSettings = await this.marketingSettingsRepo.findOne({ where: { companyId: IsNull() } });
-                if (systemSettings) {
-                    from = `"${systemSettings.fromName}" <${systemSettings.fromEmail}>`;
+                if (systemSettings && systemSettings.smtpHost && systemSettings.smtpUser) {
+                    transporter = nodemailer.createTransport({
+                        host: systemSettings.smtpHost,
+                        port: systemSettings.smtpPort,
+                        secure: systemSettings.smtpSecure,
+                        auth: { user: systemSettings.smtpUser, pass: systemSettings.smtpPassword },
+                    });
+                    // Use fromEmail if set, otherwise MUST use the SMTP user to avoid mismatch
+                    const fromEmail = systemSettings.fromEmail || systemSettings.smtpUser;
+                    from = `"${systemSettings.fromName || 'Magnet CRM'}" <${fromEmail}>`;
+                } else {
+                    // Fallback to env vars
+                    transporter = nodemailer.createTransport({
+                        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+                        port: parseInt(process.env.SMTP_PORT || '587'),
+                        secure: false,
+                        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+                    });
+                    if (process.env.SMTP_USER) {
+                        from = `"Magnet CRM" <${process.env.SMTP_USER}>`;
+                    }
+                    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+                        this.logger.warn('No SMTP credentials configured — email delivery will likely fail');
+                    }
                 }
             }
+
+            this.logger.log(`Sending email to=${to} subject="${subject}" from=${from}`);
 
             const info = await transporter.sendMail({
                 from,
@@ -122,11 +153,11 @@ export class EmailService {
                 html,
             });
 
-            this.logger.log(`Email sent: ${info.messageId}`);
+            this.logger.log(`Email sent successfully: ${info.messageId}`);
             await this.logEmail(to, subject, html, 'sent', undefined, triggeredBy);
             return { success: true, messageId: info.messageId };
         } catch (error) {
-            this.logger.error('Failed to send email', error.stack);
+            this.logger.error(`Failed to send email to=${to}: ${error.message}`, error.stack);
             await this.logEmail(to, subject, html, 'failed', error.message, triggeredBy);
             throw error;
         }

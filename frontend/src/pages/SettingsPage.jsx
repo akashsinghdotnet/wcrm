@@ -3,12 +3,14 @@ import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { User, Lock, Building2, Bell, Shield, Eye, EyeOff, Mail, Users, IndianRupee, FileText, MessageCircle } from 'lucide-react';
+import { User, Lock, Building2, Shield, Eye, EyeOff, Mail, Users, IndianRupee, FileText, MessageCircle, Plug, Phone } from 'lucide-react';
 import EmailSettings from '../components/EmailSettings';
 import TeamSettings from '../components/TeamSettings';
 import BillingSettings from '../components/BillingSettings';
 import InvoiceSettings from '../components/InvoiceSettings';
 import WhatsAppSettings from '../components/WhatsAppSettings';
+import CallingSettings from '../components/CallingSettings';
+import IntegrationsPage from './IntegrationsPage';
 
 export default function SettingsPage() {
     const { user, loading } = useAuth();
@@ -137,11 +139,12 @@ export default function SettingsPage() {
                 {[
                     { id: 'general', label: 'General', icon: User },
                     { id: 'security', label: 'Security', icon: Lock },
-                    { id: 'notifications', label: 'Notifications', icon: Bell },
                     ...(user.role === 'admin' ? [{ id: 'billing', label: 'Subscription & Invoices', icon: IndianRupee }] : []),
                     ...(['admin', 'super_admin', 'superadmin_admin'].includes(user.role) ? [{ id: 'invoice-settings', label: 'Invoice Settings', icon: FileText }] : []),
                     ...(['admin', 'manager'].includes(user.role) ? [{ id: 'team', label: 'Team', icon: Users }] : []),
+                    ...(user.role === 'admin' ? [{ id: 'integrations', label: 'Integrations', icon: Plug }] : []),
                     ...(user.role === 'admin' ? [{ id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle }] : []),
+                    ...(user.role === 'admin' ? [{ id: 'calling', label: 'Calling', icon: Phone }] : []),
                     ...(user.role === 'super_admin' ? [{ id: 'email', label: 'Email Settings', icon: Mail }] : [])
                 ].map(tab => (
                     <button
@@ -386,45 +389,8 @@ export default function SettingsPage() {
                     </div>
                 )}
 
-                {activeTab === 'notifications' && (
-                    <div className="max-w-2xl">
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="w-10 h-10 bg-purple-600/20 rounded-xl flex items-center justify-center">
-                                    <Bell className="w-5 h-5 text-purple-400" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-white">Notifications</h3>
-                            </div>
-
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between py-2">
-                                    <div>
-                                        <p className="text-sm font-medium text-white">WhatsApp Notifications</p>
-                                        <p className="text-xs text-slate-500">Get alerts for new leads via WhatsApp</p>
-                                    </div>
-                                    <button
-                                        onClick={() => { setWhatsappEnabled(!whatsappEnabled); toast.success(`WhatsApp notifications ${!whatsappEnabled ? 'enabled' : 'disabled'}`); }}
-                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${whatsappEnabled ? 'bg-indigo-600' : 'bg-slate-700'}`}
-                                    >
-                                        <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${whatsappEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                                    </button>
-                                </div>
-
-                                <div className="flex items-center justify-between py-2">
-                                    <div>
-                                        <p className="text-sm font-medium text-white">Email Notifications</p>
-                                        <p className="text-xs text-slate-500">Receive daily lead summary emails</p>
-                                    </div>
-                                    <button
-                                        onClick={() => { setEmailEnabled(!emailEnabled); toast.success(`Email notifications ${!emailEnabled ? 'enabled' : 'disabled'}`); }}
-                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${emailEnabled ? 'bg-indigo-600' : 'bg-slate-700'}`}
-                                    >
-                                        <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${emailEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                {activeTab === 'integrations' && user.role === 'admin' && (
+                    <IntegrationsPage embedded />
                 )}
 
                 {activeTab === 'email' && user.role === 'super_admin' && (
@@ -445,6 +411,10 @@ export default function SettingsPage() {
 
                 {activeTab === 'whatsapp' && user.role === 'admin' && (
                     <WhatsAppSettings />
+                )}
+
+                {activeTab === 'calling' && user.role === 'admin' && (
+                    <CallingSettings />
                 )}
             </div>
         </div>

@@ -41,7 +41,7 @@ const navItems = [
         icon: Receipt,
         show: (user) => ['admin', 'manager'].includes(user?.role) || (user?.role === 'staff' && user?.canCreateInvoices)
     },
-    { to: '/integrations', label: 'Integrations', icon: Plug, roles: ['admin'] },
+    // Integrations moved under Settings tab for company admin
     { to: '/companies', label: 'Companies', icon: Building2, roles: ['super_admin', 'superadmin_admin', 'superadmin_staff'] },
     { to: '/plans', label: 'Plans', icon: Sparkles, roles: ['super_admin', 'superadmin_admin'] },
     { to: '/billing', label: 'Billing', icon: IndianRupee, roles: ['super_admin', 'superadmin_admin'] },

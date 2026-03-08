@@ -4,7 +4,7 @@ import api from '../services/api';
 import {
     Plug, Copy, Check, Globe, MessageSquare, Settings,
     BarChart3, RefreshCcw, Shuffle, UserCheck, ExternalLink, Shield,
-    ChevronDown, ChevronUp, Code, BookOpen, AlertCircle, Info, X, Eye, EyeOff
+    ChevronDown, ChevronUp, Code, BookOpen, Info, X, Eye, EyeOff
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -17,15 +17,13 @@ const PLATFORM_CREDENTIALS = {
         { key: 'adAccountId', label: 'Ad Account ID', type: 'text', placeholder: 'e.g. act_123456789' },
     ],
     google: [
-        { key: 'clientId', label: 'Client ID', type: 'text', placeholder: 'your-client-id.apps.googleusercontent.com' },
-        { key: 'clientSecret', label: 'Client Secret', type: 'password', placeholder: 'Your client secret' },
-        { key: 'developerToken', label: 'Developer Token', type: 'password', placeholder: 'Google Ads developer token' },
-        { key: 'customerId', label: 'Customer ID', type: 'text', placeholder: 'e.g. 123-456-7890' },
+        { key: 'webhookKey', label: 'Webhook Key', type: 'password', placeholder: 'Your secret webhook key (e.g. my-secret-key-2026)' },
     ],
     indiamart: [
         { key: 'mobileNumber', label: 'Registered Mobile Number', type: 'text', placeholder: 'e.g. 9876543210' },
         { key: 'crmKey', label: 'CRM Key', type: 'password', placeholder: 'Your IndiaMart CRM key' },
     ],
+    justdial: [],
     tradeindia: [
         { key: 'userid', label: 'User ID', type: 'text', placeholder: 'Your Trade India user ID' },
         { key: 'profile_id', label: 'Profile ID', type: 'text', placeholder: 'Your Trade India profile ID' },
@@ -63,25 +61,23 @@ const INTEGRATIONS = [
     {
         id: 'google',
         name: 'Google Ads',
-        description: 'Import leads from Google Ads lead form extensions.',
+        description: 'Capture leads directly from Google Ads Lead Form Extensions via webhook — no middleware needed.',
         color: 'from-red-500 to-orange-500',
         iconBg: 'bg-red-500/10 border-red-500/20',
         iconColor: 'text-red-400',
         webhookPath: '/api/webhooks/google',
-        fields: [
-            { name: 'companyId', required: true, description: 'Your Company ID (auto-included)' },
-            { name: 'name', required: false, description: 'Full name of the lead' },
-            { name: 'phone', required: false, description: 'Phone number' },
-            { name: 'email', required: false, description: 'Email address' },
-        ],
+        fields: [],
         setupSteps: [
-            'Open Google Ads → Ads & Extensions → Lead Form Extensions',
-            'Create or edit a Lead Form Extension',
-            'Go to Lead Delivery → Webhook Integration',
-            'Paste the Webhook URL and set the API key if required',
-            'Map fields: first_name, last_name, phone, email',
-            'Include "companyId" in the webhook payload (use Zapier/Make if needed)',
-            'Submit a test lead to verify the connection',
+            'Enable this integration and click "Configure" to set your Webhook Key (choose any secret key, e.g. my-company-key-2026)',
+            'Log in to ads.google.com and go to Ads & Assets → Assets',
+            'Click "+" → select "Lead Form" (or edit an existing Lead Form)',
+            'Add the fields you want to collect: Full Name, Email, Phone Number, etc.',
+            'Scroll down to "Lead delivery options" or "Webhook integration"',
+            'Paste the Webhook URL shown below into the "Webhook URL" field',
+            'Enter the same Webhook Key you set in step 1 into the "Key" field',
+            'Click "Send test data" to verify the connection — a test lead should appear in your CRM',
+            'Save the Lead Form and attach it to your Search, Display, YouTube, or Performance Max campaign',
+            'Leads submitted through your ads will automatically appear in your CRM and get assigned via round-robin!',
         ],
     },
     {
@@ -137,6 +133,25 @@ const INTEGRATIONS = [
         ],
     },
     {
+        id: 'justdial',
+        name: 'JustDial',
+        description: 'Receive enquiry leads from your JustDial business listing automatically.',
+        color: 'from-cyan-500 to-blue-500',
+        iconBg: 'bg-cyan-500/10 border-cyan-500/20',
+        iconColor: 'text-cyan-400',
+        webhookPath: '/api/webhooks/justdial',
+        fields: [],
+        setupSteps: [
+            'Enable this integration by toggling the switch on',
+            'Copy the Webhook URL and your Company ID shown below',
+            'Contact your JustDial Account Manager (the person who manages your JustDial listing)',
+            'Send them this message: "Please enable Lead Push (webhook) to this URL: [paste webhook URL]?companyId=[paste company ID]. Send data as JSON via HTTP POST."',
+            'JustDial\'s backend team will configure it on their end (usually takes 24-48 hours)',
+            'Once they confirm it\'s active, generate a test enquiry on your JustDial listing to verify',
+            'Leads will automatically appear in your CRM and get assigned via round-robin',
+        ],
+    },
+    {
         id: 'website',
         name: 'Website Form',
         description: 'Connect your website contact form to auto-create leads.',
@@ -152,16 +167,17 @@ const INTEGRATIONS = [
             { name: 'message', required: false, description: 'Message or enquiry text' },
         ],
         setupSteps: [
-            'Add a contact/enquiry form to your website',
-            'On form submission, send a POST request to the Webhook URL',
-            'Include "companyId" in the JSON body along with form fields',
-            'Set Content-Type header to "application/json"',
-            'See the sample code below for a quick implementation',
+            'Enable this integration by toggling the switch on',
+            'Click "Guide" to see the embeddable form code and live preview',
+            'Click "Copy Form Code" to copy the ready-to-use HTML snippet',
+            'Paste the code into your website (works with WordPress, Shopify, Wix, React, plain HTML, or any CMS)',
+            'Customize the form styles (colors, fonts) to match your website design',
+            'Form submissions will automatically create leads in your CRM and assign them via round-robin',
         ],
     },
 ];
 
-export default function IntegrationsPage() {
+export default function IntegrationsPage({ embedded = false }) {
     const { user } = useAuth();
     const [copiedId, setCopiedId] = useState(null);
     const [copiedSample, setCopiedSample] = useState(null);
@@ -287,30 +303,98 @@ export default function IntegrationsPage() {
     };
 
     const getWebsiteCodeSample = () => {
-        return `// JavaScript (fetch API)
-fetch("${baseUrl}/api/webhooks/website", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    companyId: "${user.companyId}",
-    name: document.getElementById("name").value,
-    email: document.getElementById("email").value,
-    phone: document.getElementById("phone").value,
-    message: document.getElementById("message").value
+        return `<!-- Magnet CRM Lead Capture Form — Paste this anywhere in your website -->
+<div id="magnetcrm-form-wrapper">
+  <form id="magnetcrm-lead-form" onsubmit="return submitMagnetCRMForm(event)">
+    <h3 style="margin:0 0 16px;font-size:20px;font-weight:600;color:#1e293b;">Get in Touch</h3>
+    <div style="margin-bottom:12px;">
+      <input type="text" id="mcf-name" name="name" placeholder="Your Name *" required
+        style="width:100%;padding:10px 14px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box;" />
+    </div>
+    <div style="margin-bottom:12px;">
+      <input type="email" id="mcf-email" name="email" placeholder="Email Address"
+        style="width:100%;padding:10px 14px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box;" />
+    </div>
+    <div style="margin-bottom:12px;">
+      <input type="tel" id="mcf-phone" name="phone" placeholder="Phone Number"
+        style="width:100%;padding:10px 14px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box;" />
+    </div>
+    <div style="margin-bottom:16px;">
+      <textarea id="mcf-message" name="message" placeholder="Your Message" rows="3"
+        style="width:100%;padding:10px 14px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+    </div>
+    <!-- Honeypot spam protection (hidden from users) -->
+    <input type="text" name="_honey" style="display:none !important;" tabindex="-1" autocomplete="off" />
+    <button type="submit" id="mcf-submit-btn"
+      style="width:100%;padding:12px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background 0.2s;">
+      Submit
+    </button>
+    <div id="mcf-status" style="margin-top:12px;text-align:center;font-size:13px;display:none;"></div>
+  </form>
+</div>
+<script>
+function submitMagnetCRMForm(e) {
+  e.preventDefault();
+  var form = document.getElementById('magnetcrm-lead-form');
+  var btn = document.getElementById('mcf-submit-btn');
+  var status = document.getElementById('mcf-status');
+  // Check honeypot
+  if (form._honey && form._honey.value) return false;
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+  btn.style.background = '#6366f1';
+  status.style.display = 'none';
+  fetch("${baseUrl}/api/webhooks/website", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      companyId: "${user.companyId}",
+      name: document.getElementById('mcf-name').value,
+      email: document.getElementById('mcf-email').value || undefined,
+      phone: document.getElementById('mcf-phone').value || undefined,
+      message: document.getElementById('mcf-message').value || undefined
+    })
   })
-});`;
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.success) {
+      status.style.color = '#16a34a';
+      status.textContent = 'Thank you! We will get back to you soon.';
+      status.style.display = 'block';
+      form.reset();
+    } else {
+      status.style.color = '#dc2626';
+      status.textContent = 'Something went wrong. Please try again.';
+      status.style.display = 'block';
+    }
+  })
+  .catch(function() {
+    status.style.color = '#dc2626';
+    status.textContent = 'Network error. Please try again.';
+    status.style.display = 'block';
+  })
+  .finally(function() {
+    btn.disabled = false;
+    btn.textContent = 'Submit';
+    btn.style.background = '#4f46e5';
+  });
+  return false;
+}
+</script>`;
     };
 
     return (
         <div className="space-y-8">
             {/* Header */}
-            <div>
-                <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                    <Plug className="w-6 h-6 text-indigo-400" />
-                    Integrations
-                </h2>
-                <p className="text-slate-400 mt-1">Connect external lead sources, configure credentials, and manage lead distribution</p>
-            </div>
+            {!embedded && (
+                <div>
+                    <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                        <Plug className="w-6 h-6 text-indigo-400" />
+                        Integrations
+                    </h2>
+                    <p className="text-slate-400 mt-1">Connect external lead sources, configure credentials, and manage lead distribution</p>
+                </div>
+            )}
 
             {/* Lead Distribution Section */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
@@ -384,7 +468,7 @@ fetch("${baseUrl}/api/webhooks/website", {
                     <Globe className="w-5 h-5 text-indigo-400" />
                     Lead Sources
                 </h3>
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {INTEGRATIONS.map((integration) => {
                         const active = isActive(integration.id);
                         const isExpanded = expandedId === integration.id;
@@ -619,41 +703,79 @@ fetch("${baseUrl}/api/webhooks/website", {
                                             </div>
                                             )}
 
-                                            {/* Website-specific code sample */}
+                                            {/* Website-specific embeddable form */}
                                             {integration.id === 'website' && (
-                                                <div>
-                                                    <div className="flex items-center justify-between mb-3">
-                                                        <h5 className="text-sm font-semibold text-white flex items-center gap-2">
-                                                            <Code className="w-4 h-4 text-indigo-400" />
-                                                            Website Integration Code
+                                                <div className="space-y-4">
+                                                    {/* Live Preview */}
+                                                    <div>
+                                                        <h5 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                                                            <Eye className="w-4 h-4 text-indigo-400" />
+                                                            Form Preview
                                                         </h5>
-                                                        <button
-                                                            onClick={() => {
-                                                                navigator.clipboard.writeText(getWebsiteCodeSample());
-                                                                toast.success('Code copied');
-                                                            }}
-                                                            className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
-                                                        >
-                                                            <Copy className="w-3.5 h-3.5" />
-                                                            Copy Code
-                                                        </button>
+                                                        <div className="bg-white rounded-xl p-6 max-w-md">
+                                                            <h3 style={{ margin: '0 0 16px', fontSize: '20px', fontWeight: 600, color: '#1e293b' }}>Get in Touch</h3>
+                                                            <div style={{ marginBottom: '12px' }}>
+                                                                <input type="text" placeholder="Your Name *" disabled
+                                                                    style={{ width: '100%', padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', background: '#fff' }} />
+                                                            </div>
+                                                            <div style={{ marginBottom: '12px' }}>
+                                                                <input type="email" placeholder="Email Address" disabled
+                                                                    style={{ width: '100%', padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', background: '#fff' }} />
+                                                            </div>
+                                                            <div style={{ marginBottom: '12px' }}>
+                                                                <input type="tel" placeholder="Phone Number" disabled
+                                                                    style={{ width: '100%', padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', background: '#fff' }} />
+                                                            </div>
+                                                            <div style={{ marginBottom: '16px' }}>
+                                                                <textarea placeholder="Your Message" rows={3} disabled
+                                                                    style={{ width: '100%', padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', resize: 'vertical', boxSizing: 'border-box', background: '#fff' }} />
+                                                            </div>
+                                                            <button disabled
+                                                                style={{ width: '100%', padding: '12px', background: '#4f46e5', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 600, cursor: 'default' }}>
+                                                                Submit
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                    <pre className="bg-black/30 rounded-xl p-4 text-xs text-emerald-300 font-mono overflow-x-auto whitespace-pre">
-                                                        {getWebsiteCodeSample()}
-                                                    </pre>
+
+                                                    {/* Embeddable Code */}
+                                                    <div>
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <h5 className="text-sm font-semibold text-white flex items-center gap-2">
+                                                                <Code className="w-4 h-4 text-indigo-400" />
+                                                                Embeddable HTML Code
+                                                            </h5>
+                                                            <button
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(getWebsiteCodeSample());
+                                                                    toast.success('Form code copied! Paste it into your website HTML.');
+                                                                }}
+                                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:text-white bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg transition-all border border-emerald-500/20"
+                                                            >
+                                                                <Copy className="w-3.5 h-3.5" />
+                                                                Copy Form Code
+                                                            </button>
+                                                        </div>
+                                                        <div className="bg-black/30 rounded-xl p-4 max-h-64 overflow-y-auto">
+                                                            <pre className="text-xs text-emerald-300 font-mono whitespace-pre overflow-x-auto">{getWebsiteCodeSample()}</pre>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Instructions */}
+                                                    <div className="flex gap-3 p-3 bg-indigo-500/5 border border-indigo-500/10 rounded-xl">
+                                                        <Info className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
+                                                        <div className="text-xs text-slate-300">
+                                                            <p className="font-medium text-indigo-300 mb-1">How to use</p>
+                                                            <ol className="space-y-1 list-decimal list-inside text-slate-400">
+                                                                <li>Click <strong className="text-white">Copy Form Code</strong> above</li>
+                                                                <li>Paste it into your website's HTML (works with WordPress, Shopify, Wix, React, or any website)</li>
+                                                                <li>Customize the styles (colors, fonts, spacing) to match your website's look</li>
+                                                                <li>Leads submitted through the form will automatically appear in your CRM</li>
+                                                            </ol>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             )}
 
-                                            {/* Middleware tip for non-website integrations */}
-                                            {integration.id !== 'website' && (
-                                                <div className="flex gap-3 p-3 bg-amber-500/5 border border-amber-500/10 rounded-xl">
-                                                    <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                                                    <div className="text-xs text-amber-300/80">
-                                                        <p className="font-medium text-amber-300 mb-1">Using a Middleware?</p>
-                                                        <p>If {integration.name} doesn't support direct webhooks, use tools like <span className="font-medium text-white">Zapier</span>, <span className="font-medium text-white">Make (Integromat)</span>, or <span className="font-medium text-white">Pabbly Connect</span> to forward leads. Set the trigger as "{integration.name} New Lead" and action as "Webhooks POST" to the URL above with the JSON payload.</p>
-                                                    </div>
-                                                </div>
-                                            )}
                                         </div>
                                     )}
                                 </div>

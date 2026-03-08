@@ -192,17 +192,31 @@ export default function PlansPage() {
 
                         <div className="mt-6 pt-4 border-t border-slate-800">
                             {isSuperAdmin ? (
-                                <>
-                                    <p className="text-xs text-slate-500">Checkout Link</p>
-                                    <a
-                                        href={`/checkout/${plan.slug || plan.name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-')}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="block bg-black/30 p-2 rounded text-xs text-indigo-400 font-mono mt-1 break-all cursor-pointer hover:text-indigo-300 transition-colors"
-                                    >
-                                        {window.location.origin}/checkout/{plan.slug || plan.name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-')}
-                                    </a>
-                                </>
+                                <div className="space-y-2">
+                                    <p className="text-xs text-slate-500 font-medium">Checkout Links</p>
+                                    <div>
+                                        <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">Monthly Billing</p>
+                                        <a
+                                            href={`/checkout/${plan.slug || plan.name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-')}?billing=monthly`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="block bg-black/30 p-2 rounded text-xs text-indigo-400 font-mono break-all cursor-pointer hover:text-indigo-300 transition-colors"
+                                        >
+                                            {window.location.origin}/checkout/{plan.slug || plan.name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-')}?billing=monthly
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">Yearly Billing</p>
+                                        <a
+                                            href={`/checkout/${plan.slug || plan.name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-')}?billing=yearly`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="block bg-black/30 p-2 rounded text-xs text-emerald-400 font-mono break-all cursor-pointer hover:text-emerald-300 transition-colors"
+                                        >
+                                            {window.location.origin}/checkout/{plan.slug || plan.name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-')}?billing=yearly
+                                        </a>
+                                    </div>
+                                </div>
                             ) : (
                                 currentPlanId !== plan.id ? (
                                     <a

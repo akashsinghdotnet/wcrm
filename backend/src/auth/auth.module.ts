@@ -6,6 +6,7 @@ import { CompaniesModule } from '../companies/companies.module';
 import { PlansModule } from '../plans/plans.module';
 import { EmailModule } from '../email/email.module';
 import { SettingsModule } from '../settings/settings.module';
+import { CouponsModule } from '../coupons/coupons.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -18,6 +19,7 @@ import { JwtStrategy } from './jwt.strategy';
     PlansModule,
     EmailModule,
     SettingsModule,
+    CouponsModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

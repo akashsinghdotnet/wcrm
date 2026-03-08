@@ -19,6 +19,8 @@ import { IntegrationsModule } from './integrations/integrations.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
+import { CallingModule } from './calling/calling.module';
+import { CouponsModule } from './coupons/coupons.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -62,6 +64,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     WhatsAppModule,
     TicketsModule,
     AnnouncementsModule,
+    CallingModule,
+    CouponsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -247,15 +247,27 @@ export default function InvoiceViewPage() {
                         </div>
                     )}
 
-                    {/* Notes */}
-                    {(invoice.notes || settings?.terms) && (
-                        <div className="pt-8 mt-8 border-t border-slate-100">
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Notes & Terms</h3>
-                            <p className="text-sm text-slate-600 whitespace-pre-line leading-relaxed">
-                                {invoice.notes || settings.terms}
-                            </p>
+                    {/* Notes & Signature */}
+                    <div className="pt-8 mt-8 border-t border-slate-100 flex justify-between items-end gap-8">
+                        <div className="flex-1">
+                            {(invoice.notes || settings?.terms) && (
+                                <div>
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Notes & Terms</h3>
+                                    <p className="text-sm text-slate-600 whitespace-pre-line leading-relaxed">
+                                        {invoice.notes || settings.terms}
+                                    </p>
+                                </div>
+                            )}
                         </div>
-                    )}
+                        {settings?.signatureUrl && (
+                            <div className="flex-shrink-0 text-center">
+                                <img src={settings.signatureUrl} alt="Authorized Signature" className="h-16 object-contain mb-1" />
+                                <div className="border-t border-slate-300 pt-1">
+                                    <p className="text-xs text-slate-500">Authorized Signatory</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

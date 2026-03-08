@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, LessThanOrEqual, MoreThanOrEqual, In } from 'typeorm';
 import { Lead, LeadStatus } from './lead.entity';
@@ -8,6 +8,7 @@ import { UpdateLeadDto } from './dto/update-lead.dto';
 import { FilterLeadsDto } from './dto/filter-leads.dto';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UsersService } from '../users/users.service';
+import { WhatsAppService } from '../whatsapp/whatsapp.service';
 
 @Injectable()
 export class LeadsService {
@@ -20,11 +21,25 @@ export class LeadsService {
         @InjectRepository(Activity)
         private activityRepository: Repository<Activity>,
         private usersService: UsersService,
+        @Inject(forwardRef(() => WhatsAppService))
+        private whatsAppService: WhatsAppService,
     ) { }
 
     async create(createLeadDto: CreateLeadDto): Promise<Lead> {
         const lead = this.leadsRepository.create(createLeadDto);
-        return this.leadsRepository.save(lead);
+        const savedLead = await this.leadsRepository.save(lead);
+
+        // Trigger WhatsApp auto-reply asynchronously (fire and forget)
+        if (savedLead.phone && savedLead.companyId) {
+            this.whatsAppService.triggerAutoReply(
+                savedLead.companyId,
+                savedLead.id,
+                savedLead.phone,
+                savedLead.name,
+            ).catch(() => { });
+        }
+
+        return savedLead;
     }
 
     /**
@@ -68,14 +83,19 @@ export class LeadsService {
         }
 
         if (filters.dateFrom && filters.dateTo) {
+            // Append time components so BETWEEN covers the full day range
+            const from = filters.dateFrom.length === 10 ? `${filters.dateFrom} 00:00:00` : filters.dateFrom;
+            const to = filters.dateTo.length === 10 ? `${filters.dateTo} 23:59:59` : filters.dateTo;
             query.andWhere('lead.createdAt BETWEEN :dateFrom AND :dateTo', {
-                dateFrom: filters.dateFrom,
-                dateTo: filters.dateTo,
+                dateFrom: from,
+                dateTo: to,
             });
         } else if (filters.dateFrom) {
-            query.andWhere('lead.createdAt >= :dateFrom', { dateFrom: filters.dateFrom });
+            const from = filters.dateFrom.length === 10 ? `${filters.dateFrom} 00:00:00` : filters.dateFrom;
+            query.andWhere('lead.createdAt >= :dateFrom', { dateFrom: from });
         } else if (filters.dateTo) {
-            query.andWhere('lead.createdAt <= :dateTo', { dateTo: filters.dateTo });
+            const to = filters.dateTo.length === 10 ? `${filters.dateTo} 23:59:59` : filters.dateTo;
+            query.andWhere('lead.createdAt <= :dateTo', { dateTo: to });
         }
 
         // Staff members can only see their own assigned leads
@@ -201,10 +221,7 @@ export class LeadsService {
     }
 
     async countToday(companyId: string): Promise<number> {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999);
+        const { todayStart, todayEnd } = this.getTodayBoundsIST();
 
         return this.leadsRepository.count({
             where: {
@@ -225,15 +242,29 @@ export class LeadsService {
         return Math.round((converted / total) * 100 * 100) / 100; // e.g. 23.45%
     }
 
+    async countConverted(companyId: string): Promise<number> {
+        return this.leadsRepository.count({
+            where: { companyId, status: LeadStatus.CONVERTED },
+        });
+    }
+
     async countAssigned(userId: string): Promise<number> {
         return this.leadsRepository.count({ where: { assignedTo: userId } });
     }
 
+    private getTodayBoundsIST(): { todayStart: Date; todayEnd: Date } {
+        // Use IST (UTC+5:30) for date boundaries regardless of server timezone
+        const now = new Date();
+        const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+        const istNow = new Date(now.getTime() + istOffset);
+        const istDateStr = istNow.toISOString().split('T')[0]; // YYYY-MM-DD in IST
+        const todayStart = new Date(`${istDateStr}T00:00:00+05:30`);
+        const todayEnd = new Date(`${istDateStr}T23:59:59.999+05:30`);
+        return { todayStart, todayEnd };
+    }
+
     async followUpsDueToday(userId: string): Promise<Lead[]> {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999);
+        const { todayStart, todayEnd } = this.getTodayBoundsIST();
 
         return this.leadsRepository.find({
             where: {
@@ -245,8 +276,7 @@ export class LeadsService {
     }
 
     async overdueFollowUps(companyId: string, userId?: string): Promise<Lead[]> {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
+        const { todayStart } = this.getTodayBoundsIST();
 
         const qb = this.leadsRepository.createQueryBuilder('lead')
             .leftJoinAndSelect('lead.assignedUser', 'assignedUser')
@@ -264,10 +294,7 @@ export class LeadsService {
     }
 
     async companyFollowUpsToday(companyId: string): Promise<Lead[]> {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999);
+        const { todayStart, todayEnd } = this.getTodayBoundsIST();
 
         return this.leadsRepository.find({
             where: {

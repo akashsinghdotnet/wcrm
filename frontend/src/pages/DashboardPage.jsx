@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { TrendingUp, Users, FileText, IndianRupee, CalendarDays, AlertTriangle, Clock, Building2, Sparkles } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -8,6 +9,7 @@ const COLORS = ['#6366f1', '#22d3ee', '#f59e0b', '#10b981', '#ef4444'];
 
 export default function DashboardPage() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [stats, setStats] = useState(null);
     const [staffStats, setStaffStats] = useState(null);
     const [saStats, setSaStats] = useState(null);
@@ -66,11 +68,11 @@ export default function DashboardPage() {
     const isCompanyUser = user.role === 'admin' || user.role === 'staff';
 
     const statCards = isAdmin && stats ? [
-        { label: 'Total Leads', value: stats.totalLeads, icon: FileText, color: 'indigo' },
-        { label: 'Leads Today', value: stats.leadsToday, icon: CalendarDays, color: 'cyan' },
-        { label: 'Conversion Rate', value: `${stats.conversionRate}%`, icon: TrendingUp, color: 'emerald' },
-        { label: 'Total Clients', value: stats.totalClients, icon: Users, color: 'amber' },
-        { label: 'Paid Revenue', value: `₹${(stats.paidRevenue || 0).toLocaleString('en-IN')}`, icon: IndianRupee, color: 'purple' },
+        { label: 'Total Leads', value: stats.totalLeads, icon: FileText, color: 'indigo', link: '/leads' },
+        { label: 'Leads Today', value: stats.leadsToday, icon: CalendarDays, color: 'cyan', link: '/leads' },
+        { label: 'Conversion Rate', value: `${stats.conversionRate}%`, icon: TrendingUp, color: 'emerald', link: '/reports' },
+        { label: 'Converted Leads', value: stats.convertedLeads, icon: Users, color: 'amber', link: '/leads?status=converted' },
+        { label: 'Paid Revenue', value: `₹${(stats.paidRevenue || 0).toLocaleString('en-IN')}`, icon: IndianRupee, color: 'purple', link: '/invoices' },
     ] : [];
 
     const colorMap = {
@@ -111,7 +113,10 @@ export default function DashboardPage() {
             {isSuperAdmin && saStats && (
                 <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="bg-indigo-600/15 border border-indigo-500/30 rounded-2xl p-5 transition-all hover:scale-[1.02]">
+                        <div
+                            className="bg-indigo-600/15 border border-indigo-500/30 rounded-2xl p-5 transition-all hover:scale-[1.02] cursor-pointer"
+                            onClick={() => navigate('/companies')}
+                        >
                             <div className="flex items-center justify-between mb-3">
                                 <div className="w-10 h-10 bg-indigo-600/20 rounded-xl flex items-center justify-center">
                                     <Building2 className="w-5 h-5 text-indigo-400" />
@@ -140,7 +145,10 @@ export default function DashboardPage() {
                             <p className="text-2xl font-bold text-white">₹{(saStats?.thisMonthRevenue || 0).toLocaleString('en-IN')}</p>
                             <p className="text-sm text-emerald-400 mt-1">This Month Sale</p>
                         </div>
-                        <div className="bg-purple-600/15 border border-purple-500/30 rounded-2xl p-5 transition-all hover:scale-[1.02]">
+                        <div
+                            className="bg-purple-600/15 border border-purple-500/30 rounded-2xl p-5 transition-all hover:scale-[1.02] cursor-pointer"
+                            onClick={() => navigate('/plans')}
+                        >
                             <div className="flex items-center justify-between mb-3">
                                 <div className="w-10 h-10 bg-purple-600/20 rounded-xl flex items-center justify-center">
                                     <Sparkles className="w-5 h-5 text-purple-400" />
@@ -159,7 +167,7 @@ export default function DashboardPage() {
                             ) : (
                                 <div className="space-y-3">
                                     {(saStats?.companies || []).slice(0, 5).map((company) => (
-                                        <div key={company.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                        <div key={company.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => navigate(`/companies/${company.id}`)}>
                                             <div className="flex items-center gap-3 min-w-0">
                                                 <div className="w-9 h-9 rounded-lg bg-indigo-600/20 flex items-center justify-center flex-shrink-0">
                                                     <Building2 className="w-4 h-4 text-indigo-400" />
@@ -205,13 +213,14 @@ export default function DashboardPage() {
 
             {/* Admin Stat Cards */}
             {isAdmin && statCards.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                     {statCards.map((card) => {
                         const c = colorMap[card.color];
                         return (
                             <div
                                 key={card.label}
-                                className={`${c.bg} border ${c.border} rounded-2xl p-5 transition-all hover:scale-[1.02]`}
+                                className={`${c.bg} border ${c.border} rounded-2xl p-5 transition-all hover:scale-[1.02] cursor-pointer`}
+                                onClick={() => navigate(card.link)}
                             >
                                 <div className="flex items-center justify-between mb-3">
                                     <div className={`w-10 h-10 ${c.icon} rounded-xl flex items-center justify-center`}>
@@ -229,7 +238,10 @@ export default function DashboardPage() {
             {/* Staff Stats */}
             {staffStats && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                    <div
+                        className="bg-slate-900 border border-slate-800 rounded-2xl p-6 cursor-pointer hover:bg-slate-800/50 transition-colors"
+                        onClick={() => navigate('/leads')}
+                    >
                         <p className="text-sm text-slate-400 mb-1">Your Assigned Leads</p>
                         <p className="text-3xl font-bold text-white">{staffStats.assignedLeads}</p>
                     </div>
@@ -240,61 +252,69 @@ export default function DashboardPage() {
                 </div>
             )}
 
-            {/* Pending Billing Card */}
-            {isAdmin && stats && stats.pendingAmount > 0 && (
-                <div className="bg-amber-600/10 border border-amber-500/20 rounded-2xl p-5 flex items-center justify-between">
-                    <div>
-                        <p className="text-sm text-amber-400">Pending Invoices</p>
-                        <p className="text-2xl font-bold text-white mt-1">₹{stats.pendingAmount.toLocaleString('en-IN')}</p>
-                    </div>
-                    <IndianRupee className="w-8 h-8 text-amber-400/30" />
-                </div>
-            )}
-
-            {/* Overdue Follow-Ups Alert */}
-            {isCompanyUser && followUps.overdue.length > 0 && (
-                <div className="bg-red-600/10 border border-red-500/20 rounded-2xl p-5">
-                    <div className="flex items-center gap-3 mb-4">
-                        <AlertTriangle className="w-5 h-5 text-red-400" />
-                        <h3 className="text-lg font-semibold text-red-400">Overdue Follow-Ups ({followUps.overdue.length})</h3>
-                    </div>
-                    <div className="space-y-2">
-                        {followUps.overdue.map((lead) => (
-                            <div key={lead.id} className="flex items-center justify-between p-3 bg-red-500/5 rounded-xl">
-                                <div className="min-w-0">
-                                    <p className="text-sm font-medium text-white truncate">{lead.name}</p>
-                                    <p className="text-xs text-slate-400">{lead.phone || lead.email}</p>
-                                </div>
-                                <div className="text-right flex-shrink-0">
-                                    <p className="text-xs text-red-400 font-medium">
-                                        {new Date(lead.followUpDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                                    </p>
-                                    {lead.assignedUser && <p className="text-[10px] text-slate-500">{lead.assignedUser.name}</p>}
-                                </div>
+            {/* Pending Billing + Follow-Ups in Grid */}
+            {isCompanyUser && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Pending Billing Card */}
+                    {isAdmin && stats && stats.pendingAmount > 0 && (
+                        <div
+                            className="bg-amber-600/10 border border-amber-500/20 rounded-2xl p-5 flex items-center justify-between cursor-pointer hover:bg-amber-600/15 transition-colors"
+                            onClick={() => navigate('/invoices')}
+                        >
+                            <div>
+                                <p className="text-sm text-amber-400">Pending Invoices</p>
+                                <p className="text-2xl font-bold text-white mt-1">₹{stats.pendingAmount.toLocaleString('en-IN')}</p>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+                            <IndianRupee className="w-8 h-8 text-amber-400/30" />
+                        </div>
+                    )}
 
-            {/* Today's Follow-Ups */}
-            {isCompanyUser && followUps.today.length > 0 && (
-                <div className="bg-amber-600/10 border border-amber-500/20 rounded-2xl p-5">
-                    <div className="flex items-center gap-3 mb-4">
-                        <Clock className="w-5 h-5 text-amber-400" />
-                        <h3 className="text-lg font-semibold text-amber-400">Today&apos;s Follow-Ups ({followUps.today.length})</h3>
-                    </div>
-                    <div className="space-y-2">
-                        {followUps.today.map((lead) => (
-                            <div key={lead.id} className="flex items-center justify-between p-3 bg-amber-500/5 rounded-xl">
-                                <div className="min-w-0">
-                                    <p className="text-sm font-medium text-white truncate">{lead.name}</p>
-                                    <p className="text-xs text-slate-400">{lead.phone || lead.email}</p>
-                                </div>
-                                <span className="text-xs text-amber-400">{lead.notes?.slice(0, 40)}</span>
+                    {/* Overdue Follow-Ups */}
+                    {followUps.overdue.length > 0 && (
+                        <div className="bg-red-600/10 border border-red-500/20 rounded-2xl p-5">
+                            <div className="flex items-center gap-3 mb-3">
+                                <AlertTriangle className="w-5 h-5 text-red-400" />
+                                <h3 className="text-base font-semibold text-red-400">Overdue Follow-Ups ({followUps.overdue.length})</h3>
                             </div>
-                        ))}
-                    </div>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {followUps.overdue.map((lead) => (
+                                    <div key={lead.id} className="flex items-center justify-between p-2.5 bg-red-500/5 rounded-xl cursor-pointer hover:bg-red-500/10 transition-colors" onClick={() => navigate('/leads')}>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium text-white truncate">{lead.name}</p>
+                                            <p className="text-xs text-slate-400">{lead.phone || lead.email}</p>
+                                        </div>
+                                        <div className="text-right flex-shrink-0">
+                                            <p className="text-xs text-red-400 font-medium">
+                                                {new Date(lead.followUpDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                            </p>
+                                            {lead.assignedUser && <p className="text-[10px] text-slate-500">{lead.assignedUser.name}</p>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Today's Follow-Ups */}
+                    {followUps.today.length > 0 && (
+                        <div className="bg-amber-600/10 border border-amber-500/20 rounded-2xl p-5">
+                            <div className="flex items-center gap-3 mb-3">
+                                <Clock className="w-5 h-5 text-amber-400" />
+                                <h3 className="text-base font-semibold text-amber-400">Today&apos;s Follow-Ups ({followUps.today.length})</h3>
+                            </div>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {followUps.today.map((lead) => (
+                                    <div key={lead.id} className="flex items-center justify-between p-2.5 bg-amber-500/5 rounded-xl cursor-pointer hover:bg-amber-500/10 transition-colors" onClick={() => navigate('/leads')}>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium text-white truncate">{lead.name}</p>
+                                            <p className="text-xs text-slate-400">{lead.phone || lead.email}</p>
+                                        </div>
+                                        <span className="text-xs text-amber-400">{lead.notes?.slice(0, 40)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -325,12 +345,16 @@ export default function DashboardPage() {
                 {/* Recent Leads */}
                 {recentLeads.length > 0 && (
                     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                        <h3 className="text-lg font-semibold text-white mb-4">Recent Leads</h3>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-white">Recent Leads</h3>
+                            <button onClick={() => navigate('/leads')} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">View All</button>
+                        </div>
                         <div className="space-y-3">
                             {recentLeads.map((lead) => (
                                 <div
                                     key={lead.id}
-                                    className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl"
+                                    className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl cursor-pointer hover:bg-slate-800 transition-colors"
+                                    onClick={() => navigate('/leads')}
                                 >
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium text-white truncate">{lead.name}</p>

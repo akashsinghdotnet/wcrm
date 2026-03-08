@@ -17,6 +17,7 @@ import {
     Plus,
 } from 'lucide-react';
 import WhatsAppChat from './WhatsAppChat';
+import BrowserDialer from './BrowserDialer';
 
 const TYPE_META = {
     note: { icon: MessageSquare, color: 'text-blue-400', bg: 'bg-blue-500/10', label: 'Note' },
@@ -34,6 +35,7 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
     const [noteContent, setNoteContent] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [showWhatsAppChat, setShowWhatsAppChat] = useState(false);
+    const [showDialer, setShowDialer] = useState(false);
 
     useEffect(() => {
         if (lead?.id) {
@@ -130,14 +132,24 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                                 <div className="flex items-center gap-3 text-sm text-slate-300">
                                     <Phone size={14} className="text-slate-500" />
                                     <span>{lead.phone}</span>
-                                    <button
-                                        onClick={() => setShowWhatsAppChat(true)}
-                                        className="flex items-center gap-1.5 px-2.5 py-1 bg-green-600 hover:bg-green-500 text-white text-xs font-semibold rounded-lg transition-all ml-auto cursor-pointer"
-                                        title="Chat on WhatsApp"
-                                    >
-                                        <MessageCircle size={12} />
-                                        WhatsApp
-                                    </button>
+                                    <div className="flex items-center gap-1.5 ml-auto">
+                                        <button
+                                            onClick={() => setShowDialer(true)}
+                                            className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer"
+                                            title="Call from browser"
+                                        >
+                                            <Phone size={12} />
+                                            Call
+                                        </button>
+                                        <button
+                                            onClick={() => setShowWhatsAppChat(true)}
+                                            className="flex items-center gap-1.5 px-2.5 py-1 bg-green-600 hover:bg-green-500 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer"
+                                            title="Chat on WhatsApp"
+                                        >
+                                            <MessageCircle size={12} />
+                                            WhatsApp
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                             {lead.email && (
@@ -271,6 +283,11 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
             {/* WhatsApp In-CRM Chat */}
             {showWhatsAppChat && (
                 <WhatsAppChat lead={lead} onClose={() => setShowWhatsAppChat(false)} />
+            )}
+
+            {/* Browser Dialer */}
+            {showDialer && (
+                <BrowserDialer lead={lead} onClose={() => setShowDialer(false)} />
             )}
         </>
     );

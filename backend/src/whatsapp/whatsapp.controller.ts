@@ -82,6 +82,22 @@ export class WhatsAppController {
         return this.whatsappService.getMessages(req.user.companyId, leadId);
     }
 
+    // Fetch approved templates from Meta
+    @Get('templates')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
+    fetchTemplates(@Request() req) {
+        return this.whatsappService.fetchTemplates(req.user.companyId);
+    }
+
+    // Save auto-reply settings
+    @Patch('auto-reply')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
+    saveAutoReply(@Body() body: any, @Request() req) {
+        return this.whatsappService.saveAutoReplySettings(req.user.companyId, body);
+    }
+
     // Public webhook endpoint for Meta to send incoming messages
     @Post('webhook')
     handleWebhook(@Body() body: any) {

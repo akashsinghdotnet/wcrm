@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsOptional, IsEmail, IsEnum, IsString, IsDateString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsEmail, IsEnum, IsString, IsDateString, IsUUID, ValidateIf } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { LeadSource, LeadStatus } from '../lead.entity';
 
 export class CreateLeadDto {
@@ -19,6 +20,8 @@ export class CreateLeadDto {
     phone?: string;
 
     @IsOptional()
+    @Transform(({ value }) => (value === '' ? undefined : value))
+    @ValidateIf((o) => o.email !== undefined && o.email !== null && o.email !== '')
     @IsEmail()
     email?: string;
 

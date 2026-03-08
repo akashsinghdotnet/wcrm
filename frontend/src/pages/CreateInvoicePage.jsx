@@ -43,13 +43,28 @@ export default function CreateInvoicePage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                const isCompanyUser = ['admin', 'manager', 'staff'].includes(user?.role);
+
                 const [clientsRes, settingsRes] = await Promise.all([
-                    api.get('/clients?limit=1000'), // Assuming clients endpoint
+                    isCompanyUser
+                        ? api.get('/leads?status=converted&limit=1000')
+                        : api.get('/clients?limit=1000'),
                     api.get(`/billing/settings/${user.companyId}`)
                 ]);
 
-                // NestJS might return { data: [...] } or just an array
-                const clientsList = clientsRes.data.data ? clientsRes.data.data : clientsRes.data;
+                // For company users, map converted leads to client-like format
+                let clientsList;
+                if (isCompanyUser) {
+                    const leadsData = clientsRes.data.data ? clientsRes.data.data : clientsRes.data;
+                    clientsList = (leadsData || []).map(lead => ({
+                        id: lead.id,
+                        name: lead.name,
+                        email: lead.email,
+                        phone: lead.phone,
+                    }));
+                } else {
+                    clientsList = clientsRes.data.data ? clientsRes.data.data : clientsRes.data;
+                }
                 setClients(clientsList || []);
 
                 if (settingsRes.data) {
@@ -141,6 +156,11 @@ export default function CreateInvoicePage() {
                 invoiceData.guestClientAddress = form.guestClientAddress;
             } else {
                 invoiceData.clientId = form.clientId;
+                // Include additional client details filled in after selection
+                if (form.guestClientEmail) invoiceData.guestClientEmail = form.guestClientEmail;
+                if (form.guestClientPhone) invoiceData.guestClientPhone = form.guestClientPhone;
+                if (form.guestClientAddress) invoiceData.guestClientAddress = form.guestClientAddress;
+                if (form.guestClientName) invoiceData.guestClientName = form.guestClientName;
             }
 
             const res = await api.post('/billing', invoiceData);
@@ -200,17 +220,70 @@ export default function CreateInvoicePage() {
                             </div>
 
                             {!useManualEntry ? (
-                                <select
-                                    value={form.clientId}
-                                    onChange={(e) => setForm({ ...form, clientId: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    required
-                                >
-                                    <option value="" disabled>Select a client</option>
-                                    {clients.map(client => (
-                                        <option key={client.id} value={client.id}>{client.name}</option>
-                                    ))}
-                                </select>
+                                <>
+                                    <select
+                                        value={form.clientId}
+                                        onChange={(e) => {
+                                            const selectedClient = clients.find(c => c.id === e.target.value);
+                                            setForm({
+                                                ...form,
+                                                clientId: e.target.value,
+                                                guestClientEmail: selectedClient?.email || '',
+                                                guestClientPhone: selectedClient?.phone || '',
+                                                guestClientAddress: selectedClient?.address || '',
+                                                guestClientName: selectedClient?.name || '',
+                                            });
+                                        }}
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        required
+                                    >
+                                        <option value="" disabled>Select a client</option>
+                                        {clients.map(client => (
+                                            <option key={client.id} value={client.id}>
+                                                {client.name}{client.phone ? ` — ${client.phone}` : client.email ? ` — ${client.email}` : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    {/* Additional client details — editable after selection */}
+                                    {form.clientId && (
+                                        <div className="mt-3 space-y-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                                            <p className="text-xs text-slate-400 font-medium">Client Details (fill in any missing info)</p>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-400 mb-1">Email</label>
+                                                    <input
+                                                        type="email"
+                                                        value={form.guestClientEmail}
+                                                        onChange={(e) => setForm({ ...form, guestClientEmail: e.target.value })}
+                                                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                        placeholder="john@example.com"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-400 mb-1">Phone</label>
+                                                    <input
+                                                        type="tel"
+                                                        value={form.guestClientPhone}
+                                                        onChange={(e) => setForm({ ...form, guestClientPhone: e.target.value })}
+                                                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                        placeholder="+91 98765 43210"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-400 mb-1">Address</label>
+                                                <textarea
+                                                    value={form.guestClientAddress}
+                                                    onChange={(e) => setForm({ ...form, guestClientAddress: e.target.value })}
+                                                    rows={2}
+                                                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                                                    placeholder="123 Main St, City, State, PIN"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
                             ) : (
                                 <div className="space-y-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
                                     <div>

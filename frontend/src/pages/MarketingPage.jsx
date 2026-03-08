@@ -373,23 +373,82 @@ export default function MarketingPage() {
                                 placeholder="e.g. Monthly Newsletter"
                             />
                         </div>
-                        <div className="h-64 mb-12">
+                        <div className="mb-4">
                             <label className="block text-sm font-medium text-slate-300 mb-1.5">Email Body</label>
-                            <ReactQuill
-                                theme="snow"
-                                value={emailData.body}
-                                onChange={content => setEmailData(prev => ({ ...prev, body: content }))}
-                                className="bg-slate-800 text-white rounded-xl h-48"
-                                modules={{
-                                    toolbar: [
-                                        [{ 'header': [1, 2, false] }],
-                                        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-                                        [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
-                                        ['link'],
-                                        ['clean']
-                                    ],
-                                }}
-                            />
+                            <div className="quill-dark-theme rounded-xl overflow-hidden border border-slate-700">
+                                <ReactQuill
+                                    theme="snow"
+                                    value={emailData.body}
+                                    onChange={content => setEmailData(prev => ({ ...prev, body: content }))}
+                                    className="bg-slate-800 text-white"
+                                    style={{ minHeight: '250px' }}
+                                    modules={{
+                                        toolbar: [
+                                            [{ 'header': [1, 2, 3, false] }],
+                                            ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                                            [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+                                            [{ 'align': [] }],
+                                            ['link', 'image'],
+                                            ['clean']
+                                        ],
+                                    }}
+                                />
+                            </div>
+                            <style>{`
+                                .quill-dark-theme .ql-toolbar.ql-snow {
+                                    border: none !important;
+                                    border-bottom: 1px solid #334155 !important;
+                                    background: #1e293b !important;
+                                    padding: 8px 12px !important;
+                                }
+                                .quill-dark-theme .ql-container.ql-snow {
+                                    border: none !important;
+                                    min-height: 200px;
+                                }
+                                .quill-dark-theme .ql-editor {
+                                    min-height: 200px;
+                                    color: #e2e8f0 !important;
+                                    font-size: 14px;
+                                }
+                                .quill-dark-theme .ql-editor.ql-blank::before {
+                                    color: #64748b !important;
+                                    font-style: normal !important;
+                                }
+                                .quill-dark-theme .ql-toolbar .ql-stroke {
+                                    stroke: #94a3b8 !important;
+                                }
+                                .quill-dark-theme .ql-toolbar .ql-fill {
+                                    fill: #94a3b8 !important;
+                                }
+                                .quill-dark-theme .ql-toolbar .ql-picker-label {
+                                    color: #94a3b8 !important;
+                                }
+                                .quill-dark-theme .ql-toolbar .ql-picker-options {
+                                    background: #1e293b !important;
+                                    border-color: #334155 !important;
+                                }
+                                .quill-dark-theme .ql-toolbar .ql-picker-item {
+                                    color: #e2e8f0 !important;
+                                }
+                                .quill-dark-theme .ql-toolbar .ql-picker-item:hover {
+                                    color: #818cf8 !important;
+                                }
+                                .quill-dark-theme .ql-toolbar button:hover .ql-stroke,
+                                .quill-dark-theme .ql-toolbar button.ql-active .ql-stroke {
+                                    stroke: #818cf8 !important;
+                                }
+                                .quill-dark-theme .ql-toolbar button:hover .ql-fill,
+                                .quill-dark-theme .ql-toolbar button.ql-active .ql-fill {
+                                    fill: #818cf8 !important;
+                                }
+                                .quill-dark-theme .ql-toolbar button:hover,
+                                .quill-dark-theme .ql-toolbar button.ql-active {
+                                    color: #818cf8 !important;
+                                }
+                                .quill-dark-theme .ql-snow .ql-picker-label::before {
+                                    color: #94a3b8 !important;
+                                }
+                            `}</style>
                         </div>
 
                         {/* Attachments */}

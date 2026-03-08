@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { IntegrationsService } from './integrations.service';
 import { SaveIntegrationDto } from './dto/save-integration.dto';
 import { IntegrationPlatform } from './integration-config.entity';
@@ -11,6 +11,18 @@ import { UserRole } from '../users/user.entity';
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class IntegrationsController {
     constructor(private readonly integrationsService: IntegrationsService) { }
+
+    @Get('status')
+    async getActiveStatus(@Request() req) {
+        const configs = await this.integrationsService.findAllByCompany(req.user.companyId);
+        const status: Record<string, boolean> = {};
+        for (const cfg of configs) {
+            if (cfg.isActive) {
+                status[cfg.platform] = true;
+            }
+        }
+        return status;
+    }
 
     @Get()
     @Roles(UserRole.ADMIN, UserRole.MANAGER)

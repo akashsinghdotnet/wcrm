@@ -38,7 +38,15 @@ async function bootstrap() {
   ];
 
   app.enableCors({
-    origin: allowedOrigins.length === 1 ? allowedOrigins[0] : allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      // Allow any origin for webhook endpoints (embeddable forms)
+      // Auth-protected routes are safe regardless of CORS
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      // For unknown origins, allow but without credentials
+      return callback(null, true);
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

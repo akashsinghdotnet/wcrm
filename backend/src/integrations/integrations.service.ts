@@ -29,6 +29,17 @@ export class IntegrationsService {
         return this.configRepo.findOne({ where: { companyId, platform } });
     }
 
+    /**
+     * Find a Google Ads integration config by matching the webhook key.
+     * Google sends google_key in the payload — we match it to the stored webhookKey credential.
+     */
+    async findByGoogleKey(googleKey: string): Promise<IntegrationConfig | null> {
+        const allGoogleConfigs = await this.configRepo.find({
+            where: { platform: IntegrationPlatform.GOOGLE, isActive: true },
+        });
+        return allGoogleConfigs.find(c => c.credentials?.webhookKey === googleKey) || null;
+    }
+
     async save(dto: SaveIntegrationDto): Promise<IntegrationConfig> {
         let config = await this.configRepo.findOne({
             where: { companyId: dto.companyId, platform: dto.platform },
@@ -78,14 +89,13 @@ export class IntegrationsService {
         try {
             const toDate = new Date();
             const fromDate = new Date();
-            fromDate.setDate(toDate.getDate() - 7);
+            fromDate.setDate(toDate.getDate() - 1); // TradeIndia API only allows max 24 hours range
 
             const formatDate = (date: Date) => date.toISOString().split('T')[0]; // YYYY-MM-DD
 
-            // Try both TradeIndia API endpoints - my_inquiry (received inquiries) and my_buy_leads (purchased leads)
+            // TradeIndia API endpoint - my_inquiry (received inquiries)
             const endpoints = [
                 `https://www.tradeindia.com/utils/my_inquiry.html?userid=${userid}&profile_id=${profile_id}&key=${key}&from_date=${formatDate(fromDate)}&to_date=${formatDate(toDate)}&limit=50&page_no=1`,
-                `https://www.tradeindia.com/utils/my_buy_leads.html?userid=${userid}&profile_id=${profile_id}&key=${key}&from_date=${formatDate(fromDate)}&to_date=${formatDate(toDate)}&limit=50&page_no=1`,
             ];
 
             let allLeads: any[] = [];
@@ -141,6 +151,9 @@ export class IntegrationsService {
                 return { success: true, message: 'No new leads found in the specified date range.', count: 0 };
             }
 
+            // Helper to strip HTML tags from TradeIndia messages
+            const stripHtml = (str: string) => str.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+
             // Deduplicate by checking existing leads with same phone/email from TradeIndia source
             let importCount = 0;
             for (const item of allLeads) {
@@ -149,7 +162,8 @@ export class IntegrationsService {
                 const email = item.sender_email || item.email;
                 const subject = item.subject || item.product_name || item.category;
                 const city = item.sender_city || item.city;
-                const message = item.message || item.query_message || item.description;
+                const rawMessage = item.message || item.query_message || item.description;
+                const message = rawMessage ? stripHtml(rawMessage) : '';
                 const rfiId = item.rfi_id || item.inquiry_id || item.id;
 
                 if (!phone && !email) continue;
@@ -302,8 +316,8 @@ export class IntegrationsService {
         }
     }
 
-    // Auto-fetch TradeIndia leads every 15 minutes for all active integrations
-    @Cron('0 */15 * * * *')
+    // Auto-fetch TradeIndia leads every minute for all active integrations
+    @Cron('* * * * *')
     async autoFetchTradeIndiaLeads() {
         const activeConfigs = await this.configRepo.find({
             where: { platform: IntegrationPlatform.TRADEINDIA, isActive: true },

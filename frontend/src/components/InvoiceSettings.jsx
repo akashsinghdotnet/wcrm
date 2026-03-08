@@ -50,6 +50,28 @@ export default function InvoiceSettings() {
         reader.readAsDataURL(file);
         e.target.value = '';
     };
+
+    const handleSignatureUpload = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Image size should be less than 5MB');
+            e.target.value = '';
+            return;
+        }
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select an image file');
+            e.target.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setForm(f => ({ ...f, signatureUrl: reader.result }));
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    };
+
     const [form, setForm] = useState({
         logoUrl: '',
         address: '',
@@ -62,6 +84,7 @@ export default function InvoiceSettings() {
         accountHolderName: '',
         upiId: '',
         upiQrUrl: '',
+        signatureUrl: '',
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -83,6 +106,7 @@ export default function InvoiceSettings() {
                         accountHolderName: res.data.accountHolderName || '',
                         upiId: res.data.upiId || '',
                         upiQrUrl: res.data.upiQrUrl || '',
+                        signatureUrl: res.data.signatureUrl || '',
                     });
                 }
             })
@@ -285,6 +309,37 @@ export default function InvoiceSettings() {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* Signature Section */}
+                <div className="pt-4 border-t border-slate-800">
+                    <h4 className="text-md font-semibold text-white mb-4">Authorized Signature</h4>
+                    <p className="text-xs text-slate-400 mb-4">Upload a signature image that will be displayed on your invoices.</p>
+                    <div className="flex flex-col sm:flex-row gap-4 items-start">
+                        <div className="w-full sm:flex-1 space-y-2">
+                            <input
+                                value={form.signatureUrl?.startsWith('data:') ? '' : (form.signatureUrl || '')}
+                                onChange={(e) => setForm({ ...form, signatureUrl: e.target.value })}
+                                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder="https://example.com/signature.png"
+                            />
+                            <label className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 border-dashed rounded-xl text-slate-400 hover:text-white hover:border-indigo-500 cursor-pointer transition-all text-sm w-full justify-center sm:justify-start">
+                                <Upload className="w-4 h-4" />
+                                Upload Signature (max 5MB)
+                                <input type="file" accept="image/*" onChange={handleSignatureUpload} className="hidden" />
+                            </label>
+                        </div>
+                        {form.signatureUrl && (
+                            <div className="w-24 h-16 bg-slate-800 rounded-lg border border-slate-700 flex items-center justify-center p-1 relative group">
+                                <img src={form.signatureUrl} alt="Signature Preview" className="max-w-full max-h-full object-contain" />
+                                <button
+                                    type="button"
+                                    onClick={() => setForm({ ...form, signatureUrl: '' })}
+                                    className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                >x</button>
+                            </div>
+                        )}
                     </div>
                 </div>
 

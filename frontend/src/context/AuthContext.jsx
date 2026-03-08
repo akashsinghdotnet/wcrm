@@ -38,6 +38,20 @@ export function AuthProvider({ children }) {
 
     const login = async (email, password) => {
         const res = await api.post('/auth/login', { email, password });
+        // If 2FA is required, return the response without storing token
+        if (res.data.requires2FA) {
+            return res.data; // { requires2FA: true, userId }
+        }
+        const { access_token, user: userData } = res.data;
+        localStorage.setItem('magnetcrm_token', access_token);
+        localStorage.setItem('magnetcrm_user', JSON.stringify(userData));
+        setToken(access_token);
+        setUser(userData);
+        return userData;
+    };
+
+    const verify2FA = async (userId, token) => {
+        const res = await api.post('/auth/login/verify-2fa', { userId, token });
         const { access_token, user: userData } = res.data;
         localStorage.setItem('magnetcrm_token', access_token);
         localStorage.setItem('magnetcrm_user', JSON.stringify(userData));
@@ -54,7 +68,7 @@ export function AuthProvider({ children }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, token, login, verify2FA, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );

@@ -162,6 +162,10 @@ export class BillingService {
 
         if (!company) return [];
 
+        // Fetch super admin invoice settings for branding
+        const superAdminSettings = await this.invoiceSettingsRepo.findOne({ where: { companyId: null as any } });
+        const brandName = superAdminSettings?.accountHolderName || 'CRM Subscription';
+
         const invoices: any[] = [];
 
         // 1. Generate subscription invoices ONLY if plan exists
@@ -173,16 +177,23 @@ export class BillingService {
 
             let counter = 1;
 
+            // Determine actual status based on subscription
+            const isPending = company.subscriptionStatus === 'pending_payment';
+
             while (currentDate <= now || counter === 1) {
+                // First invoice: reflect actual subscription status
+                // Future invoices (if any): would be paid since subscription was active
+                const invoiceStatus = (counter === 1 && isPending) ? 'pending' : 'paid';
+
                 invoices.push({
                     id: `sub-${company.id}-${counter}`,
                     date: new Date(currentDate),
                     amount: price,
-                    description: `Magnet CRM ${company.plan.name} (${company.subscriptionPeriod})`,
+                    description: `${brandName} ${company.plan.name} (${company.subscriptionPeriod})`,
                     period: company.subscriptionPeriod === 'yearly'
                         ? `${currentDate.getFullYear()} - ${currentDate.getFullYear() + 1}`
                         : currentDate.toLocaleString('default', { month: 'long', year: 'numeric' }),
-                    status: 'paid',
+                    status: invoiceStatus,
                     invoiceNumber: `INV-${company.id.substring(0, 4).toUpperCase()}-${counter.toString().padStart(3, '0')}`,
                 });
 
@@ -233,6 +244,10 @@ export class BillingService {
             relations: ['plan'],
         });
 
+        // Fetch super admin invoice settings for branding
+        const superAdminSettings = await this.invoiceSettingsRepo.findOne({ where: { companyId: null as any } });
+        const brandName = superAdminSettings?.accountHolderName || 'CRM Subscription';
+
         let allInvoices: any[] = [];
         const now = new Date();
 
@@ -243,19 +258,22 @@ export class BillingService {
             const price = company.subscriptionPeriod === 'yearly' ? company.plan.priceYearly : company.plan.priceMonthly;
             let currentDate = new Date(startDate);
             let counter = 1;
+            const isPending = company.subscriptionStatus === 'pending_payment';
 
             while (currentDate <= now || counter === 1) {
+                const invoiceStatus = (counter === 1 && isPending) ? 'pending' : 'paid';
+
                 allInvoices.push({
                     id: `sub-${company.id}-${counter}`,
                     companyName: company.companyName,
                     planName: company.plan.name,
                     date: new Date(currentDate),
                     amount: price,
-                    description: `Magnet CRM ${company.plan.name} (${company.subscriptionPeriod})`,
+                    description: `${brandName} ${company.plan.name} (${company.subscriptionPeriod})`,
                     period: company.subscriptionPeriod === 'yearly'
                         ? `${currentDate.getFullYear()} - ${currentDate.getFullYear() + 1}`
                         : currentDate.toLocaleString('default', { month: 'long', year: 'numeric' }),
-                    status: 'paid',
+                    status: invoiceStatus,
                     invoiceNumber: `INV-${company.id.substring(0, 4).toUpperCase()}-${counter.toString().padStart(3, '0')}`,
                 });
 

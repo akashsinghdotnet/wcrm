@@ -3,6 +3,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 export enum IntegrationPlatform {
     META = 'meta',
     GOOGLE = 'google',
+    JUSTDIAL = 'justdial',
     INDIAMART = 'indiamart',
     TRADEINDIA = 'tradeindia',
     WEBSITE = 'website',

@@ -36,6 +36,24 @@ export class AuthController {
     }
 
     @Public()
+    @Post('verify-payment')
+    verifyPayment(@Body() body: {
+        razorpay_order_id: string;
+        razorpay_payment_id: string;
+        razorpay_signature: string;
+        companyId: string;
+        userId: string;
+    }) {
+        return this.authService.verifyRazorpayPayment(body);
+    }
+
+    @Public()
+    @Post('login/verify-2fa')
+    loginVerify2FA(@Body() body: { userId: string; token: string }) {
+        return this.authService.loginVerify2FA(body.userId, body.token);
+    }
+
+    @Public()
     @Post('forgot-password')
     forgotPassword(@Body() dto: ForgotPasswordDto) {
         return this.authService.forgotPassword(dto);

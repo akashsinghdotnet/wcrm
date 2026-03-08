@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, HttpCode, HttpStatus, Query, Logger } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, Query, Logger, ValidationPipe } from '@nestjs/common';
 import { LeadsService } from '../leads/leads.service';
 import { LeadSource, LeadStatus } from '../leads/lead.entity';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -110,28 +110,113 @@ export class WebhooksController {
     }
 
     /**
-     * Google Ads Lead
+     * Google Ads Lead Form Webhook
      * POST /api/webhooks/google
+     * Handles both Google's native webhook format (user_column_data) and legacy format (companyId + name/phone/email)
      */
     @Post('google')
-    @HttpCode(HttpStatus.CREATED)
-    async handleGoogle(@Body() dto: WebhookGoogleDto) {
-        const assignedTo = await this.leadsService.getNextAssignee(dto.companyId);
+    @HttpCode(HttpStatus.OK)
+    async handleGoogle(@Body(new ValidationPipe({ whitelist: false, forbidNonWhitelisted: false, transform: true })) dto: WebhookGoogleDto) {
+        this.logger.log(`Google webhook received: ${JSON.stringify(dto).substring(0, 500)}`);
 
-        const fullName = dto.name || [dto.first_name, dto.last_name].filter(Boolean).join(' ') || 'Unknown (Google)';
+        // Native Google Ads webhook format — has user_column_data array
+        if (dto.user_column_data && Array.isArray(dto.user_column_data)) {
+            // Look up company by matching google_key in stored credentials
+            let companyId = dto.companyId;
 
-        const lead = await this.leadsService.create({
-            companyId: dto.companyId,
-            name: fullName,
-            phone: dto.phone,
-            email: dto.email,
-            source: LeadSource.GOOGLE_ADS,
-            status: LeadStatus.NEW,
-            assignedTo: assignedTo || undefined,
-        });
+            if (!companyId && dto.google_key) {
+                const config = await this.integrationsService.findByGoogleKey(dto.google_key);
+                if (!config) {
+                    this.logger.warn(`No Google Ads integration found for google_key`);
+                    return {};
+                }
+                companyId = config.companyId;
+            }
 
-        this.notifyNewLead(lead, 'Google Ads');
-        return { success: true, leadId: lead.id, assignedTo };
+            if (!companyId) {
+                this.logger.warn('Google webhook: no companyId and no matching google_key');
+                return {};
+            }
+
+            // Extract fields from user_column_data array
+            const columnData = dto.user_column_data!;
+            const getField = (...columnIds: string[]): string | undefined => {
+                for (const id of columnIds) {
+                    const col = columnData.find(
+                        c => c.column_id?.toUpperCase() === id.toUpperCase()
+                    );
+                    if (col?.string_value) return col.string_value;
+                }
+                return undefined;
+            };
+
+            const name = getField('FULL_NAME', 'NAME', 'FIRST_NAME') || 'Unknown (Google Ads)';
+            const lastName = getField('LAST_NAME');
+            const fullName = lastName ? `${name} ${lastName}` : name;
+            const phone = getField('PHONE_NUMBER', 'PHONE');
+            const email = getField('EMAIL', 'USER_EMAIL');
+
+            // Deduplication by lead_id or phone/email
+            if (phone || email) {
+                const existingLead = await this.leadsService.findByPhoneOrEmail(companyId, phone, email);
+                if (existingLead) {
+                    this.logger.log(`Google lead ${dto.lead_id} already exists (duplicate), skipping`);
+                    return {};
+                }
+            }
+
+            const assignedTo = await this.leadsService.getNextAssignee(companyId);
+
+            // Build notes from campaign info and extra fields
+            const noteParts = [
+                dto.lead_id ? `Google Lead ID: ${dto.lead_id}` : null,
+                dto.campaign_id ? `Campaign: ${dto.campaign_id}` : null,
+            ];
+            // Include any custom fields beyond standard ones
+            const standardFields = ['FULL_NAME', 'NAME', 'FIRST_NAME', 'LAST_NAME', 'PHONE_NUMBER', 'PHONE', 'EMAIL', 'USER_EMAIL'];
+            for (const col of columnData) {
+                if (col.column_id && !standardFields.includes(col.column_id.toUpperCase()) && col.string_value) {
+                    noteParts.push(`${col.column_name || col.column_id}: ${col.string_value}`);
+                }
+            }
+            const notes = noteParts.filter(Boolean).join(', ') || undefined;
+
+            const lead = await this.leadsService.create({
+                companyId,
+                name: fullName,
+                phone,
+                email,
+                source: LeadSource.GOOGLE_ADS,
+                status: LeadStatus.NEW,
+                assignedTo: assignedTo || undefined,
+                notes,
+            });
+
+            this.notifyNewLead(lead, 'Google Ads');
+            return {};
+        }
+
+        // Legacy/middleware format — companyId + flat fields
+        if (dto.companyId) {
+            const fullName = dto.name || [dto.first_name, dto.last_name].filter(Boolean).join(' ') || 'Unknown (Google)';
+            const assignedTo = await this.leadsService.getNextAssignee(dto.companyId);
+
+            const lead = await this.leadsService.create({
+                companyId: dto.companyId,
+                name: fullName,
+                phone: dto.phone,
+                email: dto.email,
+                source: LeadSource.GOOGLE_ADS,
+                status: LeadStatus.NEW,
+                assignedTo: assignedTo || undefined,
+            });
+
+            this.notifyNewLead(lead, 'Google Ads');
+            return { success: true, leadId: lead.id, assignedTo };
+        }
+
+        this.logger.warn(`Unrecognized Google webhook format: ${JSON.stringify(dto).substring(0, 300)}`);
+        return {};
     }
 
     /**

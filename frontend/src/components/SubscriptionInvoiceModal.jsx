@@ -62,17 +62,10 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                                 )}
                             </div>
                             <div className="text-sm text-slate-500 space-y-1">
-                                {settings?.address ? (
+                                {settings?.address && (
                                     <div className="whitespace-pre-wrap">{settings.address}</div>
-                                ) : (
-                                    <>
-                                        <p>123 Tech Park, Sector 5</p>
-                                        <p>Bangalore, Karnataka 560001</p>
-                                        <p>India</p>
-                                    </>
                                 )}
                                 {settings?.gstNo && <p>GSTIN: {settings.gstNo}</p>}
-                                <p>support@magnetcrm.com</p>
                             </div>
                         </div>
                         <div className="text-right">
@@ -82,7 +75,7 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                             </p>
                             <div className="mt-4 space-y-1 text-sm">
                                 <p><span className="text-slate-400 w-24 inline-block">Date:</span> {new Date(invoice.date).toLocaleDateString('en-IN')}</p>
-                                <p><span className="text-slate-400 w-24 inline-block">Status:</span> <span className="text-emerald-600 font-bold uppercase text-xs bg-emerald-100 px-2 py-0.5 rounded">Paid</span></p>
+                                <p><span className="text-slate-400 w-24 inline-block">Status:</span> <span className={`font-bold uppercase text-xs px-2 py-0.5 rounded ${invoice.status === 'paid' ? 'text-emerald-600 bg-emerald-100' : 'text-amber-600 bg-amber-100'}`}>{invoice.status === 'paid' ? 'Paid' : 'Pending'}</span></p>
                             </div>
                         </div>
                     </div>
@@ -112,7 +105,7 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                                 <tr>
                                     <td className="py-4">
                                         <p className="font-semibold text-slate-800">{invoice.description}</p>
-                                        <p className="text-xs text-slate-500 mt-1">Magnet CRM Subscription</p>
+                                        <p className="text-xs text-slate-500 mt-1">Subscription</p>
                                     </td>
                                     <td className="py-4 text-right text-sm text-slate-600">
                                         {invoice.period}
@@ -145,13 +138,57 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                         </div>
                     </div>
 
+                    {/* Payment Details */}
+                    {settings && (settings.bankName || settings.upiId || settings.upiQrUrl) && (
+                        <div className="border-t border-slate-100 pt-6 mb-6">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Payment Details</h3>
+                            <div className="flex justify-between items-start gap-8">
+                                <div className="space-y-1 text-sm">
+                                    {settings.bankName && (
+                                        <div>
+                                            <p className="text-slate-500">Bank: <span className="text-slate-800 font-medium">{settings.bankName}</span></p>
+                                            {settings.accountHolderName && <p className="text-slate-500">A/C Holder: <span className="text-slate-800 font-medium">{settings.accountHolderName}</span></p>}
+                                            {settings.accountNumber && <p className="text-slate-500">A/C No: <span className="text-slate-800 font-medium">{settings.accountNumber}</span></p>}
+                                            {settings.ifscCode && <p className="text-slate-500">IFSC: <span className="text-slate-800 font-medium">{settings.ifscCode}</span></p>}
+                                        </div>
+                                    )}
+                                    {settings.upiId && <p className="text-slate-500">UPI: <span className="text-slate-800 font-medium">{settings.upiId}</span></p>}
+                                </div>
+                                {settings.upiQrUrl && (
+                                    <div className="flex-shrink-0">
+                                        <img src={settings.upiQrUrl} alt="UPI QR Code" className="w-24 h-24 object-contain border border-slate-200 rounded-lg" />
+                                        <p className="text-xs text-slate-400 text-center mt-1">Scan to Pay</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Notes & Signature */}
+                    <div className="border-t border-slate-100 pt-6 flex justify-between items-end gap-8 mb-6">
+                        <div className="flex-1">
+                            {settings?.terms && (
+                                <div>
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Terms & Conditions</h3>
+                                    <p className="text-sm text-slate-600 whitespace-pre-line leading-relaxed">{settings.terms}</p>
+                                </div>
+                            )}
+                        </div>
+                        {settings?.signatureUrl && (
+                            <div className="flex-shrink-0 text-center">
+                                <img src={settings.signatureUrl} alt="Authorized Signature" className="h-14 object-contain mb-1" />
+                                <div className="border-t border-slate-300 pt-1">
+                                    <p className="text-xs text-slate-500">Authorized Signatory</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Footer */}
-                    <div className="border-t border-slate-100 pt-8 text-center text-xs text-slate-400">
+                    <div className="border-t border-slate-100 pt-6 text-center text-xs text-slate-400">
                         <p className="mb-2">Thank you for your business!</p>
-                        {settings?.accountHolderName ? (
+                        {settings?.accountHolderName && (
                             <p>{settings.accountHolderName}</p>
-                        ) : (
-                            <p>MagnetCRM Solutions Pvt Ltd • Bangalore, India</p>
                         )}
                     </div>
                 </div>

@@ -55,4 +55,8 @@ export class RegisterSubscriptionDto {
     @IsOptional()
     @IsString()
     taxId?: string;
+
+    @IsOptional()
+    @IsString()
+    couponCode?: string;
 }

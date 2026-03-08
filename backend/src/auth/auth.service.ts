@@ -1,9 +1,10 @@
-import { Injectable, UnauthorizedException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { CompaniesService } from '../companies/companies.service';
 import { PlansService } from '../plans/plans.service';
 import { EmailService } from '../email/email.service';
 import { SettingsService } from '../settings/settings.service';
+import { CouponsService } from '../coupons/coupons.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
@@ -12,12 +13,15 @@ import { ForgotPasswordDto, ResetPasswordDto } from './dto/password-reset.dto';
 import { UserRole } from '../users/user.entity';
 import { MoreThan } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import Razorpay = require('razorpay');
 
 // otplib is ESM-only in v13+, so we use dynamic import
 import { toDataURL } from 'qrcode';
 
 @Injectable()
 export class AuthService {
+    private readonly logger = new Logger(AuthService.name);
+
     constructor(
         private usersService: UsersService,
         private companiesService: CompaniesService,
@@ -25,7 +29,33 @@ export class AuthService {
         private jwtService: JwtService,
         private emailService: EmailService,
         private settingsService: SettingsService,
+        private couponsService: CouponsService,
     ) { }
+
+    private async getRazorpayInstance(): Promise<any> {
+        const paymentSettingsRaw = await this.settingsService.getValue('payment_settings');
+        if (!paymentSettingsRaw) return null;
+        try {
+            const parsed = JSON.parse(paymentSettingsRaw);
+            if (parsed.razorpay?.enabled && parsed.razorpay?.keyId && parsed.razorpay?.keySecret) {
+                return new Razorpay({
+                    key_id: parsed.razorpay.keyId,
+                    key_secret: parsed.razorpay.keySecret,
+                });
+            }
+        } catch { }
+        return null;
+    }
+
+    private async getRazorpayKeyId(): Promise<string | null> {
+        const paymentSettingsRaw = await this.settingsService.getValue('payment_settings');
+        if (!paymentSettingsRaw) return null;
+        try {
+            const parsed = JSON.parse(paymentSettingsRaw);
+            return parsed.razorpay?.keyId || null;
+        } catch { }
+        return null;
+    }
 
     async registerSubscription(dto: RegisterSubscriptionDto) {
         // 1. Check if user exists
@@ -41,16 +71,9 @@ export class AuthService {
         }
 
         const isBankTransfer = dto.paymentMethod === 'bank_transfer';
+        const isRazorpay = dto.paymentMethod === 'razorpay';
 
-        // 3. Create Company
-        // Calculate renewal date based on billing period
-        const renewalDate = new Date();
-        if (dto.billingPeriod === 'yearly') {
-            renewalDate.setFullYear(renewalDate.getFullYear() + 1);
-        } else {
-            renewalDate.setMonth(renewalDate.getMonth() + 1);
-        }
-
+        // 3. Create Company — ALWAYS pending_payment until payment is verified
         const addressParts = [dto.streetAddress, dto.city, dto.state, dto.postcode, dto.country].filter(Boolean);
         const company = await this.companiesService.create({
             companyName: dto.companyName,
@@ -59,9 +82,8 @@ export class AuthService {
             address: addressParts.length > 0 ? addressParts.join(', ') : undefined,
             gstNo: dto.taxId,
             planId: plan.id,
-            subscriptionStatus: isBankTransfer ? 'pending_payment' : 'active',
+            subscriptionStatus: 'pending_payment',
             subscriptionPeriod: dto.billingPeriod,
-            renewalDate: isBankTransfer ? undefined : renewalDate.toISOString(),
         });
 
         // 4. Create Admin User
@@ -76,18 +98,41 @@ export class AuthService {
             companyId: company.id,
         });
 
-        const amount = dto.billingPeriod === 'yearly' ? plan.priceYearly : plan.priceMonthly;
+        let baseAmount = Number(dto.billingPeriod === 'yearly' ? plan.priceYearly : plan.priceMonthly);
+
+        // Apply coupon discount if provided
+        let appliedCouponCode: string | null = null;
+        if (dto.couponCode) {
+            try {
+                const coupon = await this.couponsService.validate(dto.couponCode, dto.billingPeriod);
+                let discount = 0;
+                if (coupon.type === 'percentage') {
+                    discount = parseFloat((baseAmount * coupon.value / 100).toFixed(2));
+                } else {
+                    discount = Math.min(coupon.value, baseAmount);
+                }
+                baseAmount = Math.max(0, parseFloat((baseAmount - discount).toFixed(2)));
+                appliedCouponCode = coupon.code;
+                this.logger.log(`Coupon ${coupon.code} applied: discount=${discount}, newBaseAmount=${baseAmount}`);
+            } catch (err) {
+                this.logger.warn(`Coupon validation failed: ${err.message}`);
+                // Continue without discount — don't block registration
+            }
+        }
+
+        const gstAmount = Math.round(baseAmount * 18) / 100;
+        const totalAmount = Math.round((baseAmount + gstAmount) * 100) / 100; // in rupees
 
         if (isBankTransfer) {
-            // Send bank details email instead of purchase confirmation
-            await this.sendBankDetailsEmail(
-                user.email,
-                dto.firstName,
-                company.companyName,
-                plan.name,
-                Number(amount),
-                dto.billingPeriod,
-            );
+            // Send bank details email
+            try {
+                await this.sendBankDetailsEmail(
+                    user.email, dto.firstName, company.companyName,
+                    plan.name, baseAmount, dto.billingPeriod,
+                );
+            } catch (err) {
+                this.logger.error(`Failed to send bank details email: ${err.message}`);
+            }
 
             return {
                 status: 'pending_payment',
@@ -95,21 +140,132 @@ export class AuthService {
             };
         }
 
-        // Online payment: Auto-login
+        if (isRazorpay) {
+            // Create Razorpay order
+            const rzp = await this.getRazorpayInstance();
+            if (!rzp) {
+                throw new BadRequestException('Razorpay is not configured. Please contact support.');
+            }
+
+            try {
+                const order = await rzp.orders.create({
+                    amount: Math.round(totalAmount * 100), // Razorpay expects paise
+                    currency: 'INR',
+                    receipt: `order_${company.id.substring(0, 8)}`,
+                    notes: {
+                        companyId: company.id,
+                        userId: user.id,
+                        planId: plan.id,
+                        billingPeriod: dto.billingPeriod,
+                        couponCode: appliedCouponCode || undefined,
+                    },
+                });
+
+                const keyId = await this.getRazorpayKeyId();
+
+                return {
+                    status: 'razorpay_order_created',
+                    orderId: order.id,
+                    amount: order.amount,
+                    currency: order.currency,
+                    keyId,
+                    companyId: company.id,
+                    userId: user.id,
+                    couponCode: appliedCouponCode || undefined,
+                    prefill: {
+                        name: `${dto.firstName} ${dto.lastName || ''}`.trim(),
+                        email: dto.email,
+                        contact: dto.phone || '',
+                    },
+                };
+            } catch (err) {
+                this.logger.error(`Razorpay order creation failed: ${err.message}`);
+                throw new BadRequestException('Failed to create payment order. Please try again.');
+            }
+        }
+
+        // PayPal or other — for now, same as bank transfer
+        return {
+            status: 'pending_payment',
+            message: 'Order placed. Your CRM will be activated once payment is verified.',
+        };
+    }
+
+    async verifyRazorpayPayment(data: {
+        razorpay_order_id: string;
+        razorpay_payment_id: string;
+        razorpay_signature: string;
+        companyId: string;
+        userId: string;
+        couponCode?: string;
+    }) {
+        // 1. Verify signature
+        const paymentSettingsRaw = await this.settingsService.getValue('payment_settings');
+        if (!paymentSettingsRaw) throw new BadRequestException('Payment settings not configured');
+
+        let keySecret: string;
+        try {
+            const parsed = JSON.parse(paymentSettingsRaw);
+            keySecret = parsed.razorpay?.keySecret;
+        } catch {
+            throw new BadRequestException('Invalid payment settings');
+        }
+
+        if (!keySecret) throw new BadRequestException('Razorpay key secret not configured');
+
+        const crypto = await import('crypto');
+        const expectedSignature = crypto
+            .createHmac('sha256', keySecret)
+            .update(`${data.razorpay_order_id}|${data.razorpay_payment_id}`)
+            .digest('hex');
+
+        if (expectedSignature !== data.razorpay_signature) {
+            throw new BadRequestException('Payment verification failed. Invalid signature.');
+        }
+
+        // 2. Activate company subscription
+        const company = await this.companiesService.findOne(data.companyId);
+        if (!company) throw new BadRequestException('Company not found');
+
+        const renewalDate = new Date();
+        if (company.subscriptionPeriod === 'yearly') {
+            renewalDate.setFullYear(renewalDate.getFullYear() + 1);
+        } else {
+            renewalDate.setMonth(renewalDate.getMonth() + 1);
+        }
+
+        await this.companiesService.update(data.companyId, {
+            subscriptionStatus: 'active',
+            renewalDate: renewalDate,
+        } as any);
+
+        // 3. Get user and generate JWT
+        const user = await this.usersService.findById(data.userId);
+        if (!user) throw new BadRequestException('User not found');
+
         const payload = { email: user.email, sub: user.id, role: user.role, companyId: user.companyId };
 
-        // Send Purchase Confirmation Email
-        await this.emailService.sendPurchaseConfirmation(
+        // 4. Send purchase confirmation email (non-blocking)
+        const plan = company.plan || (company.planId ? await this.plansService.findOne(company.planId) : null);
+        const amount = company.subscriptionPeriod === 'yearly' ? plan?.priceYearly : plan?.priceMonthly;
+
+        this.emailService.sendPurchaseConfirmation(
             user.email,
-            dto.firstName,
+            user.firstName || user.email,
             company.companyName,
-            plan.name,
-            Number(amount),
-        );
+            plan?.name || 'Subscription',
+            Number(amount || 0),
+        ).catch(err => this.logger.error(`Failed to send purchase confirmation: ${err.message}`));
+
+        // Increment coupon usage after successful payment
+        if (data.couponCode) {
+            this.couponsService.incrementUsage(data.couponCode)
+                .catch(err => this.logger.error(`Failed to increment coupon usage: ${err.message}`));
+        }
 
         return {
             access_token: this.jwtService.sign(payload),
-            user,
+            user: { ...user, password: undefined },
         };
     }
 
@@ -207,6 +363,14 @@ export class AuthService {
             }
         }
 
+        // Check if 2FA is enabled
+        if (user.isTwoFactorEnabled) {
+            return {
+                requires2FA: true,
+                userId: user.id,
+            };
+        }
+
         const payload = { email: user.email, sub: user.id, role: user.role, companyId: user.companyId };
         return {
             access_token: this.jwtService.sign(payload),
@@ -214,7 +378,36 @@ export class AuthService {
         };
     }
 
-    // 2FA Methods
+    async loginVerify2FA(userId: string, token: string) {
+        const user = await this.usersService.findById(userId);
+        if (!user) {
+            throw new UnauthorizedException('User not found');
+        }
+
+        if (!user.isTwoFactorEnabled || !user.twoFactorSecret) {
+            throw new BadRequestException('2FA is not enabled for this user');
+        }
+
+        // Verify the TOTP token
+        const { verify: otpVerify } = await import('otplib');
+        const isValid = await otpVerify({
+            token,
+            secret: user.twoFactorSecret,
+        });
+
+        if (!isValid) {
+            throw new UnauthorizedException('Invalid 2FA code');
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password, twoFactorSecret, ...safeUser } = user;
+        const payload = { email: user.email, sub: user.id, role: user.role, companyId: user.companyId };
+        return {
+            access_token: this.jwtService.sign(payload),
+            user: safeUser,
+        };
+    }
+
     // 2FA Methods
     async generate2FASecret(userId: string) {
         const user = await this.usersService.findById(userId);
