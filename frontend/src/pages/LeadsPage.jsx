@@ -774,12 +774,14 @@ export default function LeadsPage() {
                                             value={form.followUpDate}
                                             onChange={(e) => setForm({ ...form, followUpDate: e.target.value })}
                                             required={form.status === 'follow_up'}
-                                            className={`w-full px-4 py-2.5 bg-slate-800 border rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                                            step="60"
+                                            className={`w-full px-4 py-2.5 bg-slate-800 border rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 [color-scheme:dark] ${
                                                 form.status === 'follow_up' ? 'border-orange-500' : 'border-slate-700'
                                             }`}
+                                            style={{ colorScheme: 'dark' }}
                                         />
                                         {form.status === 'follow_up' && !form.followUpDate && (
-                                            <p className="text-xs text-orange-400 mt-1">Required for Follow Up status</p>
+                                            <p className="text-xs text-orange-400 mt-1">Required for Follow Up status (include time)</p>
                                         )}
                                     </div>
                                 </div>

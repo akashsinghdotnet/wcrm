@@ -136,7 +136,7 @@ export class LeadsService {
         }
 
         // Prevent clearing follow-up date when lead status is already follow_up
-        if (lead.status === LeadStatus.FOLLOW_UP && updateLeadDto.followUpDate === null) {
+        if (lead.status === LeadStatus.FOLLOW_UP && lead.followUpDate && !updateLeadDto.followUpDate && updateLeadDto.hasOwnProperty('followUpDate')) {
             throw new BadRequestException('Cannot clear follow-up date while status is Follow Up. Please change status first.');
         }
 
