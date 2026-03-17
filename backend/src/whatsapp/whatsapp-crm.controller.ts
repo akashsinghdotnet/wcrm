@@ -8,7 +8,7 @@ import { CreateTagDto } from './dto/create-tag.dto';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { CreateBroadcastDto } from './dto/create-broadcast.dto';
 
-@Controller('api/whatsapp-crm')
+@Controller('whatsapp-crm')
 @UseGuards(JwtAuthGuard)
 export class WhatsAppCRMController {
     constructor(private readonly crmService: WhatsAppCRMService) {}
