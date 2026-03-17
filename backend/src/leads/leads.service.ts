@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, LessThanOrEqual, MoreThanOrEqual, In } from 'typeorm';
-import { Lead, LeadStatus } from './lead.entity';
+import { Lead, LeadSource, LeadStatus } from './lead.entity';
 import { Activity, ActivityType } from './activity.entity';
+import { LeadAssignmentRule } from './lead-assignment-rule.entity';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { FilterLeadsDto } from './dto/filter-leads.dto';
@@ -20,6 +21,8 @@ export class LeadsService {
         private leadsRepository: Repository<Lead>,
         @InjectRepository(Activity)
         private activityRepository: Repository<Activity>,
+        @InjectRepository(LeadAssignmentRule)
+        private assignmentRuleRepo: Repository<LeadAssignmentRule>,
         private usersService: UsersService,
         @Inject(forwardRef(() => WhatsAppService))
         private whatsAppService: WhatsAppService,
@@ -57,6 +60,7 @@ export class LeadsService {
 
         const query = this.leadsRepository.createQueryBuilder('lead')
             .leftJoinAndSelect('lead.assignedUser', 'assignedUser')
+            .leftJoinAndSelect('lead.lastUpdatedByUser', 'lastUpdatedByUser')
             .leftJoinAndSelect('lead.client', 'client')
             .orderBy('lead.createdAt', 'DESC')
             .skip(skip)
@@ -80,6 +84,10 @@ export class LeadsService {
 
         if (filters.assignedTo) {
             query.andWhere('lead.assignedTo = :assignedTo', { assignedTo: filters.assignedTo });
+        }
+
+        if (filters.assigned === 'true') {
+            query.andWhere('lead.assignedTo IS NOT NULL');
         }
 
         if (filters.dateFrom && filters.dateTo) {
@@ -122,13 +130,28 @@ export class LeadsService {
     async update(id: string, updateLeadDto: UpdateLeadDto, userId?: string): Promise<Lead> {
         const lead = await this.findOne(id);
 
+        // Validate follow-up date is required when status is follow_up
+        if (updateLeadDto.status === LeadStatus.FOLLOW_UP && !updateLeadDto.followUpDate && !lead.followUpDate) {
+            throw new Error('Follow-up date and time are required when setting status to Follow Up');
+        }
+
+        // Resolve user name for activity logging
+        let userName = '';
+        if (userId) {
+            try {
+                const updater = await this.usersService.findById(userId);
+                userName = updater?.name || updater?.email?.split('@')[0] || '';
+            } catch { }
+        }
+
         // Auto-log status change
         if (updateLeadDto.status && updateLeadDto.status !== lead.status) {
+            const byText = userName ? ` by ${userName}` : '';
             await this.activityRepository.save(this.activityRepository.create({
                 leadId: id,
                 userId: userId || undefined,
                 type: ActivityType.STATUS_CHANGE,
-                content: `Status changed from ${lead.status} to ${updateLeadDto.status}`,
+                content: `Status changed from ${lead.status} to ${updateLeadDto.status}${byText}`,
             }));
         }
 
@@ -140,6 +163,11 @@ export class LeadsService {
                 type: ActivityType.ASSIGNMENT,
                 content: `Lead reassigned to ${updateLeadDto.assignedTo}`,
             }));
+        }
+
+        // Set lastUpdatedBy
+        if (userId) {
+            (updateLeadDto as any).lastUpdatedBy = userId;
         }
 
         // Remove TypeORM relation cache conflict by directly patching the DB row
@@ -157,15 +185,30 @@ export class LeadsService {
     async bulkUpdate(ids: string[], updateDto: UpdateLeadDto, user: any): Promise<void> {
         const leads = await this.leadsRepository.find({ where: { id: In(ids) } });
 
+        // Validate follow-up date is required when status is follow_up
+        if (updateDto.status === LeadStatus.FOLLOW_UP && !updateDto.followUpDate) {
+            throw new Error('Follow-up date and time are required when setting status to Follow Up');
+        }
+
+        // Resolve user name
+        let userName = '';
+        if (user?.userId) {
+            try {
+                const updater = await this.usersService.findById(user.userId);
+                userName = updater?.name || updater?.email?.split('@')[0] || '';
+            } catch { }
+        }
+
         // Track activities for each lead
         const activities: Activity[] = [];
         for (const lead of leads) {
             if (updateDto.status && updateDto.status !== lead.status) {
+                const byText = userName ? ` by ${userName}` : '';
                 activities.push(this.activityRepository.create({
                     leadId: lead.id,
                     userId: user.userId,
                     type: ActivityType.STATUS_CHANGE,
-                    content: `Status changed from ${lead.status} to ${updateDto.status}`,
+                    content: `Status changed from ${lead.status} to ${updateDto.status}${byText}`,
                 }));
             }
             if (updateDto.assignedTo && updateDto.assignedTo !== lead.assignedTo) {
@@ -173,13 +216,18 @@ export class LeadsService {
                     leadId: lead.id,
                     userId: user.userId,
                     type: ActivityType.ASSIGNMENT,
-                    content: `Lead reassigned to ${updateDto.assignedTo}`, // ideally name, but ID for now is ok
+                    content: `Lead reassigned to ${updateDto.assignedTo}`,
                 }));
             }
         }
 
         if (activities.length > 0) {
             await this.activityRepository.save(activities);
+        }
+
+        // Set lastUpdatedBy
+        if (user?.userId) {
+            (updateDto as any).lastUpdatedBy = user.userId;
         }
 
         await this.leadsRepository.update({ id: In(ids) }, updateDto);
@@ -190,20 +238,74 @@ export class LeadsService {
     }
 
     /**
-     * Round-robin auto-assignment: picks the next active staff member for a company.
-     * Cycles through all active staff so leads spread evenly.
+     * Round-robin auto-assignment with source-based rule override.
+     * If a rule exists for the given source, assign to that user.
+     * Otherwise, fall back to round-robin across active staff.
      */
-    async getNextAssignee(companyId: string): Promise<string | null> {
+    async getNextAssignee(companyId: string, source?: string): Promise<string | null> {
+        // Check source-based assignment rules first
+        if (source) {
+            const rule = await this.assignmentRuleRepo.findOne({
+                where: { companyId, source: source as LeadSource, isActive: true },
+            });
+            if (rule) {
+                return rule.assignedTo;
+            }
+        }
+
+        // Get all active source rules to exclude those employees from round-robin
+        const activeRules = await this.assignmentRuleRepo.find({
+            where: { companyId, isActive: true },
+        });
+        const excludedUserIds = new Set(activeRules.map(r => r.assignedTo));
+
+        // Fall back to round-robin, excluding employees with source-specific rules
         const staff = await this.usersService.findActiveStaff(companyId);
-        if (staff.length === 0) {
+        const availableStaff = staff.filter(s => !excludedUserIds.has(s.id));
+        if (availableStaff.length === 0) {
             return null;
         }
 
         const currentIndex = this.roundRobinIndex.get(companyId) || 0;
-        const nextIndex = currentIndex % staff.length;
+        const nextIndex = currentIndex % availableStaff.length;
         this.roundRobinIndex.set(companyId, nextIndex + 1);
 
-        return staff[nextIndex].id;
+        return availableStaff[nextIndex].id;
+    }
+
+    // ------- Assignment Rule CRUD -------
+
+    async getAssignmentRules(companyId: string): Promise<LeadAssignmentRule[]> {
+        return this.assignmentRuleRepo.find({
+            where: { companyId },
+            relations: ['assignedUser'],
+            order: { createdAt: 'DESC' },
+        });
+    }
+
+    async createAssignmentRule(companyId: string, source: string, assignedTo: string): Promise<LeadAssignmentRule> {
+        // Upsert: one rule per source per company
+        let rule = await this.assignmentRuleRepo.findOne({
+            where: { companyId, source: source as LeadSource },
+        });
+        if (rule) {
+            rule.assignedTo = assignedTo;
+            rule.isActive = true;
+        } else {
+            rule = this.assignmentRuleRepo.create({
+                companyId,
+                source: source as LeadSource,
+                assignedTo,
+                isActive: true,
+            });
+        }
+        return this.assignmentRuleRepo.save(rule);
+    }
+
+    async deleteAssignmentRule(id: string): Promise<void> {
+        const rule = await this.assignmentRuleRepo.findOne({ where: { id } });
+        if (!rule) throw new NotFoundException('Assignment rule not found');
+        await this.assignmentRuleRepo.remove(rule);
     }
 
     async findByPhoneOrEmail(companyId: string, phone?: string, email?: string): Promise<Lead | null> {
@@ -434,6 +536,53 @@ export class LeadsService {
         if (from) qb.andWhere('lead.createdAt >= :from', { from });
         if (to) qb.andWhere('lead.createdAt <= :to', { to });
         return qb.getRawMany();
+    }
+
+    async employeePerformance(companyId: string, from?: string, to?: string) {
+        const qb = this.leadsRepository.createQueryBuilder('lead')
+            .select('lead.assignedTo', 'assignedTo')
+            .addSelect('COUNT(*)', 'total')
+            .addSelect("SUM(CASE WHEN lead.status = 'new' THEN 1 ELSE 0 END)", 'newCount')
+            .addSelect("SUM(CASE WHEN lead.status = 'contacted' THEN 1 ELSE 0 END)", 'contactedCount')
+            .addSelect("SUM(CASE WHEN lead.status = 'follow_up' THEN 1 ELSE 0 END)", 'followUpCount')
+            .addSelect("SUM(CASE WHEN lead.status = 'converted' THEN 1 ELSE 0 END)", 'convertedCount')
+            .addSelect("SUM(CASE WHEN lead.status = 'lost' THEN 1 ELSE 0 END)", 'lostCount')
+            .where('lead.companyId = :companyId', { companyId })
+            .andWhere('lead.assignedTo IS NOT NULL')
+            .groupBy('lead.assignedTo');
+
+        if (from) qb.andWhere('lead.createdAt >= :from', { from });
+        if (to) qb.andWhere('lead.createdAt <= :to', { to });
+
+        const rawData = await qb.getRawMany();
+
+        // Resolve user names
+        const result: any[] = [];
+        for (const row of rawData) {
+            let userName = '';
+            let userEmail = '';
+            try {
+                const u = await this.usersService.findById(row.assignedTo);
+                userName = u?.name || '';
+                userEmail = u?.email || '';
+            } catch { }
+            result.push({
+                userId: row.assignedTo,
+                name: userName || userEmail?.split('@')[0] || 'Unknown',
+                email: userEmail,
+                total: parseInt(row.total),
+                newCount: parseInt(row.newCount),
+                contactedCount: parseInt(row.contactedCount),
+                followUpCount: parseInt(row.followUpCount),
+                convertedCount: parseInt(row.convertedCount),
+                lostCount: parseInt(row.lostCount),
+                conversionRate: parseInt(row.total) > 0
+                    ? Math.round((parseInt(row.convertedCount) / parseInt(row.total)) * 100 * 100) / 100
+                    : 0,
+            });
+        }
+
+        return result.sort((a, b) => b.total - a.total);
     }
 
     async search(companyId: string, query: string): Promise<Lead[]> {

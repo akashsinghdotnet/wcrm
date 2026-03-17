@@ -22,6 +22,7 @@ const sourceColors = {
     indiamart: 'bg-orange-500/20 text-orange-400',
     tradeindia: 'bg-emerald-500/20 text-emerald-400',
     website: 'bg-purple-500/20 text-purple-400',
+    whatsapp: 'bg-green-600/20 text-green-400',
     manual: 'bg-slate-600/20 text-slate-400',
 };
 
@@ -44,7 +45,7 @@ export default function LeadsPage() {
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [form, setForm] = useState(emptyForm);
-    const [filters, setFilters] = useState({ status: '', source: '', dateRange: '' });
+    const [filters, setFilters] = useState({ status: '', source: '', dateRange: '', assigned: '' });
     const [customDateFrom, setCustomDateFrom] = useState('');
     const [customDateTo, setCustomDateTo] = useState('');
     const [activeSources, setActiveSources] = useState([]);
@@ -70,6 +71,7 @@ export default function LeadsPage() {
                     if (res.data.tradeindia) sources.push({ key: 'tradeindia', label: 'Trade India' });
                     if (res.data.justdial) sources.push({ key: 'justdial', label: 'JustDial' });
                     sources.push({ key: 'website', label: 'Website' });
+                    sources.push({ key: 'whatsapp', label: 'WhatsApp' });
                     setActiveSources(sources);
                 }
             } catch {
@@ -82,6 +84,7 @@ export default function LeadsPage() {
                     { key: 'tradeindia', label: 'Trade India' },
                     { key: 'justdial', label: 'JustDial' },
                     { key: 'website', label: 'Website' },
+                    { key: 'whatsapp', label: 'WhatsApp' },
                 ]);
             }
         };
@@ -130,6 +133,7 @@ export default function LeadsPage() {
             params.set('limit', limit);
             if (filters.status) params.set('status', filters.status);
             if (filters.source) params.set('source', filters.source);
+            if (filters.assigned) params.set('assigned', filters.assigned);
 
             const dateRange = getDateRange();
             if (dateRange.dateFrom) params.set('dateFrom', dateRange.dateFrom);
@@ -163,6 +167,13 @@ export default function LeadsPage() {
     };
 
     const openEdit = (lead) => {
+        // Format followUpDate for datetime-local input (YYYY-MM-DDTHH:MM)
+        let followUpDateTime = '';
+        if (lead.followUpDate) {
+            const date = new Date(lead.followUpDate);
+            followUpDateTime = date.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:MM
+        }
+
         setForm({
             name: lead.name,
             phone: lead.phone || '',
@@ -171,7 +182,7 @@ export default function LeadsPage() {
             status: lead.status,
             assignedTo: lead.assignedTo || '',
             notes: lead.notes || '',
-            followUpDate: lead.followUpDate?.split('T')[0] || '',
+            followUpDate: followUpDateTime,
         });
         setEditingId(lead.id);
         setShowModal(true);
@@ -179,6 +190,13 @@ export default function LeadsPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Validate follow-up date is required when status is follow_up
+        if (form.status === 'follow_up' && !form.followUpDate) {
+            toast.error('Follow-up date and time are required when status is Follow Up');
+            return;
+        }
+
         try {
             const payload = {
                 ...form,
@@ -247,6 +265,13 @@ export default function LeadsPage() {
     const handleBulkUpdate = async (type, value) => {
         try {
             if (!value) return;
+
+            // Prevent changing to follow_up status without a follow-up date in bulk
+            if (type === 'status' && value === 'follow_up') {
+                toast.error('Cannot bulk update to Follow Up status. Please update leads individually to set follow-up date and time.');
+                return;
+            }
+
             const payload = { ids: selectedIds, updates: {} };
             if (type === 'status') payload.updates.status = value;
             if (type === 'assign') payload.updates.assignedTo = value === 'unassigned' ? null : value;
@@ -257,7 +282,7 @@ export default function LeadsPage() {
             setBulkAction(null);
             loadData();
         } catch (err) {
-            toast.error('Bulk update failed');
+            toast.error(err.response?.data?.message || 'Bulk update failed');
         }
     };
 
@@ -344,6 +369,42 @@ export default function LeadsPage() {
                 )}
             </div>
 
+            {/* Status Quick Filter Tabs */}
+            <div className="flex flex-wrap items-center gap-2">
+                {[
+                    { key: '', label: 'All Leads' },
+                    { key: 'new', label: 'New' },
+                    { key: 'contacted', label: 'Contacted' },
+                    { key: 'follow_up', label: 'Follow Up' },
+                    { key: 'converted', label: 'Converted' },
+                    { key: 'lost', label: 'Lost' },
+                    { key: 'assigned', label: 'Assigned' },
+                ].map((tab) => {
+                    const isActive = tab.key === 'assigned'
+                        ? filters.assigned === 'true' && !filters.status
+                        : filters.status === tab.key && filters.assigned !== 'true';
+                    return (
+                        <button
+                            key={tab.key}
+                            onClick={() => {
+                                if (tab.key === 'assigned') {
+                                    setFilters({ ...filters, status: '', assigned: 'true' });
+                                } else {
+                                    setFilters({ ...filters, status: tab.key, assigned: '' });
+                                }
+                                setPage(1);
+                            }}
+                            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${isActive
+                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
+                                : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700'
+                            }`}
+                        >
+                            {tab.label}
+                        </button>
+                    );
+                })}
+            </div>
+
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-3">
                 <Filter className="w-4 h-4 text-slate-400" />
@@ -398,9 +459,9 @@ export default function LeadsPage() {
                         />
                     </div>
                 )}
-                {(filters.status || filters.source || filters.dateRange) && (
+                {(filters.status || filters.source || filters.dateRange || filters.assigned) && (
                     <button
-                        onClick={() => { setFilters({ status: '', source: '', dateRange: '' }); setCustomDateFrom(''); setCustomDateTo(''); setPage(1); }}
+                        onClick={() => { setFilters({ status: '', source: '', dateRange: '', assigned: '' }); setCustomDateFrom(''); setCustomDateTo(''); setPage(1); }}
                         className="text-xs text-slate-400 hover:text-white px-3 py-2 bg-slate-800 rounded-xl"
                     >
                         Clear
@@ -427,6 +488,7 @@ export default function LeadsPage() {
                                 <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Source</th>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Assigned To</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Updated By</th>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Date</th>
                                 <th className="px-6 py-4 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Actions</th>
                             </tr>
@@ -464,6 +526,15 @@ export default function LeadsPage() {
                                     </td>
                                     <td className="px-6 py-4 text-sm text-slate-400">
                                         {lead.assignedUser?.email?.split('@')[0] || '—'}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm">
+                                        {lead.lastUpdatedByUser ? (
+                                            <span className={lead.lastUpdatedBy !== lead.assignedTo ? 'text-amber-400 font-medium' : 'text-slate-400'}>
+                                                {lead.lastUpdatedByUser.name || lead.lastUpdatedByUser.email?.split('@')[0]}
+                                            </span>
+                                        ) : (
+                                            <span className="text-slate-500">—</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 text-sm text-slate-400">
                                         {new Date(lead.createdAt).toLocaleDateString('en-IN')}
@@ -508,7 +579,7 @@ export default function LeadsPage() {
                             ))}
                             {leads.length === 0 && (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan={9} className="px-6 py-12 text-center text-slate-500">
                                         No leads found. {canAssign ? 'Click "Add Lead" to create one.' : 'No leads assigned to you yet.'}
                                     </td>
                                 </tr>
@@ -656,6 +727,7 @@ export default function LeadsPage() {
                                             <option value="google_ads">Google Ads</option>
                                             <option value="justdial">JustDial</option>
                                             <option value="website">Website</option>
+                                            <option value="whatsapp">WhatsApp</option>
                                         </select>
                                     </div>
                                     <div>
@@ -691,13 +763,21 @@ export default function LeadsPage() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Follow-up Date</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                                            Follow-up Date & Time{form.status === 'follow_up' && <span className="text-red-400"> *</span>}
+                                        </label>
                                         <input
-                                            type="date"
+                                            type="datetime-local"
                                             value={form.followUpDate}
                                             onChange={(e) => setForm({ ...form, followUpDate: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            required={form.status === 'follow_up'}
+                                            className={`w-full px-4 py-2.5 bg-slate-800 border rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                                                form.status === 'follow_up' ? 'border-orange-500' : 'border-slate-700'
+                                            }`}
                                         />
+                                        {form.status === 'follow_up' && !form.followUpDate && (
+                                            <p className="text-xs text-orange-400 mt-1">Required for Follow Up status</p>
+                                        )}
                                     </div>
                                 </div>
                                 <div>
