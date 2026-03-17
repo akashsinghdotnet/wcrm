@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, Upload, Plus, Search, Filter, Tag, List, Download, UserCheck, UserX } from 'lucide-react';
-import api from '../api';
+import api from '../services/api';
 import toast from 'react-hot-toast';
 
 export default function WhatsAppContactsPage() {

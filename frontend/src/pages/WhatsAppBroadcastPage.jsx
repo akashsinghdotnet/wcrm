@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Send, Calendar, Users, CheckCircle, XCircle, Clock, AlertTriangle, BarChart3 } from 'lucide-react';
-import api from '../api';
+import api from '../services/api';
 import toast from 'react-hot-toast';
 
 export default function WhatsAppBroadcastPage() {
