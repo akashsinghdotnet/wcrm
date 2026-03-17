@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FileText, Plus, CheckCircle, XCircle, Clock, ExternalLink } from 'lucide-react';
-import api from '../api';
+import api from '../services/api';
 import toast from 'react-hot-toast';
 
 export default function WhatsAppTemplatesPage() {
