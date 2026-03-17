@@ -31,6 +31,9 @@ import EmailHistoryPage from './pages/EmailHistoryPage';
 import MarketingPage from './pages/MarketingPage';
 import WhatsAppChatsPage from './pages/WhatsAppChatsPage';
 import WhatsAppChatPage from './pages/WhatsAppChatPage';
+import WhatsAppContactsPage from './pages/WhatsAppContactsPage';
+import WhatsAppBroadcastPage from './pages/WhatsAppBroadcastPage';
+import WhatsAppTemplatesPage from './pages/WhatsAppTemplatesPage';
 import TicketsPage from './pages/TicketsPage';
 import TicketDetailsPage from './pages/TicketDetailsPage';
 import AnnouncementsAdminPage from './pages/AnnouncementsAdminPage';
@@ -178,6 +181,21 @@ export default function App() {
           <Route path="whatsapp-chats/:leadId" element={
             <ProtectedRoute roles={['admin', 'manager', 'staff']}>
               <WhatsAppChatPage />
+            </ProtectedRoute>
+          } />
+          <Route path="whatsapp-contacts" element={
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+              <WhatsAppContactsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="whatsapp-broadcasts" element={
+            <ProtectedRoute roles={['admin', 'manager']}>
+              <WhatsAppBroadcastPage />
+            </ProtectedRoute>
+          } />
+          <Route path="whatsapp-templates" element={
+            <ProtectedRoute roles={['admin']}>
+              <WhatsAppTemplatesPage />
             </ProtectedRoute>
           } />
           <Route path="tickets" element={

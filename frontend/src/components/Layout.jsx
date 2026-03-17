@@ -28,6 +28,9 @@ import {
     Ticket,
     Megaphone,
     Bell,
+    UserCircle2,
+    Send,
+    FileType,
 } from 'lucide-react';
 
 const navItems = [
@@ -35,6 +38,9 @@ const navItems = [
     { to: '/leads', label: 'Leads', icon: FileText, roles: ['admin', 'staff'] },
     { to: '/pipeline', label: 'Pipeline', icon: Kanban, roles: ['admin', 'staff'] },
     { to: '/whatsapp-chats', label: 'WhatsApp Chats', icon: MessageCircle, roles: ['admin', 'manager', 'staff'] },
+    { to: '/whatsapp-contacts', label: 'WA Contacts', icon: UserCircle2, roles: ['admin', 'manager', 'staff'] },
+    { to: '/whatsapp-broadcasts', label: 'WA Broadcasts', icon: Send, roles: ['admin', 'manager'] },
+    { to: '/whatsapp-templates', label: 'WA Templates', icon: FileType, roles: ['admin'] },
     {
         to: '/invoices',
         label: 'Invoices',

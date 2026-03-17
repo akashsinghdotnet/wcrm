@@ -272,7 +272,7 @@ export class WhatsAppService {
 
                 if (whatsappConfig) {
                     const contactName = contacts.find((c: any) => c.wa_id === fromPhone)?.profile?.name || 'Unknown (WhatsApp Ad)';
-                    const assignedTo = await this.leadsService.getNextAssignee(whatsappConfig.companyId);
+                    const assignedTo = await this.leadsService.getNextAssignee(whatsappConfig.companyId, 'meta_ads');
 
                     const adNotes = [
                         referral.source_url ? `Ad URL: ${referral.source_url}` : null,
@@ -307,7 +307,7 @@ export class WhatsAppService {
 
                 if (whatsappConfig) {
                     const contactName = contacts.find((c: any) => c.wa_id === fromPhone)?.profile?.name || 'Unknown (WhatsApp)';
-                    const assignedTo = await this.leadsService.getNextAssignee(whatsappConfig.companyId);
+                    const assignedTo = await this.leadsService.getNextAssignee(whatsappConfig.companyId, 'whatsapp');
 
                     lead = await this.leadsService.create({
                         companyId: whatsappConfig.companyId,
