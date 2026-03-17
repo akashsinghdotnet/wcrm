@@ -10,6 +10,7 @@ export enum LeadSource {
     INDIAMART = 'indiamart',
     TRADEINDIA = 'tradeindia',
     WEBSITE = 'website',
+    WHATSAPP = 'whatsapp',
     MANUAL = 'manual',
 }
 
@@ -75,6 +76,13 @@ export class Lead {
 
     @Column({ type: 'timestamp', nullable: true })
     followUpDate: Date;
+
+    @Column({ nullable: true })
+    lastUpdatedBy: string;
+
+    @ManyToOne(() => User, { nullable: true })
+    @JoinColumn({ name: 'lastUpdatedBy' })
+    lastUpdatedByUser: User;
 
     @CreateDateColumn()
     createdAt: Date;

@@ -19,6 +19,10 @@ export class FilterLeadsDto {
     companyId?: string;
 
     @IsOptional()
+    @IsString()
+    assigned?: string;
+
+    @IsOptional()
     @IsDateString()
     dateFrom?: string;
 

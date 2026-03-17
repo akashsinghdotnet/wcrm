@@ -45,6 +45,26 @@ export class LeadsController {
         return this.leadsService.importFromCsv(body.csvText, req.user.companyId);
     }
 
+    // ---- Assignment Rule endpoints (MUST be before :id) ----
+
+    @Get('assignment-rules')
+    @Roles(UserRole.ADMIN)
+    getAssignmentRules(@Request() req) {
+        return this.leadsService.getAssignmentRules(req.user.companyId);
+    }
+
+    @Post('assignment-rules')
+    @Roles(UserRole.ADMIN)
+    createAssignmentRule(@Request() req, @Body() body: { source: string; assignedTo: string }) {
+        return this.leadsService.createAssignmentRule(req.user.companyId, body.source, body.assignedTo);
+    }
+
+    @Delete('assignment-rules/:ruleId')
+    @Roles(UserRole.ADMIN)
+    deleteAssignmentRule(@Param('ruleId') ruleId: string) {
+        return this.leadsService.deleteAssignmentRule(ruleId);
+    }
+
     // ---- Bulk endpoints (MUST be before :id) ----
 
     @Patch('bulk')
