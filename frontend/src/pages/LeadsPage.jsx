@@ -202,7 +202,8 @@ export default function LeadsPage() {
                 ...form,
                 companyId: user.companyId,
                 assignedTo: form.assignedTo || null,
-                followUpDate: form.followUpDate || undefined,
+                // Send null if date is cleared (empty string), otherwise send the date value or undefined
+                followUpDate: form.followUpDate === '' ? null : (form.followUpDate || undefined),
             };
 
             if (editingId) {
@@ -215,7 +216,9 @@ export default function LeadsPage() {
             setShowModal(false);
             loadData();
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to save');
+            // Display backend error message if available
+            const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to save';
+            toast.error(errorMessage);
         }
     };
 

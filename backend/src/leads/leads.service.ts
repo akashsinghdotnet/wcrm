@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, LessThanOrEqual, MoreThanOrEqual, In } from 'typeorm';
 import { Lead, LeadSource, LeadStatus } from './lead.entity';
@@ -132,7 +132,12 @@ export class LeadsService {
 
         // Validate follow-up date is required when status is follow_up
         if (updateLeadDto.status === LeadStatus.FOLLOW_UP && !updateLeadDto.followUpDate && !lead.followUpDate) {
-            throw new Error('Follow-up date and time are required when setting status to Follow Up');
+            throw new BadRequestException('Please choose follow-up date and time to set status to Follow Up');
+        }
+
+        // Prevent clearing follow-up date when lead status is already follow_up
+        if (lead.status === LeadStatus.FOLLOW_UP && updateLeadDto.followUpDate === null) {
+            throw new BadRequestException('Cannot clear follow-up date while status is Follow Up. Please change status first.');
         }
 
         // Resolve user name for activity logging
@@ -187,7 +192,7 @@ export class LeadsService {
 
         // Validate follow-up date is required when status is follow_up
         if (updateDto.status === LeadStatus.FOLLOW_UP && !updateDto.followUpDate) {
-            throw new Error('Follow-up date and time are required when setting status to Follow Up');
+            throw new BadRequestException('Please choose follow-up date and time to set status to Follow Up');
         }
 
         // Resolve user name
