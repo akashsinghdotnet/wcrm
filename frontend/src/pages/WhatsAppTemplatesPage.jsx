@@ -204,7 +204,7 @@ export default function WhatsAppTemplatesPage() {
                                         placeholder="Hello {{name}}, your order {{order_id}} has been confirmed..."
                                         className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono"
                                     />
-                                    <p className="text-xs text-slate-500 mt-1">Use {{"{{"}}variable{{"}}"}} for dynamic content</p>
+                                    <p className="text-xs text-slate-500 mt-1">Use {`{{variable}}`} for dynamic content</p>
                                 </div>
 
                                 <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 text-sm text-yellow-300">
