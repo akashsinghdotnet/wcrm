@@ -58,9 +58,11 @@ export class WhatsAppCRMService {
     async importContacts(companyId: string, dto: ImportContactsDto): Promise<{
         imported: number;
         skipped: number;
-        errors: string[]
+        errors: string[];
+        contactIds: string[];
     }> {
         const errors: string[] = [];
+        const contactIds: string[] = [];
         let imported = 0;
         let skipped = 0;
 
@@ -86,14 +88,15 @@ export class WhatsAppCRMService {
                     optInDate: contactData.isOptedIn ? new Date() : null,
                 });
 
-                await this.contactRepo.save(contact);
+                const saved = await this.contactRepo.save(contact);
+                contactIds.push(saved.id);
                 imported++;
             } catch (error) {
                 errors.push(`Failed to import ${contactData.phone}: ${error.message}`);
             }
         }
 
-        return { imported, skipped, errors };
+        return { imported, skipped, errors, contactIds };
     }
 
     async getContacts(companyId: string, filters?: {

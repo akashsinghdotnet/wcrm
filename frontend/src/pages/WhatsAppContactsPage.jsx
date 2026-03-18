@@ -24,6 +24,13 @@ export default function WhatsAppContactsPage() {
         notes: '',
         isOptedIn: false,
         optInSource: 'manual',
+        listIds: [],
+        tagIds: [],
+    });
+
+    const [importForm, setImportForm] = useState({
+        listIds: [],
+        tagIds: [],
     });
 
     const [listForm, setListForm] = useState({ name: '', description: '', color: '#6366f1' });
@@ -63,16 +70,38 @@ export default function WhatsAppContactsPage() {
     const handleCreateContact = async (e) => {
         e.preventDefault();
         try {
+            let contactId;
             if (selectedContact) {
                 await api.put(`/whatsapp-crm/contacts/${selectedContact.id}`, contactForm);
+                contactId = selectedContact.id;
                 toast.success('Contact updated');
             } else {
-                await api.post('/whatsapp-crm/contacts', contactForm);
+                const res = await api.post('/whatsapp-crm/contacts', contactForm);
+                contactId = res.data.id;
                 toast.success('Contact created');
             }
+
+            // Add to lists
+            for (const listId of contactForm.listIds) {
+                try {
+                    await api.post(`/whatsapp-crm/lists/${listId}/contacts`, { contactIds: [contactId] });
+                } catch (err) {
+                    console.error('Failed to add contact to list', err);
+                }
+            }
+
+            // Add tags
+            for (const tagId of contactForm.tagIds) {
+                try {
+                    await api.post(`/whatsapp-crm/contacts/${contactId}/tags`, { tagIds: [tagId] });
+                } catch (err) {
+                    console.error('Failed to add tag to contact', err);
+                }
+            }
+
             setShowContactModal(false);
             setSelectedContact(null);
-            setContactForm({ name: '', phone: '', email: '', notes: '', isOptedIn: false, optInSource: 'manual' });
+            setContactForm({ name: '', phone: '', email: '', notes: '', isOptedIn: false, optInSource: 'manual', listIds: [], tagIds: [] });
             loadData();
         } catch (err) {
             toast.error(err.response?.data?.message || 'Failed to save contact');
@@ -120,12 +149,36 @@ export default function WhatsAppContactsPage() {
                     defaultOptInSource: 'imported',
                 });
 
+                // Add imported contacts to selected lists and tags
+                if (res.data.contactIds && res.data.contactIds.length > 0) {
+                    // Add to lists
+                    for (const listId of importForm.listIds) {
+                        try {
+                            await api.post(`/whatsapp-crm/lists/${listId}/contacts`, { contactIds: res.data.contactIds });
+                        } catch (err) {
+                            console.error('Failed to add contacts to list', err);
+                        }
+                    }
+
+                    // Add tags
+                    for (const contactId of res.data.contactIds) {
+                        for (const tagId of importForm.tagIds) {
+                            try {
+                                await api.post(`/whatsapp-crm/contacts/${contactId}/tags`, { tagIds: [tagId] });
+                            } catch (err) {
+                                console.error('Failed to add tag to contact', err);
+                            }
+                        }
+                    }
+                }
+
                 toast.success(`Imported ${res.data.imported} contacts. Skipped ${res.data.skipped} duplicates.`);
                 if (res.data.errors.length > 0) {
                     console.error('Import errors:', res.data.errors);
                 }
                 setShowImportModal(false);
                 setImportFile(null);
+                setImportForm({ listIds: [], tagIds: [] });
                 loadData();
             };
             reader.readAsText(importFile);
@@ -425,6 +478,36 @@ export default function WhatsAppContactsPage() {
                                 <Download className="w-4 h-4" />
                                 Download Sample CSV
                             </button>
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Add all contacts to Lists (optional)</label>
+                                    <select
+                                        multiple
+                                        value={importForm.listIds}
+                                        onChange={(e) => setImportForm({ ...importForm, listIds: Array.from(e.target.selectedOptions, option => option.value) })}
+                                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white min-h-[100px]"
+                                    >
+                                        {lists.map(list => (
+                                            <option key={list.id} value={list.id}>{list.name}</option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-slate-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Add all contacts to Tags (optional)</label>
+                                    <select
+                                        multiple
+                                        value={importForm.tagIds}
+                                        onChange={(e) => setImportForm({ ...importForm, tagIds: Array.from(e.target.selectedOptions, option => option.value) })}
+                                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white min-h-[100px]"
+                                    >
+                                        {tags.map(tag => (
+                                            <option key={tag.id} value={tag.id}>{tag.name}</option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-slate-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                                </div>
+                            </div>
                             <div className="flex gap-3">
                                 <button
                                     type="button"
@@ -505,6 +588,52 @@ export default function WhatsAppContactsPage() {
                                     rows={3}
                                     className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"
                                 />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Add to Lists</label>
+                                    <select
+                                        multiple
+                                        value={contactForm.listIds}
+                                        onChange={(e) => setContactForm({ ...contactForm, listIds: Array.from(e.target.selectedOptions, option => option.value) })}
+                                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white min-h-[100px]"
+                                    >
+                                        {lists.map(list => (
+                                            <option key={list.id} value={list.id}>{list.name}</option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-slate-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Add Tags</label>
+                                    <select
+                                        multiple
+                                        value={contactForm.tagIds}
+                                        onChange={(e) => setContactForm({ ...contactForm, tagIds: Array.from(e.target.selectedOptions, option => option.value) })}
+                                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white min-h-[100px]"
+                                    >
+                                        {tags.map(tag => (
+                                            <option key={tag.id} value={tag.id}>{tag.name}</option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-slate-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2 mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowListModal(true)}
+                                    className="px-3 py-1.5 bg-purple-600/20 text-purple-400 text-sm rounded-lg hover:bg-purple-600/30 border border-purple-600/30"
+                                >
+                                    + Create New List
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowTagModal(true)}
+                                    className="px-3 py-1.5 bg-pink-600/20 text-pink-400 text-sm rounded-lg hover:bg-pink-600/30 border border-pink-600/30"
+                                >
+                                    + Create New Tag
+                                </button>
                             </div>
                             <div className="mb-6">
                                 <label className="flex items-center gap-2 cursor-pointer">
