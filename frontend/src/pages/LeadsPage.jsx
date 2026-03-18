@@ -174,13 +174,16 @@ export default function LeadsPage() {
             followUpDateTime = date.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:MM
         }
 
+        // Get the assigned user ID from either assignedTo field or assignedUser object
+        const assignedUserId = lead.assignedUser?.id || lead.assignedTo || '';
+
         setForm({
             name: lead.name,
             phone: lead.phone || '',
             email: lead.email || '',
-            source: lead.source,
+            source: lead.source || 'manual',
             status: lead.status,
-            assignedTo: lead.assignedTo || '',
+            assignedTo: assignedUserId,
             notes: lead.notes || '',
             followUpDate: followUpDateTime,
         });
@@ -725,12 +728,9 @@ export default function LeadsPage() {
                                             disabled={!canAssign}
                                             className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
                                         >
-                                            <option value="manual">Manual</option>
-                                            <option value="meta_ads">Meta Ads</option>
-                                            <option value="google_ads">Google Ads</option>
-                                            <option value="justdial">JustDial</option>
-                                            <option value="website">Website</option>
-                                            <option value="whatsapp">WhatsApp</option>
+                                            {activeSources.map(src => (
+                                                <option key={src.key} value={src.key}>{src.label}</option>
+                                            ))}
                                         </select>
                                     </div>
                                     <div>
@@ -763,6 +763,12 @@ export default function LeadsPage() {
                                                     {u.email} ({u.role})
                                                 </option>
                                             ))}
+                                            {/* Add current assigned user if not in users list (for staff viewing their own leads) */}
+                                            {editingId && form.assignedTo && !users.find(u => u.id === form.assignedTo) && leads.find(l => l.id === editingId)?.assignedUser && (
+                                                <option value={leads.find(l => l.id === editingId).assignedUser.id}>
+                                                    {leads.find(l => l.id === editingId).assignedUser.email} ({leads.find(l => l.id === editingId).assignedUser.role})
+                                                </option>
+                                            )}
                                         </select>
                                     </div>
                                     <div>

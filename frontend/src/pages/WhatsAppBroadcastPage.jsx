@@ -460,7 +460,9 @@ export default function WhatsAppBroadcastPage() {
                                     <div className="bg-slate-900 rounded-xl p-4 border border-slate-700">
                                         <h4 className="text-sm font-medium text-slate-300 mb-3">Estimated Recipients</h4>
                                         <div className="text-3xl font-bold text-green-400 mb-1">
-                                            {form.targetListIds.length + form.targetTagIds.length > 0 ? '~' : '0'} contacts
+                                            {form.targetType === 'all' || form.targetType === 'unorganized' ||
+                                             (form.targetType === 'lists_tags' && (form.targetListIds.length > 0 || form.targetTagIds.length > 0))
+                                             ? '~' : '0'} contacts
                                         </div>
                                         <p className="text-xs text-slate-500">Will be calculated when broadcast is created</p>
                                     </div>
