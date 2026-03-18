@@ -18,6 +18,7 @@ export default function WhatsAppBroadcastPage() {
         name: '',
         templateId: '',
         message: '',
+        targetType: 'lists_tags', // 'all', 'unorganized', 'lists_tags'
         targetListIds: [],
         targetTagIds: [],
         targetContactIds: [],
@@ -64,8 +65,8 @@ export default function WhatsAppBroadcastPage() {
             return;
         }
 
-        if (form.targetListIds.length === 0 && form.targetTagIds.length === 0 && form.targetContactIds.length === 0) {
-            toast.error('Please select at least one target (list, tag, or contacts)');
+        if (form.targetType === 'lists_tags' && form.targetListIds.length === 0 && form.targetTagIds.length === 0 && form.targetContactIds.length === 0) {
+            toast.error('Please select at least one list, tag, or contact');
             return;
         }
 
@@ -77,6 +78,7 @@ export default function WhatsAppBroadcastPage() {
                 name: '',
                 templateId: '',
                 message: '',
+                targetType: 'lists_tags',
                 targetListIds: [],
                 targetTagIds: [],
                 targetContactIds: [],
@@ -338,7 +340,57 @@ export default function WhatsAppBroadcastPage() {
                                 {/* Right Column */}
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-2">Target Lists</label>
+                                        <label className="block text-sm font-medium text-slate-300 mb-3">Target Audience</label>
+                                        <div className="space-y-2 mb-4">
+                                            <label className="flex items-center gap-3 cursor-pointer bg-slate-900 p-3 rounded-xl border border-slate-700 hover:border-green-500/50 transition-colors">
+                                                <input
+                                                    type="radio"
+                                                    name="targetType"
+                                                    value="all"
+                                                    checked={form.targetType === 'all'}
+                                                    onChange={(e) => setForm({ ...form, targetType: e.target.value })}
+                                                    className="w-4 h-4 text-green-600"
+                                                />
+                                                <div className="flex-1">
+                                                    <span className="text-sm font-medium text-slate-200 block">All Contacts</span>
+                                                    <span className="text-xs text-slate-500">Send to all contacts in your database</span>
+                                                </div>
+                                            </label>
+                                            <label className="flex items-center gap-3 cursor-pointer bg-slate-900 p-3 rounded-xl border border-slate-700 hover:border-green-500/50 transition-colors">
+                                                <input
+                                                    type="radio"
+                                                    name="targetType"
+                                                    value="unorganized"
+                                                    checked={form.targetType === 'unorganized'}
+                                                    onChange={(e) => setForm({ ...form, targetType: e.target.value })}
+                                                    className="w-4 h-4 text-green-600"
+                                                />
+                                                <div className="flex-1">
+                                                    <span className="text-sm font-medium text-slate-200 block">Unorganized Contacts</span>
+                                                    <span className="text-xs text-slate-500">Contacts not in any list or tag</span>
+                                                </div>
+                                            </label>
+                                            <label className="flex items-center gap-3 cursor-pointer bg-slate-900 p-3 rounded-xl border border-slate-700 hover:border-green-500/50 transition-colors">
+                                                <input
+                                                    type="radio"
+                                                    name="targetType"
+                                                    value="lists_tags"
+                                                    checked={form.targetType === 'lists_tags'}
+                                                    onChange={(e) => setForm({ ...form, targetType: e.target.value })}
+                                                    className="w-4 h-4 text-green-600"
+                                                />
+                                                <div className="flex-1">
+                                                    <span className="text-sm font-medium text-slate-200 block">Specific Lists/Tags</span>
+                                                    <span className="text-xs text-slate-500">Choose specific lists or tags</span>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {form.targetType === 'lists_tags' && (
+                                        <>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-2">Target Lists</label>
                                         <div className="space-y-2 max-h-32 overflow-y-auto bg-slate-900 rounded-xl p-3 border border-slate-700">
                                             {lists.map(list => (
                                                 <label key={list.id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-2 rounded">
@@ -385,6 +437,8 @@ export default function WhatsAppBroadcastPage() {
                                             ))}
                                         </div>
                                     </div>
+                                        </>
+                                    )}
 
                                     <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
                                         <label className="flex items-start gap-3 cursor-pointer">

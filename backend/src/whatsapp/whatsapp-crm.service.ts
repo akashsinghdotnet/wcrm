@@ -305,9 +305,10 @@ export class WhatsAppCRMService {
     // ==================== BROADCAST MANAGEMENT ====================
 
     async createBroadcast(companyId: string, userId: string, dto: CreateBroadcastDto): Promise<WhatsAppBroadcast> {
-        // Get target contacts
+        // Get target contacts based on target type
         const contacts = await this.getTargetContacts(
             companyId,
+            dto.targetType || 'lists_tags',
             dto.targetListIds || [],
             dto.targetTagIds || [],
             dto.targetContactIds || [],
@@ -344,6 +345,7 @@ export class WhatsAppCRMService {
 
     private async getTargetContacts(
         companyId: string,
+        targetType: string,
         listIds: string[],
         tagIds: string[],
         contactIds: string[],
@@ -360,26 +362,37 @@ export class WhatsAppCRMService {
             query.andWhere('contact.isOptedOut = false');
         }
 
-        // Build conditions
-        const conditions: string[] = [];
+        // Handle different target types
+        if (targetType === 'all') {
+            // Send to all contacts (already filtered by opt-in above)
+            return query.getMany();
+        } else if (targetType === 'unorganized') {
+            // Send to contacts not in any list or tag
+            query.andWhere('list.id IS NULL');
+            query.andWhere('tag.id IS NULL');
+            return query.getMany();
+        } else {
+            // targetType === 'lists_tags' - Send to specific lists/tags
+            const conditions: string[] = [];
 
-        if (listIds.length > 0) {
-            conditions.push('list.id IN (:...listIds)');
+            if (listIds.length > 0) {
+                conditions.push('list.id IN (:...listIds)');
+            }
+
+            if (tagIds.length > 0) {
+                conditions.push('tag.id IN (:...tagIds)');
+            }
+
+            if (contactIds.length > 0) {
+                conditions.push('contact.id IN (:...contactIds)');
+            }
+
+            if (conditions.length > 0) {
+                query.andWhere(`(${conditions.join(' OR ')})`, { listIds, tagIds, contactIds });
+            }
+
+            return query.getMany();
         }
-
-        if (tagIds.length > 0) {
-            conditions.push('tag.id IN (:...tagIds)');
-        }
-
-        if (contactIds.length > 0) {
-            conditions.push('contact.id IN (:...contactIds)');
-        }
-
-        if (conditions.length > 0) {
-            query.andWhere(`(${conditions.join(' OR ')})`, { listIds, tagIds, contactIds });
-        }
-
-        return query.getMany();
     }
 
     async getBroadcasts(companyId: string): Promise<WhatsAppBroadcast[]> {

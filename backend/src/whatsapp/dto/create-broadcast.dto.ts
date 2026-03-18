@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray, IsBoolean, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsBoolean, IsDateString, IsIn } from 'class-validator';
 
 export class CreateBroadcastDto {
     @IsString()
@@ -11,6 +11,11 @@ export class CreateBroadcastDto {
     @IsString()
     @IsOptional()
     message?: string;
+
+    @IsString()
+    @IsOptional()
+    @IsIn(['all', 'unorganized', 'lists_tags'])
+    targetType?: string; // 'all', 'unorganized', 'lists_tags'
 
     @IsArray()
     @IsOptional()
