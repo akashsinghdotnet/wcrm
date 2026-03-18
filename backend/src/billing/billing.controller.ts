@@ -43,9 +43,10 @@ export class BillingController {
     @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN, UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF)
     async getSettings(@Request() req, @Param('companyId') companyId: string) {
         await this.checkInvoiceAccess(req);
-        // Only allow querying own company's settings unless super admin team
         const isSuperadminTeam = req.user.role === UserRole.SUPER_ADMIN || req.user.role === UserRole.SUPERADMIN_ADMIN;
-        if (!isSuperadminTeam && req.user.companyId !== companyId) {
+        // Allow any authenticated user to read super-admin settings (used in subscription invoices)
+        // But restrict access to other companies' settings
+        if (!isSuperadminTeam && companyId !== 'super-admin' && req.user.companyId !== companyId) {
             throw new ForbiddenException('Access denied for company.');
         }
         return this.billingService.getSettings(companyId);

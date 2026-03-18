@@ -13,7 +13,7 @@ export class InvoiceSettings {
     @JoinColumn({ name: 'companyId' })
     company: Company;
 
-    @Column({ nullable: true })
+    @Column({ type: 'longtext', nullable: true })
     logoUrl: string;
 
     @Column({ type: 'text', nullable: true })
@@ -43,10 +43,10 @@ export class InvoiceSettings {
     @Column({ nullable: true })
     upiId: string;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({ type: 'longtext', nullable: true })
     upiQrUrl: string;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({ type: 'longtext', nullable: true })
     signatureUrl: string;
 
     @CreateDateColumn()

@@ -33,6 +33,12 @@ export class DashboardController {
         return this.dashboardService.getReports(req.user.companyId, from, to);
     }
 
+    @Get('employee-reports')
+    @Roles(UserRole.ADMIN, UserRole.MANAGER)
+    getEmployeeReports(@Request() req, @Query('from') from?: string, @Query('to') to?: string) {
+        return this.dashboardService.getEmployeeReports(req.user.companyId, from, to);
+    }
+
     @Get('follow-ups')
     @Roles(UserRole.ADMIN, UserRole.STAFF)
     getFollowUps(@Request() req) {

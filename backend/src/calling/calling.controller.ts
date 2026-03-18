@@ -60,11 +60,7 @@ export class CallingController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF)
     async updateCallSid(@Param('id') id: string, @Body() body: { twilioCallSid: string }) {
-        const log = await this.callingService.getCallLog(id);
-        if (log) {
-            log.twilioCallSid = body.twilioCallSid;
-            // Save directly through the service
-        }
+        await this.callingService.saveCallSid(id, body.twilioCallSid);
         return { success: true };
     }
 
@@ -97,18 +93,29 @@ export class CallingController {
     async voiceTwiml(@Body() body: any, @Res() res: Response) {
         const to = body.To || body.to;
         const from = body.From || body.Caller || body.from;
-        const callSid = body.CallSid;
 
-        // Find config by the "from" phone number or caller
-        // The TwiML App passes custom params — we check To field
         if (!to) {
             const twiml = '<Response><Say>No destination number provided.</Say></Response>';
             res.type('text/xml').send(twiml);
             return;
         }
 
-        // Default: use the from number as caller ID, enable recording
-        const twiml = this.callingService.generateVoiceTwiml(to, from, true);
+        // Look up the company's Twilio phone number to use as callerId
+        // The "from" field from browser SDK is "client:userId", not a valid phone number
+        let callerId = from;
+        let record = true;
+
+        if (from && from.startsWith('client:')) {
+            // Extract userId from client identity and find their company config
+            const userId = from.replace('client:', '');
+            const config = await this.callingService.getConfigByUserId(userId);
+            if (config) {
+                callerId = config.phoneNumber;
+                record = config.recordCalls;
+            }
+        }
+
+        const twiml = this.callingService.generateVoiceTwiml(to, callerId, record);
         res.type('text/xml').send(twiml);
     }
 
@@ -118,15 +125,37 @@ export class CallingController {
      */
     @Post('call-status')
     @HttpCode(HttpStatus.OK)
-    async callStatus(@Body() body: any) {
+    async callStatus(@Body() body: any, @Res() res: Response) {
         const callSid = body.CallSid;
-        const status = body.CallStatus;
-        const duration = body.CallDuration ? parseInt(body.CallDuration) : undefined;
+        // <Dial> action sends DialCallStatus/DialCallDuration; <Number> statusCallback sends CallStatus/CallDuration
+        const status = body.DialCallStatus || body.CallStatus;
+        const duration = body.DialCallDuration || body.CallDuration;
+        const durationNum = duration ? parseInt(duration) : undefined;
 
         if (callSid && status) {
-            await this.callingService.updateCallStatus(callSid, status, duration);
+            await this.callingService.updateCallStatus(callSid, status, durationNum);
         }
-        return '';
+        // Return empty TwiML response (required when used as <Dial> action URL)
+        res.type('text/xml').send('<Response></Response>');
+    }
+
+    // ─── Stream recording audio (proxy to Twilio with auth) ───
+
+    @Get('recording/:callLogId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF)
+    async streamRecording(@Param('callLogId') callLogId: string, @Res() res: Response) {
+        const audioBuffer = await this.callingService.fetchRecording(callLogId);
+        if (!audioBuffer) {
+            res.status(404).json({ message: 'Recording not found' });
+            return;
+        }
+        res.set({
+            'Content-Type': 'audio/mpeg',
+            'Content-Length': audioBuffer.length.toString(),
+            'Cache-Control': 'public, max-age=86400',
+        });
+        res.send(audioBuffer);
     }
 
     /**

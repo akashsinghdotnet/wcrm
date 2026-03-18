@@ -6,7 +6,7 @@ import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
     PieChart, Pie, Cell, LineChart, Line, Legend,
 } from 'recharts';
-import { CalendarDays, TrendingUp, Target, IndianRupee, Loader2 } from 'lucide-react';
+import { CalendarDays, TrendingUp, Target, IndianRupee, Loader2, Download, Users } from 'lucide-react';
 
 const COLORS = ['#6366f1', '#06b6d4', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'];
 const STATUS_COLORS = { new: '#3b82f6', contacted: '#06b6d4', follow_up: '#f59e0b', converted: '#10b981', lost: '#ef4444' };
@@ -23,6 +23,9 @@ export default function ReportsPage() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [preset, setPreset] = useState(1); // Default: 30 days
+    const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'employee'
+    const [employeeData, setEmployeeData] = useState([]);
+    const [empLoading, setEmpLoading] = useState(false);
 
     const dateRange = useMemo(() => {
         const days = DATE_PRESETS[preset].days;
@@ -34,7 +37,12 @@ export default function ReportsPage() {
 
     useEffect(() => {
         fetchReports();
+        if (activeTab === 'employee') fetchEmployeeReports();
     }, [dateRange]);
+
+    useEffect(() => {
+        if (activeTab === 'employee' && employeeData.length === 0) fetchEmployeeReports();
+    }, [activeTab]);
 
     const fetchReports = async () => {
         try {
@@ -49,6 +57,39 @@ export default function ReportsPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchEmployeeReports = async () => {
+        try {
+            setEmpLoading(true);
+            const params = {};
+            if (dateRange.from) params.from = dateRange.from;
+            if (dateRange.to) params.to = dateRange.to;
+            const res = await api.get('/dashboard/employee-reports', { params });
+            setEmployeeData(res.data);
+        } catch {
+            toast.error('Failed to load employee reports');
+        } finally {
+            setEmpLoading(false);
+        }
+    };
+
+    const downloadEmployeeCsv = () => {
+        if (!employeeData.length) return;
+        const header = 'Employee,Email,Total Leads,New,Contacted,Follow Up,Converted,Lost,Conversion Rate\n';
+        const rows = employeeData.map(e =>
+            [e.name, e.email, e.total, e.newCount, e.contactedCount, e.followUpCount, e.convertedCount, e.lostCount, `${e.conversionRate}%`]
+                .map(f => `"${f}"`).join(',')
+        ).join('\n');
+        const blob = new Blob([header + rows], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'employee-performance.csv');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        toast.success('CSV downloaded');
     };
 
     if (loading || !data) {
@@ -85,6 +126,87 @@ export default function ReportsPage() {
                 </div>
             </div>
 
+            {/* Tab Switcher */}
+            <div className="flex gap-2">
+                <button
+                    onClick={() => setActiveTab('overview')}
+                    className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${activeTab === 'overview' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700'}`}
+                >
+                    Overview
+                </button>
+                <button
+                    onClick={() => setActiveTab('employee')}
+                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all ${activeTab === 'employee' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700'}`}
+                >
+                    <Users className="w-4 h-4" />
+                    Employee Performance
+                </button>
+            </div>
+
+            {activeTab === 'employee' ? (
+                /* Employee Performance Tab */
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold text-white">Employee Performance</h3>
+                        <button
+                            onClick={downloadEmployeeCsv}
+                            disabled={!employeeData.length}
+                            className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-xl transition-all border border-slate-700 disabled:opacity-50"
+                        >
+                            <Download className="w-4 h-4" />
+                            Download CSV
+                        </button>
+                    </div>
+                    {empLoading ? (
+                        <div className="flex items-center justify-center h-40">
+                            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+                        </div>
+                    ) : employeeData.length === 0 ? (
+                        <div className="text-center text-slate-500 py-12">No assigned leads found</div>
+                    ) : (
+                        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b border-slate-800">
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Employee</th>
+                                            <th className="px-4 py-4 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">Total</th>
+                                            <th className="px-4 py-4 text-center text-xs font-medium text-blue-400 uppercase tracking-wider">New</th>
+                                            <th className="px-4 py-4 text-center text-xs font-medium text-cyan-400 uppercase tracking-wider">Contacted</th>
+                                            <th className="px-4 py-4 text-center text-xs font-medium text-orange-400 uppercase tracking-wider">Follow Up</th>
+                                            <th className="px-4 py-4 text-center text-xs font-medium text-emerald-400 uppercase tracking-wider">Converted</th>
+                                            <th className="px-4 py-4 text-center text-xs font-medium text-red-400 uppercase tracking-wider">Lost</th>
+                                            <th className="px-4 py-4 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">Conversion %</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-800">
+                                        {employeeData.map((emp) => (
+                                            <tr key={emp.userId} className="hover:bg-slate-800/40 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <p className="text-sm font-medium text-white">{emp.name}</p>
+                                                    <p className="text-xs text-slate-500">{emp.email}</p>
+                                                </td>
+                                                <td className="px-4 py-4 text-center text-sm font-bold text-white">{emp.total}</td>
+                                                <td className="px-4 py-4 text-center text-sm text-blue-400">{emp.newCount}</td>
+                                                <td className="px-4 py-4 text-center text-sm text-cyan-400">{emp.contactedCount}</td>
+                                                <td className="px-4 py-4 text-center text-sm text-orange-400">{emp.followUpCount}</td>
+                                                <td className="px-4 py-4 text-center text-sm text-emerald-400 font-semibold">{emp.convertedCount}</td>
+                                                <td className="px-4 py-4 text-center text-sm text-red-400">{emp.lostCount}</td>
+                                                <td className="px-4 py-4 text-center">
+                                                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${emp.conversionRate >= 50 ? 'bg-emerald-500/20 text-emerald-400' : emp.conversionRate >= 20 ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-700 text-slate-300'}`}>
+                                                        {emp.conversionRate}%
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ) : (
+            <>
             {/* KPI row */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <KpiCard icon={Target} label="Total Leads" value={totalLeads} color="text-blue-400" />
@@ -165,6 +287,8 @@ export default function ReportsPage() {
                     </ResponsiveContainer>
                 </div>
             </div>
+            </>
+            )}
         </div>
     );
 }

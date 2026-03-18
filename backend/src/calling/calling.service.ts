@@ -25,6 +25,14 @@ export class CallingService {
         return this.configRepo.findOne({ where: { companyId } });
     }
 
+    async getConfigByUserId(userId: string): Promise<CallingConfig | null> {
+        return this.configRepo
+            .createQueryBuilder('config')
+            .innerJoin('users', 'u', 'u.companyId = config.companyId')
+            .where('u.id = :userId', { userId })
+            .getOne();
+    }
+
     async saveConfig(companyId: string, dto: {
         accountSid: string;
         authToken: string;
@@ -129,13 +137,20 @@ export class CallingService {
         const VoiceResponse = twilio.twiml.VoiceResponse;
         const response = new VoiceResponse();
 
+        const apiUrl = process.env.API_URL || 'https://api.magnetcrm.com';
         const dial = response.dial({
             callerId,
             record: record ? 'record-from-answer-dual' : 'do-not-record',
-            recordingStatusCallback: `${process.env.API_URL || 'https://api.magnetcrm.com'}/api/calling/recording-status`,
+            recordingStatusCallback: `${apiUrl}/api/calling/recording-status`,
             recordingStatusCallbackMethod: 'POST',
+            action: `${apiUrl}/api/calling/call-status`,
+            method: 'POST',
         });
-        dial.number(to);
+        dial.number({
+            statusCallback: `${apiUrl}/api/calling/call-status`,
+            statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
+            statusCallbackMethod: 'POST',
+        }, to);
 
         return response.toString();
     }
@@ -154,6 +169,13 @@ export class CallingService {
             status: CallStatus.INITIATED,
         });
         return this.callLogRepo.save(log);
+    }
+
+    async saveCallSid(callLogId: string, twilioCallSid: string): Promise<void> {
+        const log = await this.callLogRepo.findOne({ where: { id: callLogId } });
+        if (!log) return;
+        log.twilioCallSid = twilioCallSid;
+        await this.callLogRepo.save(log);
     }
 
     async updateCallStatus(callSid: string, status: string, duration?: number): Promise<void> {
@@ -183,7 +205,7 @@ export class CallingService {
         const log = await this.callLogRepo.findOne({ where: { twilioCallSid: callSid } });
         if (!log) return;
 
-        log.recordingUrl = recordingUrl;
+        log.recordingUrl = recordingUrl.endsWith('.mp3') ? recordingUrl : `${recordingUrl}.mp3`;
         log.recordingSid = recordingSid;
         await this.callLogRepo.save(log);
     }
@@ -220,6 +242,30 @@ export class CallingService {
             relations: ['user'],
             take: 50,
         });
+    }
+
+    async fetchRecording(callLogId: string): Promise<Buffer | null> {
+        const log = await this.callLogRepo.findOne({ where: { id: callLogId } });
+        if (!log || !log.recordingUrl) return null;
+
+        // Get Twilio credentials for this company
+        const config = await this.configRepo.findOne({ where: { companyId: log.companyId } });
+        if (!config) return null;
+
+        try {
+            const url = log.recordingUrl.endsWith('.mp3') ? log.recordingUrl : `${log.recordingUrl}.mp3`;
+            const authHeader = Buffer.from(`${config.accountSid}:${config.authToken}`).toString('base64');
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Basic ${authHeader}` },
+                redirect: 'follow',
+            });
+            if (!response.ok) return null;
+            const arrayBuffer = await response.arrayBuffer();
+            return Buffer.from(arrayBuffer);
+        } catch (err) {
+            this.logger.error(`Failed to fetch recording: ${err.message}`);
+            return null;
+        }
     }
 
     async getCallLog(id: string): Promise<CallLog | null> {

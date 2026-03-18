@@ -87,6 +87,13 @@ export class DashboardService {
     }
 
     /**
+     * Employee performance reports
+     */
+    async getEmployeeReports(companyId: string, from?: string, to?: string) {
+        return this.leadsService.employeePerformance(companyId, from, to);
+    }
+
+    /**
      * Global search across leads and clients
      */
     async search(companyId: string, query: string) {

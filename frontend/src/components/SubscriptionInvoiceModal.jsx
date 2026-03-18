@@ -71,7 +71,7 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                         <div className="text-right">
                             <h1 className="text-4xl font-light text-indigo-900 mb-2">INVOICE</h1>
                             <p className="text-slate-500 font-medium">
-                                #{invoice.invoiceNumber?.startsWith(settings?.prefix || 'INV-') ? invoice.invoiceNumber : `${settings?.prefix || 'INV-'}${invoice.invoiceNumber}`}
+                                #{invoice.invoiceNumber}
                             </p>
                             <div className="mt-4 space-y-1 text-sm">
                                 <p><span className="text-slate-400 w-24 inline-block">Date:</span> {new Date(invoice.date).toLocaleDateString('en-IN')}</p>

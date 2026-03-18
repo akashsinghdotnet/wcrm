@@ -179,7 +179,7 @@ export class IntegrationsService {
                     message ? `Message: ${message}` : null,
                 ].filter(Boolean).join(', ');
 
-                const assignedTo = await this.leadsService.getNextAssignee(companyId);
+                const assignedTo = await this.leadsService.getNextAssignee(companyId, 'tradeindia');
 
                 await this.leadsService.create({
                     companyId,
@@ -280,7 +280,7 @@ export class IntegrationsService {
                 return;
             }
 
-            const assignedTo = await this.leadsService.getNextAssignee(config.companyId);
+            const assignedTo = await this.leadsService.getNextAssignee(config.companyId, 'meta_ads');
 
             // Build notes from additional fields
             const additionalFields = fieldData

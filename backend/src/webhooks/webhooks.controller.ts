@@ -91,7 +91,7 @@ export class WebhooksController {
 
         // Fallback: handle legacy/direct format with companyId in body
         if (body?.companyId) {
-            const assignedTo = await this.leadsService.getNextAssignee(body.companyId);
+            const assignedTo = await this.leadsService.getNextAssignee(body.companyId, 'meta_ads');
             const lead = await this.leadsService.create({
                 companyId: body.companyId,
                 name: body.name || body.full_name || 'Unknown (Meta)',
@@ -165,7 +165,7 @@ export class WebhooksController {
                 }
             }
 
-            const assignedTo = await this.leadsService.getNextAssignee(companyId);
+            const assignedTo = await this.leadsService.getNextAssignee(companyId, 'google_ads');
 
             // Build notes from campaign info and extra fields
             const noteParts = [
@@ -199,7 +199,7 @@ export class WebhooksController {
         // Legacy/middleware format — companyId + flat fields
         if (dto.companyId) {
             const fullName = dto.name || [dto.first_name, dto.last_name].filter(Boolean).join(' ') || 'Unknown (Google)';
-            const assignedTo = await this.leadsService.getNextAssignee(dto.companyId);
+            const assignedTo = await this.leadsService.getNextAssignee(dto.companyId, 'google_ads');
 
             const lead = await this.leadsService.create({
                 companyId: dto.companyId,
@@ -226,7 +226,7 @@ export class WebhooksController {
     @Post('justdial')
     @HttpCode(HttpStatus.CREATED)
     async handleJustdial(@Body() dto: WebhookJustdialDto) {
-        const assignedTo = await this.leadsService.getNextAssignee(dto.companyId);
+        const assignedTo = await this.leadsService.getNextAssignee(dto.companyId, 'justdial');
 
         const notes = [
             dto.category ? `Category: ${dto.category}` : null,
@@ -272,7 +272,7 @@ export class WebhooksController {
         const queryMessage = response?.QUERY_MESSAGE || '';
         const subject = response?.SUBJECT || dto.category || '';
 
-        const assignedTo = await this.leadsService.getNextAssignee(companyId);
+        const assignedTo = await this.leadsService.getNextAssignee(companyId, 'indiamart');
 
         const notes = [
             subject ? `Subject: ${subject}` : null,
@@ -303,7 +303,7 @@ export class WebhooksController {
     @Post('tradeindia')
     @HttpCode(HttpStatus.CREATED)
     async handleTradeindia(@Body() dto: WebhookTradeindiaDto) {
-        const assignedTo = await this.leadsService.getNextAssignee(dto.companyId);
+        const assignedTo = await this.leadsService.getNextAssignee(dto.companyId, 'tradeindia');
 
         const notes = [
             dto.category ? `Category: ${dto.category}` : null,
@@ -332,7 +332,7 @@ export class WebhooksController {
     @Post('website')
     @HttpCode(HttpStatus.CREATED)
     async handleWebsite(@Body() dto: WebhookWebsiteDto) {
-        const assignedTo = await this.leadsService.getNextAssignee(dto.companyId);
+        const assignedTo = await this.leadsService.getNextAssignee(dto.companyId, 'website');
 
         const lead = await this.leadsService.create({
             companyId: dto.companyId,

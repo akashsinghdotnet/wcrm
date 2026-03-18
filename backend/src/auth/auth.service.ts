@@ -388,14 +388,14 @@ export class AuthService {
             throw new BadRequestException('2FA is not enabled for this user');
         }
 
-        // Verify the TOTP token
+        // Verify the TOTP token (otplib v13 verify returns { valid, delta, ... })
         const { verify: otpVerify } = await import('otplib');
-        const isValid = await otpVerify({
+        const result = await otpVerify({
             token,
             secret: user.twoFactorSecret,
         });
 
-        if (!isValid) {
+        if (!result || !result.valid) {
             throw new UnauthorizedException('Invalid 2FA code');
         }
 
@@ -434,18 +434,18 @@ export class AuthService {
             throw new BadRequestException('2FA is not set up');
         }
 
-        // otplib v13+ uses ESM dynamic import
+        // otplib v13 verify returns { valid, delta, ... } not a boolean
         const { verify: otpVerify } = await import('otplib');
-        const isValid = await otpVerify({
+        const result = await otpVerify({
             token,
             secret: user.twoFactorSecret,
         });
 
-        if (!isValid) {
+        if (!result || !result.valid) {
             throw new UnauthorizedException('Invalid 2FA token');
         }
 
-        return isValid;
+        return true;
     }
 
     async enable2FA(userId: string, token: string) {

@@ -54,8 +54,13 @@ export default function BrowserDialer({ lead, onClose }) {
             const res = await api.get('/calling/token');
             const token = res.data.token;
 
+            if (!token) {
+                toast.error('No token received from server. Check Twilio settings.');
+                setLoadingDevice(false);
+                return;
+            }
+
             const device = new Device(token, {
-                codecPreferences: [Device.Codec.Opus, Device.Codec.PCMU],
                 enableRingingState: true,
             });
 
@@ -64,17 +69,35 @@ export default function BrowserDialer({ lead, onClose }) {
                 setLoadingDevice(false);
             });
 
+            device.on('unregistered', () => {
+                console.warn('Twilio Device unregistered');
+                setDeviceReady(false);
+                setLoadingDevice(false);
+            });
+
             device.on('error', (err) => {
                 console.error('Twilio Device error:', err);
                 toast.error(`Call error: ${err.message}`);
+                setLoadingDevice(false);
                 setCallState('failed');
             });
 
+            // Set a timeout in case register() hangs
+            const registerTimeout = setTimeout(() => {
+                if (!deviceRef.current) {
+                    console.error('Twilio Device registration timed out');
+                    toast.error('Twilio connection timed out. Please retry.');
+                    setLoadingDevice(false);
+                }
+            }, 10000);
+
             await device.register();
+            clearTimeout(registerTimeout);
             deviceRef.current = device;
         } catch (err) {
             console.error('Failed to init Twilio:', err);
-            toast.error(err.response?.data?.message || 'Failed to initialize calling. Check Twilio settings.');
+            const msg = err.response?.data?.message || err.message || 'Failed to initialize calling. Check Twilio settings.';
+            toast.error(msg);
             setLoadingDevice(false);
         }
     };
@@ -237,7 +260,15 @@ export default function BrowserDialer({ lead, onClose }) {
                             <p className="text-slate-400 text-sm">Ready to call</p>
                         )}
                         {callState === 'idle' && !loadingDevice && !deviceReady && (
-                            <p className="text-red-400 text-sm">Calling not available. Check Twilio settings.</p>
+                            <div className="space-y-2">
+                                <p className="text-red-400 text-sm">Calling not available. Check Twilio settings.</p>
+                                <button
+                                    onClick={() => { setLoadingDevice(true); initializeDevice(); }}
+                                    className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 transition-all cursor-pointer"
+                                >
+                                    Retry Connection
+                                </button>
+                            </div>
                         )}
                         {callState === 'connecting' && (
                             <div className="flex items-center justify-center gap-2 text-amber-400">

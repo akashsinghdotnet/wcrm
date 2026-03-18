@@ -36,12 +36,21 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
     const [submitting, setSubmitting] = useState(false);
     const [showWhatsAppChat, setShowWhatsAppChat] = useState(false);
     const [showDialer, setShowDialer] = useState(false);
+    const [callLogs, setCallLogs] = useState([]);
 
     useEffect(() => {
         if (lead?.id) {
             fetchActivities();
+            fetchCallLogs();
         }
     }, [lead?.id]);
+
+    const fetchCallLogs = async () => {
+        try {
+            const res = await api.get(`/calling/logs?leadId=${lead.id}`);
+            setCallLogs(res.data);
+        } catch { }
+    };
 
     const fetchActivities = async () => {
         try {
@@ -89,6 +98,7 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
         indiamart: 'IndiaMart',
         tradeindia: 'TradeIndia',
         website: 'Website',
+        whatsapp: 'WhatsApp',
         manual: 'Manual',
     };
 
@@ -228,6 +238,59 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                         </form>
                     </div>
 
+                    {/* Call History & Recordings */}
+                    {callLogs.length > 0 && (
+                        <div className="space-y-3">
+                            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                Call History ({callLogs.length})
+                            </h3>
+                            <div className="space-y-2">
+                                {callLogs.map((log) => (
+                                    <div key={log.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <PhoneCall size={14} className="text-emerald-400" />
+                                                <span className="text-sm text-white">{log.phoneNumber}</span>
+                                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                                    log.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400' :
+                                                    log.status === 'failed' || log.status === 'busy' ? 'bg-red-500/15 text-red-400' :
+                                                    log.status === 'no-answer' ? 'bg-amber-500/15 text-amber-400' :
+                                                    'bg-slate-700 text-slate-400'
+                                                }`}>
+                                                    {log.status?.replace(/[_-]/g, ' ')}
+                                                </span>
+                                            </div>
+                                            <span className="text-xs text-slate-500">
+                                                {new Date(log.createdAt).toLocaleString('en-IN', {
+                                                    day: 'numeric', month: 'short',
+                                                    hour: '2-digit', minute: '2-digit',
+                                                })}
+                                            </span>
+                                        </div>
+                                        {log.duration > 0 && (
+                                            <p className="text-xs text-slate-400">
+                                                Duration: {Math.floor(log.duration / 60)}m {log.duration % 60}s
+                                            </p>
+                                        )}
+                                        {log.disposition && (
+                                            <p className="text-xs text-slate-400">
+                                                Outcome: <span className="text-slate-300 font-medium">{log.disposition.replace(/_/g, ' ')}</span>
+                                                {log.notes && ` — ${log.notes}`}
+                                            </p>
+                                        )}
+                                        {log.recordingUrl && (
+                                            <div className="pt-1">
+                                                <audio controls className="w-full h-8" style={{ filter: 'invert(1) hue-rotate(180deg)' }}>
+                                                    <source src={`${import.meta.env.VITE_API_URL || 'https://api.magnetcrm.com/api'}/calling/recording/${log.id}?token=${localStorage.getItem('magnetcrm_token')}`} type="audio/mpeg" />
+                                                </audio>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Activity Timeline */}
                     <div className="space-y-3">
                         <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -255,8 +318,13 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-sm text-white">{act.content}</p>
-                                                    <div className="flex items-center gap-2 mt-1">
+                                                    <div className="flex items-center gap-2 mt-1 flex-wrap">
                                                         <span className={`text-xs font-medium ${meta.color}`}>{meta.label}</span>
+                                                        {act.type === 'status_change' && act.userId && act.userId !== lead.assignedTo && (
+                                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                                                                Manager Action
+                                                            </span>
+                                                        )}
                                                         <span className="text-xs text-slate-500">
                                                             {new Date(act.createdAt).toLocaleString('en-IN', {
                                                                 day: 'numeric', month: 'short',

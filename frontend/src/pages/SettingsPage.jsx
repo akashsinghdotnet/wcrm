@@ -3,13 +3,14 @@ import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { User, Lock, Building2, Shield, Eye, EyeOff, Mail, Users, IndianRupee, FileText, MessageCircle, Plug, Phone } from 'lucide-react';
+import { User, Lock, Building2, Shield, Eye, EyeOff, Mail, Users, IndianRupee, FileText, MessageCircle, Plug, Phone, GitBranch } from 'lucide-react';
 import EmailSettings from '../components/EmailSettings';
 import TeamSettings from '../components/TeamSettings';
 import BillingSettings from '../components/BillingSettings';
 import InvoiceSettings from '../components/InvoiceSettings';
 import WhatsAppSettings from '../components/WhatsAppSettings';
 import CallingSettings from '../components/CallingSettings';
+import LeadAssignmentSettings from '../components/LeadAssignmentSettings';
 import IntegrationsPage from './IntegrationsPage';
 
 export default function SettingsPage() {
@@ -144,6 +145,7 @@ export default function SettingsPage() {
                     ...(['admin', 'manager'].includes(user.role) ? [{ id: 'team', label: 'Team', icon: Users }] : []),
                     ...(user.role === 'admin' ? [{ id: 'integrations', label: 'Integrations', icon: Plug }] : []),
                     ...(user.role === 'admin' ? [{ id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle }] : []),
+                    ...(user.role === 'admin' ? [{ id: 'lead-assignment', label: 'Lead Assignment', icon: GitBranch }] : []),
                     ...(user.role === 'admin' ? [{ id: 'calling', label: 'Calling', icon: Phone }] : []),
                     ...(user.role === 'super_admin' ? [{ id: 'email', label: 'Email Settings', icon: Mail }] : [])
                 ].map(tab => (
@@ -411,6 +413,10 @@ export default function SettingsPage() {
 
                 {activeTab === 'whatsapp' && user.role === 'admin' && (
                     <WhatsAppSettings />
+                )}
+
+                {activeTab === 'lead-assignment' && user.role === 'admin' && (
+                    <LeadAssignmentSettings />
                 )}
 
                 {activeTab === 'calling' && user.role === 'admin' && (

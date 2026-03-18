@@ -162,9 +162,14 @@ export class BillingService {
 
         if (!company) return [];
 
-        // Fetch super admin invoice settings for branding
+        // Fetch super admin invoice settings for branding and prefix
         const superAdminSettings = await this.invoiceSettingsRepo.findOne({ where: { companyId: null as any } });
         const brandName = superAdminSettings?.accountHolderName || 'CRM Subscription';
+        // Parse prefix: e.g. "INV-0000" → base="INV-", padLength=4
+        const rawPrefix = superAdminSettings?.prefix || 'INV-0000';
+        const trailingZeros = rawPrefix.match(/0+$/);
+        const padLength = trailingZeros ? trailingZeros[0].length + 1 : 4;
+        const basePrefix = trailingZeros ? rawPrefix.replace(/0+$/, '') : rawPrefix;
 
         const invoices: any[] = [];
 
@@ -194,7 +199,7 @@ export class BillingService {
                         ? `${currentDate.getFullYear()} - ${currentDate.getFullYear() + 1}`
                         : currentDate.toLocaleString('default', { month: 'long', year: 'numeric' }),
                     status: invoiceStatus,
-                    invoiceNumber: `INV-${company.id.substring(0, 4).toUpperCase()}-${counter.toString().padStart(3, '0')}`,
+                    invoiceNumber: `${basePrefix}${counter.toString().padStart(padLength, '0')}`,
                 });
 
                 // Increment date
@@ -244,12 +249,17 @@ export class BillingService {
             relations: ['plan'],
         });
 
-        // Fetch super admin invoice settings for branding
+        // Fetch super admin invoice settings for branding and prefix
         const superAdminSettings = await this.invoiceSettingsRepo.findOne({ where: { companyId: null as any } });
         const brandName = superAdminSettings?.accountHolderName || 'CRM Subscription';
+        const rawPrefix = superAdminSettings?.prefix || 'INV-0000';
+        const trailingZeros = rawPrefix.match(/0+$/);
+        const padLength = trailingZeros ? trailingZeros[0].length + 1 : 4;
+        const basePrefix = trailingZeros ? rawPrefix.replace(/0+$/, '') : rawPrefix;
 
         let allInvoices: any[] = [];
         const now = new Date();
+        let globalCounter = 0;
 
         for (const company of companies) {
             if (!company.plan) continue;
@@ -262,6 +272,7 @@ export class BillingService {
 
             while (currentDate <= now || counter === 1) {
                 const invoiceStatus = (counter === 1 && isPending) ? 'pending' : 'paid';
+                globalCounter++;
 
                 allInvoices.push({
                     id: `sub-${company.id}-${counter}`,
@@ -274,7 +285,7 @@ export class BillingService {
                         ? `${currentDate.getFullYear()} - ${currentDate.getFullYear() + 1}`
                         : currentDate.toLocaleString('default', { month: 'long', year: 'numeric' }),
                     status: invoiceStatus,
-                    invoiceNumber: `INV-${company.id.substring(0, 4).toUpperCase()}-${counter.toString().padStart(3, '0')}`,
+                    invoiceNumber: `${basePrefix}${globalCounter.toString().padStart(padLength, '0')}`,
                 });
 
                 if (company.subscriptionPeriod === 'yearly') {
