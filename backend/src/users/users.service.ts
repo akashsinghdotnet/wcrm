@@ -24,15 +24,26 @@ export class UsersService {
     async create(createUserDto: CreateUserDto): Promise<User> {
         const { email, password, role, companyId, name, phone, firstName, lastName, canCreateInvoices } = createUserDto;
 
-        const existingUser = await this.usersRepository.findOneBy({ email });
-        if (existingUser) {
-            throw new ConflictException('Email already exists');
-        }
-
         // Superadmin team members (SUPER_ADMIN, SUPERADMIN_ADMIN, SUPERADMIN_STAFF) should not have companyId
         const isSuperadminTeamMember = role === UserRole.SUPER_ADMIN ||
                                        role === UserRole.SUPERADMIN_ADMIN ||
                                        role === UserRole.SUPERADMIN_STAFF;
+
+        // Check for existing user with context-aware uniqueness
+        const existingUser = await this.usersRepository.findOneBy({ email });
+        if (existingUser) {
+            // If creating superadmin user and existing user is company user (or vice versa), allow it
+            const existingIsSuperadmin = existingUser.role === UserRole.SUPER_ADMIN ||
+                                        existingUser.role === UserRole.SUPERADMIN_ADMIN ||
+                                        existingUser.role === UserRole.SUPERADMIN_STAFF;
+
+            // If both are same type (both superadmin or both company), reject
+            if (isSuperadminTeamMember === existingIsSuperadmin) {
+                throw new ConflictException('Email already exists');
+            }
+            // If different types (one superadmin, one company), allow creation
+            // This enables same person to have separate superadmin and company accounts
+        }
 
         let finalCompanyId = companyId;
         if (isSuperadminTeamMember) {
@@ -137,7 +148,14 @@ export class UsersService {
     }
 
     async findOne(email: string): Promise<User | null> {
+        // Return first user with this email (for backward compatibility)
+        // Note: There might be multiple users with same email (superadmin vs company)
         return this.usersRepository.findOneBy({ email });
+    }
+
+    async findAllByEmail(email: string): Promise<User[]> {
+        // Return all users with this email (for login with duplicate emails)
+        return this.usersRepository.find({ where: { email } });
     }
 
     async findById(id: string): Promise<User | null> {
