@@ -61,8 +61,14 @@ export default function CompaniesPage() {
     };
 
     const openEdit = (company) => {
-        console.log('Opening edit for company:', company); // Debug log
+        console.log('=== Opening edit for company ===');
+        console.log('Full company object:', JSON.stringify(company, null, 2));
+        console.log('Company email:', company.email);
+        console.log('Company phone:', company.phone);
+        console.log('Company address:', company.address);
+
         setEditingCompany(company);
+
         const formData = {
             companyName: company.companyName || '',
             email: company.email || '',
@@ -73,7 +79,9 @@ export default function CompaniesPage() {
             subscriptionPeriod: company.subscriptionPeriod || 'monthly',
             renewalDate: company.renewalDate ? company.renewalDate.split('T')[0] : '',
         };
-        console.log('Form data:', formData); // Debug log
+
+        console.log('Form data being set:', JSON.stringify(formData, null, 2));
+
         setForm(formData);
         setShowEditModal(true);
     };

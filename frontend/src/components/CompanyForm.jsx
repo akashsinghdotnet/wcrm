@@ -1,6 +1,10 @@
 import { CreditCard } from 'lucide-react';
 
 export default function CompanyForm({ form, setForm, plans, onSubmit, isEdit, onCancel }) {
+    console.log('=== CompanyForm rendering ===');
+    console.log('Form object:', form);
+    console.log('Email value:', form?.email, 'Phone value:', form?.phone, 'Address value:', form?.address);
+
     return (
         <form onSubmit={onSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
             <div>
