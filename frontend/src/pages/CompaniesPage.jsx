@@ -69,10 +69,15 @@ export default function CompaniesPage() {
 
         setEditingCompany(company);
 
+        // If company doesn't have email/phone, try to get from admin user
+        const adminUser = company.users?.find(u => u.role === 'admin');
+
         const formData = {
             companyName: company.companyName || '',
-            email: company.email || '',
-            phone: company.phone || '',
+            // Use admin email as fallback if company email is missing
+            email: company.email || (adminUser?.email || ''),
+            // Use admin phone as fallback if company phone is missing
+            phone: company.phone || (adminUser?.phone || ''),
             address: company.address || '',
             planId: company.planId || '',
             subscriptionStatus: company.subscriptionStatus || 'active',
