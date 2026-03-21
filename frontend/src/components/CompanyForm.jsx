@@ -6,7 +6,7 @@ export default function CompanyForm({ form, setForm, plans, onSubmit, isEdit, on
             <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Company Name *</label>
                 <input
-                    type="text" required value={form.companyName}
+                    type="text" required value={form.companyName || ''}
                     onChange={(e) => setForm({ ...form, companyName: e.target.value })}
                     className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="Acme Agency"
@@ -16,7 +16,7 @@ export default function CompanyForm({ form, setForm, plans, onSubmit, isEdit, on
                 <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
                     <input
-                        type="email" value={form.email}
+                        type="email" value={form.email || ''}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         placeholder="contact@acme.com"
@@ -25,7 +25,7 @@ export default function CompanyForm({ form, setForm, plans, onSubmit, isEdit, on
                 <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1.5">Phone</label>
                     <input
-                        type="tel" value={form.phone}
+                        type="tel" value={form.phone || ''}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
                         className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         placeholder="+91..."
@@ -35,7 +35,7 @@ export default function CompanyForm({ form, setForm, plans, onSubmit, isEdit, on
             <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Address</label>
                 <textarea
-                    value={form.address} rows="2"
+                    value={form.address || ''} rows="2"
                     onChange={(e) => setForm({ ...form, address: e.target.value })}
                     className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="City, Country"
@@ -50,7 +50,7 @@ export default function CompanyForm({ form, setForm, plans, onSubmit, isEdit, on
                 <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1.5">Plan</label>
                     <select
-                        value={form.planId}
+                        value={form.planId || ''}
                         onChange={(e) => setForm({ ...form, planId: e.target.value })}
                         className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
@@ -66,7 +66,7 @@ export default function CompanyForm({ form, setForm, plans, onSubmit, isEdit, on
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1.5">Status</label>
                         <select
-                            value={form.subscriptionStatus}
+                            value={form.subscriptionStatus || 'active'}
                             onChange={(e) => setForm({ ...form, subscriptionStatus: e.target.value })}
                             className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
@@ -78,7 +78,7 @@ export default function CompanyForm({ form, setForm, plans, onSubmit, isEdit, on
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1.5">Billing Period</label>
                         <select
-                            value={form.subscriptionPeriod}
+                            value={form.subscriptionPeriod || 'monthly'}
                             onChange={(e) => setForm({ ...form, subscriptionPeriod: e.target.value })}
                             className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
@@ -90,7 +90,7 @@ export default function CompanyForm({ form, setForm, plans, onSubmit, isEdit, on
                 <div className="mt-3">
                     <label className="block text-sm font-medium text-slate-300 mb-1.5">Renewal Date</label>
                     <input
-                        type="date" value={form.renewalDate}
+                        type="date" value={form.renewalDate || ''}
                         onChange={(e) => setForm({ ...form, renewalDate: e.target.value })}
                         className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
