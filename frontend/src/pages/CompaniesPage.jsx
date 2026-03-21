@@ -189,7 +189,15 @@ export default function CompaniesPage() {
                         >
                             {company.companyName}
                         </h3>
-                        {company.email && <p className="text-xs text-slate-500">{company.email}</p>}
+                        {company.email ? (
+                            <p className="text-xs text-slate-500">{company.email}</p>
+                        ) : (
+                            company.users?.find(u => u.role === 'admin')?.email && (
+                                <p className="text-xs text-slate-500 italic">
+                                    {company.users.find(u => u.role === 'admin').email}
+                                </p>
+                            )
+                        )}
 
                         <div className="space-y-2.5 mt-4">
                             <div className="flex items-center justify-between text-sm">
