@@ -87,38 +87,43 @@ export class CompaniesService {
             await queryRunner.query('DELETE FROM whatsapp_messages WHERE companyId = ?', [id]);
             await queryRunner.query('DELETE FROM whatsapp_configs WHERE companyId = ?', [id]);
 
-            // 2. Billing & Invoices
-            await queryRunner.query('DELETE FROM invoice_items WHERE invoiceId IN (SELECT id FROM invoices WHERE companyId = ?)', [id]);
+            // 2. Announcements
+            await queryRunner.query('DELETE FROM announcement_reads WHERE announcementId IN (SELECT id FROM announcements WHERE companyId = ?)', [id]);
+            await queryRunner.query('DELETE FROM announcements WHERE companyId = ?', [id]);
+
+            // 3. Billing & Invoices
             await queryRunner.query('DELETE FROM invoices WHERE companyId = ?', [id]);
             await queryRunner.query('DELETE FROM invoice_settings WHERE companyId = ?', [id]);
 
-            // 3. Leads & Lead Assignment Rules
+            // 4. Leads, Activities & Lead Assignment Rules
+            await queryRunner.query('DELETE FROM activities WHERE leadId IN (SELECT id FROM leads WHERE companyId = ?)', [id]);
             await queryRunner.query('DELETE FROM leads WHERE companyId = ?', [id]);
             await queryRunner.query('DELETE FROM lead_assignment_rules WHERE companyId = ?', [id]);
 
-            // 4. Tickets
+            // 5. Tickets & Replies
+            await queryRunner.query('DELETE FROM ticket_replies WHERE ticketId IN (SELECT id FROM tickets WHERE companyId = ?)', [id]);
             await queryRunner.query('DELETE FROM tickets WHERE companyId = ?', [id]);
 
-            // 5. Clients
+            // 6. Clients
             await queryRunner.query('DELETE FROM clients WHERE companyId = ?', [id]);
 
-            // 6. Calling & Call Logs
+            // 7. Calling & Call Logs
             await queryRunner.query('DELETE FROM call_logs WHERE companyId = ?', [id]);
             await queryRunner.query('DELETE FROM calling_configs WHERE companyId = ?', [id]);
 
-            // 7. Integration Configs
+            // 8. Integration Configs
             await queryRunner.query('DELETE FROM integration_configs WHERE companyId = ?', [id]);
 
-            // 8. Marketing Settings
+            // 9. Marketing Settings
             await queryRunner.query('DELETE FROM marketing_settings WHERE companyId = ?', [id]);
 
-            // 9. Email Logs
+            // 10. Email Logs
             await queryRunner.query('DELETE FROM email_logs WHERE companyId = ?', [id]);
 
-            // 10. Users (must be deleted before company)
+            // 11. Users (must be deleted before company)
             await queryRunner.query('DELETE FROM users WHERE companyId = ?', [id]);
 
-            // 11. Finally, delete the company
+            // 12. Finally, delete the company
             await queryRunner.query('DELETE FROM companies WHERE id = ?', [id]);
 
             await queryRunner.commitTransaction();
