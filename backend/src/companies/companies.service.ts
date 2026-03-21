@@ -56,8 +56,11 @@ export class CompaniesService {
     }
 
     async remove(id: string) {
-        const company = await this.findOne(id);
-        return this.companiesRepository.remove(company);
+        // Verify company exists before deletion
+        await this.findOne(id);
+        // Use delete instead of remove to trigger CASCADE DELETE in database
+        await this.companiesRepository.delete(id);
+        return { message: 'Company deleted successfully', id };
     }
 
     async getAllPlans() {

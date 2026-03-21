@@ -19,6 +19,14 @@ export class EmailService {
         private marketingSettingsRepo: Repository<MarketingSettings>,
     ) { }
 
+    private formatRoleName(role: string): string {
+        // Handle special cases for superadmin roles
+        if (role === 'superadmin_admin') return 'Admin';
+        if (role === 'superadmin_staff') return 'Staff';
+        // For other roles, capitalize each word
+        return role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
 
     private async getTransporter() {
         // 1. Try to get config from legacy EmailConfig (if used)
@@ -268,7 +276,7 @@ export class EmailService {
                         <h3 style="margin-top: 0; color: #111827;">Your Login Credentials</h3>
                         <p style="margin: 5px 0;"><strong>Email:</strong> ${to}</p>
                         <p style="margin: 5px 0;"><strong>Password:</strong> ${password}</p>
-                        <p style="margin: 5px 0;"><strong>Role:</strong> ${role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</p>
+                        <p style="margin: 5px 0;"><strong>Role:</strong> ${this.formatRoleName(role)}</p>
                     </div>
 
                     <p style="color: #dc2626; font-size: 14px;">⚠ Please change your password after your first login for security.</p>

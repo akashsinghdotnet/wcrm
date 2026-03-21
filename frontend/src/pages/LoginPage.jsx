@@ -55,10 +55,16 @@ export default function LoginPage({ type = 'client' }) {
         } catch (err) {
             const status = err.response?.status;
             const msg = err.response?.data?.message;
+
+            // Show specific error messages based on status and message
             if (status === 401) {
-                toast.error('Incorrect email or password. Please try again.');
+                toast.error(msg || 'Incorrect email or password. Please try again.');
+            } else if (status === 403) {
+                toast.error(msg || 'Access denied. Please contact support.');
+            } else if (msg) {
+                toast.error(msg);
             } else {
-                toast.error(msg || 'Something went wrong. Please try again.');
+                toast.error('Unable to connect to server. Please try again.');
             }
         } finally {
             setIsLoading(false);
