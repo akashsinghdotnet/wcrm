@@ -50,10 +50,14 @@ export default function CompanyDetailsPage() {
     };
 
     const openEdit = () => {
+        // Get admin user for fallback contact info
+        const adminUser = users.find(u => u.role === 'admin');
+
         setEditForm({
             companyName: company.companyName || '',
-            email: company.email || '',
-            phone: company.phone || '',
+            // Use admin email/phone as fallback if company doesn't have them
+            email: company.email || (adminUser?.email || ''),
+            phone: company.phone || (adminUser?.phone || ''),
             address: company.address || '',
             planId: company.planId || '',
             subscriptionStatus: company.subscriptionStatus || 'active',
@@ -272,15 +276,39 @@ export default function CompanyDetailsPage() {
                             <div className="space-y-4">
                                 <div className="flex items-center gap-3 text-slate-300">
                                     <Mail className="w-5 h-5 text-slate-500" />
-                                    {company.email || 'No email provided'}
+                                    {company.email ? (
+                                        <span>{company.email}</span>
+                                    ) : (
+                                        users.find(u => u.role === 'admin')?.email ? (
+                                            <span className="italic text-slate-400">
+                                                {users.find(u => u.role === 'admin').email} <span className="text-xs">(from admin)</span>
+                                            </span>
+                                        ) : (
+                                            <span className="text-slate-500">No email provided</span>
+                                        )
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-3 text-slate-300">
                                     <Phone className="w-5 h-5 text-slate-500" />
-                                    {company.phone || 'No phone provided'}
+                                    {company.phone ? (
+                                        <span>{company.phone}</span>
+                                    ) : (
+                                        users.find(u => u.role === 'admin')?.phone ? (
+                                            <span className="italic text-slate-400">
+                                                {users.find(u => u.role === 'admin').phone} <span className="text-xs">(from admin)</span>
+                                            </span>
+                                        ) : (
+                                            <span className="text-slate-500">No phone provided</span>
+                                        )
+                                    )}
                                 </div>
                                 <div className="flex items-start gap-3 text-slate-300">
                                     <MapPin className="w-5 h-5 text-slate-500 shrink-0" />
-                                    {company.address || 'No address provided'}
+                                    {company.address ? (
+                                        <span>{company.address}</span>
+                                    ) : (
+                                        <span className="text-slate-500">No address provided</span>
+                                    )}
                                 </div>
                             </div>
                         </div>
