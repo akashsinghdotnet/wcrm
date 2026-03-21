@@ -73,10 +73,13 @@ export class CompaniesService {
             // The order matters to avoid foreign key constraint violations
 
             // 1. WhatsApp related data
-            await queryRunner.query('DELETE FROM whatsapp_broadcast_contacts WHERE broadcastId IN (SELECT id FROM whatsapp_broadcasts WHERE companyId = ?)', [id]);
+            // First delete join table records
+            await queryRunner.query('DELETE FROM whatsapp_list_contacts WHERE listId IN (SELECT id FROM whatsapp_lists WHERE companyId = ?)', [id]);
+            await queryRunner.query('DELETE FROM whatsapp_tag_contacts WHERE tagId IN (SELECT id FROM whatsapp_tags WHERE companyId = ?)', [id]);
+            await queryRunner.query('DELETE FROM whatsapp_broadcast_logs WHERE broadcastId IN (SELECT id FROM whatsapp_broadcasts WHERE companyId = ?)', [id]);
+
+            // Then delete main WhatsApp tables
             await queryRunner.query('DELETE FROM whatsapp_broadcasts WHERE companyId = ?', [id]);
-            await queryRunner.query('DELETE FROM whatsapp_contact_lists WHERE contactId IN (SELECT id FROM whatsapp_contacts WHERE companyId = ?)', [id]);
-            await queryRunner.query('DELETE FROM whatsapp_contact_tags WHERE contactId IN (SELECT id FROM whatsapp_contacts WHERE companyId = ?)', [id]);
             await queryRunner.query('DELETE FROM whatsapp_contacts WHERE companyId = ?', [id]);
             await queryRunner.query('DELETE FROM whatsapp_lists WHERE companyId = ?', [id]);
             await queryRunner.query('DELETE FROM whatsapp_tags WHERE companyId = ?', [id]);
