@@ -145,10 +145,16 @@ export default function WhatsAppChat({ lead, onClose }) {
                                     }`}
                                 >
                                     <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                                    {msg.status === 'failed' && msg.errorDetail && (
+                                        <p className="text-[10px] mt-1 text-red-300 opacity-80 break-words">
+                                            ⚠ {msg.errorDetail}
+                                        </p>
+                                    )}
                                     <div className={`flex items-center gap-1.5 mt-1 ${
                                         msg.direction === 'outbound' ? 'justify-end' : 'justify-start'
                                     }`}>
                                         <span className={`text-[10px] ${
+                                            msg.status === 'failed' ? 'text-red-300' :
                                             msg.direction === 'outbound' ? 'text-green-200' : 'text-slate-500'
                                         }`}>
                                             {formatTime(msg.createdAt)}

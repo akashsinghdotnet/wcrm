@@ -41,6 +41,9 @@ export class WhatsAppMessage {
     @Column({ nullable: true })
     whatsappMessageId: string;
 
+    @Column({ type: 'text', nullable: true })
+    errorDetail: string;
+
     @Column({ nullable: true })
     sentBy: string;
 

@@ -127,6 +127,7 @@ export class WhatsAppService {
             content: message,
             status,
             whatsappMessageId: whatsappMessageId || undefined,
+            errorDetail: errorDetail || undefined,
             sentBy: userId,
         });
         await this.messageRepo.save(msg);
@@ -436,6 +437,7 @@ export class WhatsAppService {
 
         let whatsappMessageId: string | null = null;
         let status = MessageStatus.SENT;
+        let errorDetail: string | null = null;
 
         try {
             const response = await fetch(
@@ -453,13 +455,15 @@ export class WhatsAppService {
             const data = await response.json();
 
             if (!response.ok) {
-                this.logger.error(`WhatsApp template send error: ${JSON.stringify(data)}`);
+                errorDetail = data.error?.message || JSON.stringify(data);
+                this.logger.error(`WhatsApp template send error (${response.status}): ${JSON.stringify(data)}`);
                 status = MessageStatus.FAILED;
             } else {
                 whatsappMessageId = data.messages?.[0]?.id || null;
                 this.logger.log(`Template "${templateName}" sent to ${phone} for lead ${leadId}`);
             }
         } catch (error) {
+            errorDetail = error.message;
             this.logger.error(`WhatsApp template send failed: ${error.message}`);
             status = MessageStatus.FAILED;
         }
@@ -472,17 +476,19 @@ export class WhatsAppService {
             content: `[Template: ${templateName}]${variables?.length ? ' Variables: ' + variables.join(', ') : ''}`,
             status,
             whatsappMessageId: whatsappMessageId || undefined,
+            errorDetail: errorDetail || undefined,
         });
         await this.messageRepo.save(msg);
 
         // Log activity
         try {
+            const activityContent = status === MessageStatus.FAILED
+                ? `Auto-reply template "${templateName}" failed to send${errorDetail ? ': ' + errorDetail : ''}`
+                : `Auto-reply template "${templateName}" sent`;
             const activity = this.activityRepo.create({
                 leadId,
                 type: ActivityType.WHATSAPP,
-                content: status === MessageStatus.FAILED
-                    ? `Auto-reply template "${templateName}" failed to send`
-                    : `Auto-reply template "${templateName}" sent`,
+                content: activityContent,
             });
             await this.activityRepo.save(activity);
         } catch { }
