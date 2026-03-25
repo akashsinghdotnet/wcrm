@@ -52,17 +52,24 @@ export class WhatsAppService {
         mediaId?: string,
         userId?: string,
     ): Promise<WhatsAppMessage> {
+        this.logger.log(`[WhatsApp] Attempting to send message to ${to} for lead ${leadId} (company: ${companyId})`);
+
         const config = await this.configRepo.findOne({ where: { companyId } });
         if (!config) {
+            this.logger.error(`[WhatsApp] No config found for company ${companyId}`);
             throw new BadRequestException('WhatsApp Business API is not configured for this company');
         }
 
+        this.logger.log(`[WhatsApp] Found config - Phone Number ID: ${config.phoneNumberId.substring(0, 8)}...`);
+
         // Format phone number - ensure it has country code
         const phone = this.formatPhone(to);
+        this.logger.log(`[WhatsApp] Formatted phone: ${phone} (original: ${to})`);
 
         // Send via WhatsApp Cloud API
         let whatsappMessageId: string | null = null;
         let status = MessageStatus.SENT;
+        let errorDetail: string | null = null;
 
         try {
             const payload: any = {
@@ -79,12 +86,14 @@ export class WhatsAppService {
                 payload.document = { id: mediaId, caption: message || '' };
             }
 
+            this.logger.log(`[WhatsApp] Sending ${type} message. Payload: ${JSON.stringify(payload).substring(0, 200)}`);
+
             const response = await fetch(
                 `https://graph.facebook.com/v21.0/${config.phoneNumberId}/messages`,
                 {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${config.accessToken}`,
+                        'Authorization': `Bearer ${config.accessToken.substring(0, 15)}...`,
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(payload),
@@ -92,15 +101,21 @@ export class WhatsAppService {
             );
 
             const data = await response.json();
+            this.logger.log(`[WhatsApp] API Response Status: ${response.status}, Data: ${JSON.stringify(data)}`);
 
             if (!response.ok) {
-                this.logger.error(`WhatsApp API error: ${JSON.stringify(data)}`);
+                errorDetail = data.error?.message || JSON.stringify(data);
+                this.logger.error(`[WhatsApp] API error (${response.status}): ${errorDetail}`);
+                this.logger.error(`[WhatsApp] Full error response: ${JSON.stringify(data)}`);
                 status = MessageStatus.FAILED;
             } else {
                 whatsappMessageId = data.messages?.[0]?.id || null;
+                this.logger.log(`[WhatsApp] Message sent successfully! WhatsApp Message ID: ${whatsappMessageId}`);
             }
         } catch (error) {
-            this.logger.error(`WhatsApp API request failed: ${error.message}`);
+            errorDetail = error.message;
+            this.logger.error(`[WhatsApp] API request failed with exception: ${error.message}`);
+            this.logger.error(`[WhatsApp] Error stack: ${error.stack}`);
             status = MessageStatus.FAILED;
         }
 
@@ -235,25 +250,37 @@ export class WhatsAppService {
     }
 
     async handleIncomingWebhook(body: any): Promise<void> {
+        this.logger.log(`[WhatsApp Webhook] Received webhook payload: ${JSON.stringify(body).substring(0, 500)}`);
+
         // Handle Meta webhook verification and incoming messages
         const entry = body?.entry?.[0];
         const changes = entry?.changes?.[0];
         const value = changes?.value;
 
-        if (!value?.messages?.length) return;
+        if (!value?.messages?.length) {
+            this.logger.log(`[WhatsApp Webhook] No messages in payload, skipping`);
+            return;
+        }
 
         // Extract contact info from webhook payload
         const contacts = value.contacts || [];
         const phoneNumberId = value.metadata?.phone_number_id;
+
+        this.logger.log(`[WhatsApp Webhook] Processing ${value.messages.length} message(s) from Phone Number ID: ${phoneNumberId}`);
 
         for (const msg of value.messages) {
             const fromPhone = msg.from;
             const text = msg.text?.body || '';
             const waMessageId = msg.id;
 
+            this.logger.log(`[WhatsApp Webhook] Processing message from ${fromPhone}: "${text.substring(0, 50)}..."`);
+            this.logger.log(`[WhatsApp Webhook] Message ID: ${waMessageId}`);
+
             // Check if this message came from a WhatsApp Ad (Click-to-WhatsApp ad)
             const referral = msg.referral;
             const isFromAd = !!referral;
+
+            this.logger.log(`[WhatsApp Webhook] Message is from ${isFromAd ? 'WhatsApp Ad' : 'regular message'}`);
 
             // Find lead by phone number
             let lead = await this.leadRepo
@@ -263,14 +290,22 @@ export class WhatsAppService {
                 })
                 .getOne();
 
+            if (lead) {
+                this.logger.log(`[WhatsApp Webhook] Found existing lead: ${lead.name} (ID: ${lead.id})`);
+            } else {
+                this.logger.warn(`[WhatsApp Webhook] No existing lead found for phone ${fromPhone}`);
+            }
+
             // If no lead found and message came from a WhatsApp Ad, auto-create a lead
             if (!lead && isFromAd) {
+                this.logger.log(`[WhatsApp Webhook] Attempting to auto-create lead from WhatsApp Ad`);
                 // Find which company this WhatsApp number belongs to
                 const whatsappConfig = await this.configRepo.findOne({
                     where: { phoneNumberId },
                 });
 
                 if (whatsappConfig) {
+                    this.logger.log(`[WhatsApp Webhook] Found company config for phoneNumberId ${phoneNumberId}: ${whatsappConfig.companyId}`);
                     const contactName = contacts.find((c: any) => c.wa_id === fromPhone)?.profile?.name || 'Unknown (WhatsApp Ad)';
                     const assignedTo = await this.leadsService.getNextAssignee(whatsappConfig.companyId, 'meta_ads');
 
@@ -301,11 +336,13 @@ export class WhatsAppService {
 
             // If no lead found and NOT from ad, also try to auto-create if we can identify the company
             if (!lead && !isFromAd) {
+                this.logger.log(`[WhatsApp Webhook] Attempting to auto-create lead from regular WhatsApp message`);
                 const whatsappConfig = await this.configRepo.findOne({
                     where: { phoneNumberId },
                 });
 
                 if (whatsappConfig) {
+                    this.logger.log(`[WhatsApp Webhook] Found company config for phoneNumberId ${phoneNumberId}: ${whatsappConfig.companyId}`);
                     const contactName = contacts.find((c: any) => c.wa_id === fromPhone)?.profile?.name || 'Unknown (WhatsApp)';
                     const assignedTo = await this.leadsService.getNextAssignee(whatsappConfig.companyId, 'whatsapp');
 
@@ -319,14 +356,18 @@ export class WhatsAppService {
                         notes: text ? `First Message: ${text}` : undefined,
                     });
 
-                    this.logger.log(`Auto-created lead from WhatsApp message: ${contactName} (${fromPhone}) for company ${whatsappConfig.companyId}`);
+                    this.logger.log(`[WhatsApp Webhook] Auto-created lead: ${contactName} (${fromPhone}) - Lead ID: ${lead.id} for company ${whatsappConfig.companyId}`);
                 } else {
-                    this.logger.warn(`Incoming WhatsApp from ${fromPhone} — no matching lead or config found`);
+                    this.logger.error(`[WhatsApp Webhook] CRITICAL: No WhatsApp config found for phoneNumberId ${phoneNumberId}! Cannot auto-create lead.`);
+                    this.logger.error(`[WhatsApp Webhook] Please verify that phoneNumberId ${phoneNumberId} is configured in WhatsApp settings`);
                     continue;
                 }
             }
 
-            if (!lead) continue;
+            if (!lead) {
+                this.logger.error(`[WhatsApp Webhook] Failed to find or create lead for phone ${fromPhone}. Skipping message.`);
+                continue;
+            }
 
             const message = this.messageRepo.create({
                 companyId: lead.companyId,
@@ -337,6 +378,7 @@ export class WhatsAppService {
                 whatsappMessageId: waMessageId,
             });
             await this.messageRepo.save(message);
+            this.logger.log(`[WhatsApp Webhook] ✓ Saved incoming message to database (Message ID: ${message.id})`);
 
             // Log activity
             const activity = this.activityRepo.create({
@@ -347,7 +389,10 @@ export class WhatsAppService {
                     : `Incoming WhatsApp message: "${text}"`,
             });
             await this.activityRepo.save(activity);
+            this.logger.log(`[WhatsApp Webhook] ✓ Logged activity for lead ${lead.id}`);
         }
+
+        this.logger.log(`[WhatsApp Webhook] ✓ Webhook processing complete`);
     }
 
     /**
@@ -569,5 +614,77 @@ export class WhatsAppService {
         // If 10 digits, assume Indian number
         if (digits.length === 10) return `91${digits}`;
         return digits;
+    }
+
+    /**
+     * Debug method to check WhatsApp configuration and test connectivity
+     */
+    async debugConfiguration(companyId: string): Promise<any> {
+        const config = await this.configRepo.findOne({ where: { companyId } });
+
+        if (!config) {
+            return {
+                configured: false,
+                error: 'No WhatsApp configuration found for this company',
+                companyId,
+            };
+        }
+
+        const debug: any = {
+            configured: true,
+            companyId,
+            phoneNumberId: config.phoneNumberId,
+            hasAccessToken: !!config.accessToken,
+            accessTokenLength: config.accessToken?.length || 0,
+            accessTokenPrefix: config.accessToken?.substring(0, 15) + '...',
+            businessAccountId: config.businessAccountId || 'Not set',
+            autoReplyEnabled: config.autoReplyEnabled,
+            autoReplyTemplateName: config.autoReplyTemplateName || 'Not set',
+        };
+
+        // Test API connectivity
+        try {
+            const response = await fetch(
+                `https://graph.facebook.com/v21.0/${config.phoneNumberId}`,
+                {
+                    headers: { 'Authorization': `Bearer ${config.accessToken}` },
+                }
+            );
+            const data = await response.json();
+
+            if (response.ok) {
+                debug.apiTest = {
+                    status: 'success',
+                    phoneNumber: data.display_phone_number || data.verified_name,
+                    phoneNumberId: data.id,
+                    qualityRating: data.quality_rating,
+                };
+            } else {
+                debug.apiTest = {
+                    status: 'failed',
+                    error: data.error?.message || 'Unknown error',
+                    errorCode: data.error?.code,
+                };
+            }
+        } catch (error) {
+            debug.apiTest = {
+                status: 'error',
+                error: error.message,
+            };
+        }
+
+        // Get recent message statistics
+        const messageStats = await this.messageRepo
+            .createQueryBuilder('msg')
+            .select('msg.direction', 'direction')
+            .addSelect('msg.status', 'status')
+            .addSelect('COUNT(*)', 'count')
+            .where('msg.companyId = :companyId', { companyId })
+            .groupBy('msg.direction, msg.status')
+            .getRawMany();
+
+        debug.messageStats = messageStats;
+
+        return debug;
     }
 }

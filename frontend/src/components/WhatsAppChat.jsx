@@ -61,14 +61,26 @@ export default function WhatsAppChat({ lead, onClose }) {
             });
 
             if (res.data.status === 'failed') {
-                toast.error('Message failed to send. Check your WhatsApp API config.');
+                toast.error('Message failed to send. Check server logs or WhatsApp API config.', {
+                    duration: 5000,
+                });
+                console.error('WhatsApp send failed:', res.data);
             } else {
                 toast.success('Message sent');
             }
 
             fetchMessages();
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to send message');
+            const errorMsg = err.response?.data?.message || 'Failed to send message';
+            console.error('WhatsApp send error:', err.response?.data || err);
+
+            if (errorMsg.includes('not configured')) {
+                toast.error('WhatsApp not configured. Please go to Settings → Integrations → WhatsApp.', {
+                    duration: 6000,
+                });
+            } else {
+                toast.error(errorMsg, { duration: 5000 });
+            }
         } finally {
             setSending(false);
             inputRef.current?.focus();

@@ -117,4 +117,12 @@ export class WhatsAppController {
         }
         return 'OK';
     }
+
+    // Debug endpoint to check WhatsApp configuration
+    @Get('debug/:companyId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
+    async debugConfig(@Param('companyId') companyId: string) {
+        return this.whatsappService.debugConfiguration(companyId);
+    }
 }
