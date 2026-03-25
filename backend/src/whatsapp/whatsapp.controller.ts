@@ -104,7 +104,6 @@ export class WhatsAppController {
         return this.whatsappService.handleIncomingWebhook(body);
     }
 
-    // Meta webhook verification (GET request with challenge)
     @Get('webhook')
     verifyWebhook(
         @Query('hub.mode') mode: string,
@@ -113,7 +112,8 @@ export class WhatsAppController {
     ) {
         const VERIFY_TOKEN = 'magnet-crm';
         if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-            return parseInt(challenge);
+            // Return the challenge exactly as-is (Meta expects the raw string echoed back)
+            return challenge;
         }
         return 'OK';
     }
