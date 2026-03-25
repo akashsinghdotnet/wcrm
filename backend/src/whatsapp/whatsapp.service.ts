@@ -253,7 +253,6 @@ export class WhatsAppService {
     async handleIncomingWebhook(body: any): Promise<void> {
         this.logger.log(`[WhatsApp Webhook] Received webhook payload: ${JSON.stringify(body).substring(0, 500)}`);
 
-        // Handle Meta webhook verification and incoming messages
         const entry = body?.entry?.[0];
         const changes = entry?.changes?.[0];
         const value = changes?.value;
@@ -263,53 +262,58 @@ export class WhatsAppService {
             return;
         }
 
-        // Extract contact info from webhook payload
         const contacts = value.contacts || [];
         const phoneNumberId = value.metadata?.phone_number_id;
 
         this.logger.log(`[WhatsApp Webhook] Processing ${value.messages.length} message(s) from Phone Number ID: ${phoneNumberId}`);
+
+        // ── Resolve company FIRST from phoneNumberId ──────────────────────────
+        // This MUST happen before any lead lookup to ensure strict company isolation.
+        // All lead searches are scoped to this company only.
+        const whatsappConfig = await this.configRepo.findOne({ where: { phoneNumberId } });
+        if (!whatsappConfig) {
+            this.logger.error(`[WhatsApp Webhook] CRITICAL: No WhatsApp config found for phoneNumberId ${phoneNumberId}. Dropping all messages in this webhook.`);
+            this.logger.error(`[WhatsApp Webhook] Please verify that phoneNumberId ${phoneNumberId} is configured in CRM Settings → Integrations → WhatsApp`);
+            return;
+        }
+        const companyId = whatsappConfig.companyId;
+        this.logger.log(`[WhatsApp Webhook] Resolved company: ${companyId} for phoneNumberId: ${phoneNumberId}`);
+        // ──────────────────────────────────────────────────────────────────────
 
         for (const msg of value.messages) {
             const fromPhone = msg.from;
             const text = msg.text?.body || '';
             const waMessageId = msg.id;
 
-            this.logger.log(`[WhatsApp Webhook] Processing message from ${fromPhone}: "${text.substring(0, 50)}..."`);
-            this.logger.log(`[WhatsApp Webhook] Message ID: ${waMessageId}`);
+            this.logger.log(`[WhatsApp Webhook] Processing message from ${fromPhone}: "${text.substring(0, 50)}"`);
 
-            // Check if this message came from a WhatsApp Ad (Click-to-WhatsApp ad)
             const referral = msg.referral;
             const isFromAd = !!referral;
 
-            this.logger.log(`[WhatsApp Webhook] Message is from ${isFromAd ? 'WhatsApp Ad' : 'regular message'}`);
-
-            // Find lead by phone number
+            // ── Find lead by phone — SCOPED TO THIS COMPANY ONLY ──────────────
             let lead = await this.leadRepo
                 .createQueryBuilder('lead')
-                .where("REPLACE(REPLACE(REPLACE(lead.phone, '+', ''), '-', ''), ' ', '') LIKE :phone", {
+                .where('lead.companyId = :companyId', { companyId })
+                .andWhere("REPLACE(REPLACE(REPLACE(lead.phone, '+', ''), '-', ''), ' ', '') LIKE :phone", {
                     phone: `%${fromPhone.slice(-10)}`,
                 })
                 .getOne();
+            // ──────────────────────────────────────────────────────────────────
 
             if (lead) {
-                this.logger.log(`[WhatsApp Webhook] Found existing lead: ${lead.name} (ID: ${lead.id})`);
+                this.logger.log(`[WhatsApp Webhook] Found existing lead: ${lead.name} (ID: ${lead.id}) in company ${companyId}`);
             } else {
-                this.logger.warn(`[WhatsApp Webhook] No existing lead found for phone ${fromPhone}`);
+                this.logger.warn(`[WhatsApp Webhook] No existing lead found for phone ${fromPhone} in company ${companyId}`);
             }
 
-            // If no lead found and message came from a WhatsApp Ad, auto-create a lead
-            if (!lead && isFromAd) {
-                this.logger.log(`[WhatsApp Webhook] Attempting to auto-create lead from WhatsApp Ad`);
-                // Find which company this WhatsApp number belongs to
-                const whatsappConfig = await this.configRepo.findOne({
-                    where: { phoneNumberId },
-                });
+            // Auto-create lead if not found
+            if (!lead) {
+                const contactName = contacts.find((c: any) => c.wa_id === fromPhone)?.profile?.name || 'Unknown';
+                const source = isFromAd ? LeadSource.META_ADS : LeadSource.WHATSAPP;
+                const assignedTo = await this.leadsService.getNextAssignee(companyId, isFromAd ? 'meta_ads' : 'whatsapp');
 
-                if (whatsappConfig) {
-                    this.logger.log(`[WhatsApp Webhook] Found company config for phoneNumberId ${phoneNumberId}: ${whatsappConfig.companyId}`);
-                    const contactName = contacts.find((c: any) => c.wa_id === fromPhone)?.profile?.name || 'Unknown (WhatsApp Ad)';
-                    const assignedTo = await this.leadsService.getNextAssignee(whatsappConfig.companyId, 'meta_ads');
-
+                let notes: string | undefined;
+                if (isFromAd && referral) {
                     const adNotes = [
                         referral.source_url ? `Ad URL: ${referral.source_url}` : null,
                         referral.headline ? `Ad Headline: ${referral.headline}` : null,
@@ -317,73 +321,42 @@ export class WhatsAppService {
                         referral.source_type ? `Source: ${referral.source_type}` : null,
                         text ? `First Message: ${text}` : null,
                     ].filter(Boolean).join(', ');
-
-                    lead = await this.leadsService.create({
-                        companyId: whatsappConfig.companyId,
-                        name: contactName,
-                        phone: `+${fromPhone}`,
-                        source: LeadSource.META_ADS,
-                        status: LeadStatus.NEW,
-                        assignedTo: assignedTo || undefined,
-                        notes: adNotes || undefined,
-                        skipAutoReply: true,
-                    });
-
-                    this.logger.log(`Auto-created lead from WhatsApp Ad: ${contactName} (${fromPhone}) for company ${whatsappConfig.companyId}`);
+                    notes = adNotes || undefined;
                 } else {
-                    this.logger.warn(`Incoming WhatsApp Ad message from ${fromPhone} — no matching WhatsApp config for phoneNumberId ${phoneNumberId}`);
-                    continue;
+                    notes = text ? `First WhatsApp message: ${text}` : undefined;
                 }
-            }
 
-            // If no lead found and NOT from ad, also try to auto-create if we can identify the company
-            if (!lead && !isFromAd) {
-                this.logger.log(`[WhatsApp Webhook] Attempting to auto-create lead from regular WhatsApp message`);
-                const whatsappConfig = await this.configRepo.findOne({
-                    where: { phoneNumberId },
+                lead = await this.leadsService.create({
+                    companyId,
+                    name: contactName,
+                    phone: `+${fromPhone}`,
+                    source,
+                    status: LeadStatus.NEW,
+                    assignedTo: assignedTo || undefined,
+                    notes,
+                    skipAutoReply: true,
                 });
 
-                if (whatsappConfig) {
-                    this.logger.log(`[WhatsApp Webhook] Found company config for phoneNumberId ${phoneNumberId}: ${whatsappConfig.companyId}`);
-                    const contactName = contacts.find((c: any) => c.wa_id === fromPhone)?.profile?.name || 'Unknown';
-                    const assignedTo = await this.leadsService.getNextAssignee(whatsappConfig.companyId, 'whatsapp');
-
-                    lead = await this.leadsService.create({
-                        companyId: whatsappConfig.companyId,
-                        name: contactName,
-                        phone: `+${fromPhone}`,
-                        source: LeadSource.WHATSAPP,
-                        status: LeadStatus.NEW,
-                        assignedTo: assignedTo || undefined,
-                        notes: text ? `First WhatsApp message: ${text}` : undefined,
-                        skipAutoReply: true,
-                    });
-
-                    this.logger.log(`[WhatsApp Webhook] ✓ Auto-created lead: ${contactName} (${fromPhone}) - Lead ID: ${lead.id} | Source: whatsapp | Company: ${whatsappConfig.companyId}`);
-                } else {
-                    this.logger.error(`[WhatsApp Webhook] CRITICAL: No WhatsApp config found for phoneNumberId ${phoneNumberId}! Cannot auto-create lead.`);
-                    this.logger.error(`[WhatsApp Webhook] Please verify that phoneNumberId ${phoneNumberId} is configured in WhatsApp settings`);
-                    continue;
-                }
+                this.logger.log(`[WhatsApp Webhook] ✓ Auto-created lead: ${contactName} (${fromPhone}) - Lead ID: ${lead.id} | Source: ${source} | Company: ${companyId}`);
             }
 
             if (!lead) {
-                this.logger.error(`[WhatsApp Webhook] Failed to find or create lead for phone ${fromPhone}. Skipping message.`);
+                this.logger.error(`[WhatsApp Webhook] Failed to find or create lead for phone ${fromPhone}. Skipping.`);
                 continue;
             }
 
+            // Save message — companyId is guaranteed to match the lead's company
             const message = this.messageRepo.create({
-                companyId: lead.companyId,
+                companyId,
                 leadId: lead.id,
                 direction: MessageDirection.INBOUND,
-                content: text,
+                content: text || '[Non-text message]',
                 status: MessageStatus.DELIVERED,
                 whatsappMessageId: waMessageId,
             });
             await this.messageRepo.save(message);
-            this.logger.log(`[WhatsApp Webhook] ✓ Saved incoming message to database (Message ID: ${message.id})`);
+            this.logger.log(`[WhatsApp Webhook] ✓ Saved incoming message (ID: ${message.id}) for lead ${lead.id} in company ${companyId}`);
 
-            // Log activity
             const activity = this.activityRepo.create({
                 leadId: lead.id,
                 type: ActivityType.WHATSAPP,
