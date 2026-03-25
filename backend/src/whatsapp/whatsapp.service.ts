@@ -334,8 +334,7 @@ export class WhatsAppService {
                     status: LeadStatus.NEW,
                     assignedTo: assignedTo || undefined,
                     notes,
-                    skipAutoReply: true,
-                });
+                }, { skipAutoReply: true });
 
                 this.logger.log(`[WhatsApp Webhook] ✓ Auto-created lead: ${contactName} (${fromPhone}) - Lead ID: ${lead.id} | Source: ${source} | Company: ${companyId}`);
             }
