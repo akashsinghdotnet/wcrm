@@ -561,15 +561,30 @@ export class WhatsAppService {
      */
     async triggerAutoReply(companyId: string, leadId: string, leadPhone: string, leadName: string) {
         try {
+            this.logger.log(`[WhatsApp Auto-Reply] Checking auto-reply for lead ${leadId} (${leadName}) - Phone: ${leadPhone}`);
+
             const config = await this.configRepo.findOne({ where: { companyId } });
-            if (!config || !config.autoReplyEnabled || !config.autoReplyTemplateName) {
+            if (!config) {
+                this.logger.warn(`[WhatsApp Auto-Reply] No WhatsApp config found for company ${companyId}`);
+                return;
+            }
+
+            if (!config.autoReplyEnabled) {
+                this.logger.log(`[WhatsApp Auto-Reply] Auto-reply is DISABLED for company ${companyId}`);
+                return;
+            }
+
+            if (!config.autoReplyTemplateName) {
+                this.logger.warn(`[WhatsApp Auto-Reply] Auto-reply enabled but no template selected for company ${companyId}`);
                 return;
             }
 
             if (!leadPhone) {
-                this.logger.warn(`Auto-reply skipped for lead ${leadId}: no phone number`);
+                this.logger.warn(`[WhatsApp Auto-Reply] Skipped for lead ${leadId}: no phone number`);
                 return;
             }
+
+            this.logger.log(`[WhatsApp Auto-Reply] ✓ Will send template "${config.autoReplyTemplateName}" to ${leadName} (${leadPhone})`);
 
             const delaySec = config.autoReplyDelaySec || 0;
 
