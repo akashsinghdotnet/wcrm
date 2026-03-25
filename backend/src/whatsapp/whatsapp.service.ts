@@ -93,7 +93,7 @@ export class WhatsAppService {
                 {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${config.accessToken.substring(0, 15)}...`,
+                        'Authorization': `Bearer ${config.accessToken}`,
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(payload),
