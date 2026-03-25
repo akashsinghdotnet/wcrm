@@ -326,6 +326,7 @@ export class WhatsAppService {
                         status: LeadStatus.NEW,
                         assignedTo: assignedTo || undefined,
                         notes: adNotes || undefined,
+                        skipAutoReply: true,
                     });
 
                     this.logger.log(`Auto-created lead from WhatsApp Ad: ${contactName} (${fromPhone}) for company ${whatsappConfig.companyId}`);
@@ -344,20 +345,21 @@ export class WhatsAppService {
 
                 if (whatsappConfig) {
                     this.logger.log(`[WhatsApp Webhook] Found company config for phoneNumberId ${phoneNumberId}: ${whatsappConfig.companyId}`);
-                    const contactName = contacts.find((c: any) => c.wa_id === fromPhone)?.profile?.name || 'Unknown (WhatsApp)';
+                    const contactName = contacts.find((c: any) => c.wa_id === fromPhone)?.profile?.name || 'Unknown';
                     const assignedTo = await this.leadsService.getNextAssignee(whatsappConfig.companyId, 'whatsapp');
 
                     lead = await this.leadsService.create({
                         companyId: whatsappConfig.companyId,
                         name: contactName,
                         phone: `+${fromPhone}`,
-                        source: LeadSource.MANUAL,
+                        source: LeadSource.WHATSAPP,
                         status: LeadStatus.NEW,
                         assignedTo: assignedTo || undefined,
-                        notes: text ? `First Message: ${text}` : undefined,
+                        notes: text ? `First WhatsApp message: ${text}` : undefined,
+                        skipAutoReply: true,
                     });
 
-                    this.logger.log(`[WhatsApp Webhook] Auto-created lead: ${contactName} (${fromPhone}) - Lead ID: ${lead.id} for company ${whatsappConfig.companyId}`);
+                    this.logger.log(`[WhatsApp Webhook] ✓ Auto-created lead: ${contactName} (${fromPhone}) - Lead ID: ${lead.id} | Source: whatsapp | Company: ${whatsappConfig.companyId}`);
                 } else {
                     this.logger.error(`[WhatsApp Webhook] CRITICAL: No WhatsApp config found for phoneNumberId ${phoneNumberId}! Cannot auto-create lead.`);
                     this.logger.error(`[WhatsApp Webhook] Please verify that phoneNumberId ${phoneNumberId} is configured in WhatsApp settings`);

@@ -44,4 +44,7 @@ export class CreateLeadDto {
     @IsOptional()
     @IsDateString()
     followUpDate?: string;
+
+    /** Internal flag — set to true when creating a lead from an inbound WhatsApp message to prevent auto-reply loop */
+    skipAutoReply?: boolean;
 }

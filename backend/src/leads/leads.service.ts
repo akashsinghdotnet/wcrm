@@ -33,7 +33,8 @@ export class LeadsService {
         const savedLead = await this.leadsRepository.save(lead);
 
         // Trigger WhatsApp auto-reply asynchronously (fire and forget)
-        if (savedLead.phone && savedLead.companyId) {
+        // Skip if the lead was created FROM an inbound WhatsApp message to prevent reply loops
+        if (savedLead.phone && savedLead.companyId && !createLeadDto.skipAutoReply) {
             this.whatsAppService.triggerAutoReply(
                 savedLead.companyId,
                 savedLead.id,
