@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request, Res, HttpStatus } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response as HttpResponse } from 'express';
 import { IntegrationsService } from './integrations.service';
 import { SaveIntegrationDto } from './dto/save-integration.dto';
 import { IntegrationPlatform } from './integration-config.entity';
@@ -19,7 +19,7 @@ export class IntegrationsController {
         @Query('hub.mode') mode: string,
         @Query('hub.challenge') challenge: string,
         @Query('hub.verify_token') verifyToken: string,
-        @Res() res: Response,
+        @Res() res: HttpResponse,
     ) {
         const result = this.integrationsService.verifyMetaWebhook(mode, challenge, verifyToken);
         if (result !== null) {
@@ -29,7 +29,7 @@ export class IntegrationsController {
     }
 
     @Post('meta/webhook')
-    async handleMetaLeadgenWebhook(@Body() body: any, @Res() res: Response) {
+    async handleMetaLeadgenWebhook(@Body() body: any, @Res() res: HttpResponse) {
         // Always return 200 immediately — Meta expects a fast response
         res.status(HttpStatus.OK).json({ received: true });
 
