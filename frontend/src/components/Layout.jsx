@@ -28,6 +28,8 @@ import {
     Ticket,
     Megaphone,
     Bell,
+    Sun,
+    Moon,
 } from 'lucide-react';
 
 const navItems = [
@@ -77,6 +79,24 @@ export default function Layout() {
     const prevUnreadRef = useRef(0);
     const audioRef = useRef(null);
     const notifPermissionRef = useRef(false);
+
+    // Dark / Light mode
+    const [isDark, setIsDark] = useState(() => {
+        const saved = localStorage.getItem('theme');
+        return saved ? saved === 'dark' : true; // default dark
+    });
+    useEffect(() => {
+        const root = document.documentElement;
+        if (isDark) {
+            root.classList.remove('light');
+            root.setAttribute('data-theme', 'dark');
+        } else {
+            root.classList.add('light');
+            root.setAttribute('data-theme', 'light');
+        }
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }, [isDark]);
+    const toggleTheme = () => setIsDark(prev => !prev);
 
     // Request notification permission on mount
     useEffect(() => {
@@ -210,7 +230,7 @@ export default function Layout() {
     });
 
     return (
-        <div className="min-h-screen bg-slate-950 flex">
+        <div className={`min-h-screen flex ${isDark ? 'bg-slate-950' : 'bg-gray-50'}`}>
             {/* Mobile overlay */}
             {sidebarOpen && (
                 <div
@@ -221,12 +241,12 @@ export default function Layout() {
 
             {/* Sidebar */}
             <aside
-                className={`fixed lg:sticky top-0 h-screen inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800 flex flex-col transform transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-                    }`}
+                className={`fixed lg:sticky top-0 h-screen inset-y-0 left-0 z-50 w-64 border-r flex flex-col transform transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+                    } ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-200'}`}
             >
                 {/* Logo */}
                 <div
-                    className="px-6 border-b border-slate-800"
+                    className={`px-6 border-b ${isDark ? 'border-slate-800' : 'border-gray-200'}`}
                     style={{
                         paddingTop: config?.sidebar_padding_vertical ? `${config.sidebar_padding_vertical}px` : '1.5rem',
                         paddingBottom: config?.sidebar_padding_vertical ? `${config.sidebar_padding_vertical}px` : '1.5rem'
@@ -266,8 +286,8 @@ export default function Layout() {
                         )}
                         {(config?.sidebar_show_text === undefined || config?.sidebar_show_text === 'true') && (
                             <div>
-                                <h1 className="text-lg font-bold text-white">{config?.sidebar_text_content || 'MagnetCRM'}</h1>
-                                <p className="text-xs text-slate-400">Marketing Agency CRM</p>
+                                <h1 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{config?.sidebar_text_content || 'MagnetCRM'}</h1>
+                                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Marketing Agency CRM</p>
                             </div>
                         )}
                     </div>
@@ -284,7 +304,7 @@ export default function Layout() {
                             className={({ isActive }) =>
                                 `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${isActive
                                     ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
-                                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                                    : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/60' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                                 }`
                             }
                         >
@@ -300,7 +320,7 @@ export default function Layout() {
                 </nav>
 
                 {/* User info + logout */}
-                <div className="p-4 border-t border-slate-800">
+                <div className={`p-4 border-t ${isDark ? 'border-slate-800' : 'border-gray-200'}`}>
                     <div className="flex items-center gap-3 px-3 py-2">
                         <div className="w-9 h-9 rounded-full bg-indigo-600/30 flex items-center justify-center">
                             <span className="text-sm font-semibold text-indigo-400">
@@ -308,8 +328,8 @@ export default function Layout() {
                             </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-white truncate">{displayName}</p>
-                            <p className="text-xs text-slate-400">{getRoleLabel(user?.role)}</p>
+                            <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{displayName}</p>
+                            <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{getRoleLabel(user?.role)}</p>
                         </div>
                     </div>
                     <button
@@ -323,9 +343,9 @@ export default function Layout() {
             </aside>
 
             {/* Main content */}
-            <div className="flex-1 flex flex-col min-h-screen min-w-0">
+            <div className={`flex-1 flex flex-col min-h-screen min-w-0 ${isDark ? '' : 'bg-gray-50'}`}>
                 {/* Top bar */}
-                <header className="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm flex items-center px-4 lg:px-6 sticky top-0 z-30">
+                <header className={`h-16 border-b backdrop-blur-sm flex items-center px-4 lg:px-6 sticky top-0 z-30 ${isDark ? 'border-slate-800 bg-slate-900/80' : 'border-gray-200 bg-white/90'}`}>
                     <button
                         onClick={() => setSidebarOpen(true)}
                         className="lg:hidden mr-4 p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
@@ -334,6 +354,14 @@ export default function Layout() {
                     </button>
                     <div className="flex-1" />
                     <div className="flex items-center gap-3">
+                        {/* Theme toggle */}
+                        <button
+                            onClick={toggleTheme}
+                            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                            className={`p-2 rounded-lg transition-all ${isDark ? 'text-slate-400 hover:text-yellow-400 hover:bg-slate-800' : 'text-gray-500 hover:text-indigo-600 hover:bg-gray-100'}`}
+                        >
+                            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                        </button>
                         {/* Notification bell - only for company users */}
                         {!['super_admin', 'superadmin_admin', 'superadmin_staff'].includes(user?.role) && (
                             <div className="relative" ref={notifDropdownRef}>
@@ -407,7 +435,7 @@ export default function Layout() {
                             </div>
                         )}
 
-                        <span className="text-sm text-slate-400 hidden sm:block">{displayName}</span>
+                        <span className={`text-sm hidden sm:block ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{displayName}</span>
                         <span className="px-2.5 py-1 text-xs font-medium bg-indigo-600/20 text-indigo-400 rounded-full">
                             {getRoleLabel(user?.role)}
                         </span>
@@ -415,7 +443,7 @@ export default function Layout() {
                 </header>
 
                 {/* Page content */}
-                <main className="flex-1 p-4 lg:p-6 overflow-auto">
+                <main className={`flex-1 p-4 lg:p-6 overflow-auto ${isDark ? '' : 'bg-gray-50'}`}>
                     <Outlet />
                 </main>
             </div>

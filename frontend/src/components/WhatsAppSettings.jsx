@@ -337,13 +337,18 @@ export default function WhatsAppSettings() {
                         </div>
                         {/* Toggle */}
                         <button
+                            type="button"
+                            role="switch"
+                            aria-checked={autoReply.autoReplyEnabled}
                             onClick={() => {
                                 const newVal = !autoReply.autoReplyEnabled;
                                 setAutoReply(prev => ({ ...prev, autoReplyEnabled: newVal }));
                             }}
-                            className={`ml-auto relative w-12 h-6 rounded-full transition-colors cursor-pointer ${autoReply.autoReplyEnabled ? 'bg-green-500' : 'bg-slate-700'}`}
+                            className={`ml-auto relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${autoReply.autoReplyEnabled ? 'bg-green-500' : 'bg-slate-700'}`}
                         >
-                            <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${autoReply.autoReplyEnabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                            <span
+                                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ${autoReply.autoReplyEnabled ? 'translate-x-7' : 'translate-x-0.5'}`}
+                            />
                         </button>
                     </div>
 

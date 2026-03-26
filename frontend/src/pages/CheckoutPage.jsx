@@ -611,20 +611,6 @@ export default function CheckoutPage() {
                                 )}
                             </div>
 
-                            {/* Billing Period Toggle */}
-                            <div className="mb-5">
-                                <p className="text-xs text-slate-400 font-medium mb-2 uppercase tracking-wide">Billing Period</p>
-                                <div className="flex bg-slate-800 rounded-xl p-1 gap-1">
-                                    <button onClick={() => setBillingPeriod('monthly')}
-                                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${billingPeriod === 'monthly' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}>
-                                        Monthly
-                                    </button>
-                                    <button onClick={() => setBillingPeriod('yearly')}
-                                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${billingPeriod === 'yearly' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}>
-                                        Yearly
-                                    </button>
-                                </div>
-                            </div>
 
                             {/* Coupon Code */}
                             <div className="mb-5">
