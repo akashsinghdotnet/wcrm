@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { WhatsAppContact } from './entities/whatsapp-contact.entity';
@@ -15,6 +15,8 @@ import { CreateTemplateDto } from './dto/create-template.dto';
 import { CreateBroadcastDto } from './dto/create-broadcast.dto';
 import { BroadcastStatus } from './entities/whatsapp-broadcast.entity';
 import { TemplateStatus } from './entities/whatsapp-template.entity';
+import { WhatsAppService } from './whatsapp.service';
+import { Lead } from '../leads/lead.entity';
 
 @Injectable()
 export class WhatsAppCRMService {
@@ -31,6 +33,10 @@ export class WhatsAppCRMService {
         private broadcastRepo: Repository<WhatsAppBroadcast>,
         @InjectRepository(WhatsAppBroadcastLog)
         private broadcastLogRepo: Repository<WhatsAppBroadcastLog>,
+        @InjectRepository(Lead)
+        private leadRepo: Repository<Lead>,
+        @Inject(forwardRef(() => WhatsAppService))
+        private whatsappService: WhatsAppService,
     ) {}
 
     // ==================== CONTACT MANAGEMENT ====================
@@ -104,32 +110,62 @@ export class WhatsAppCRMService {
         tagId?: string;
         optedIn?: boolean;
         search?: string;
-    }): Promise<WhatsAppContact[]> {
+    }): Promise<any[]> {
+        // Get WhatsApp-specific contacts
         const query = this.contactRepo.createQueryBuilder('contact')
             .leftJoinAndSelect('contact.lists', 'list')
             .leftJoinAndSelect('contact.tags', 'tag')
             .where('contact.companyId = :companyId', { companyId });
 
-        if (filters?.listId) {
-            query.andWhere('list.id = :listId', { listId: filters.listId });
-        }
-
-        if (filters?.tagId) {
-            query.andWhere('tag.id = :tagId', { tagId: filters.tagId });
-        }
-
-        if (filters?.optedIn !== undefined) {
-            query.andWhere('contact.isOptedIn = :optedIn', { optedIn: filters.optedIn });
-        }
-
+        if (filters?.listId) query.andWhere('list.id = :listId', { listId: filters.listId });
+        if (filters?.tagId) query.andWhere('tag.id = :tagId', { tagId: filters.tagId });
+        if (filters?.optedIn !== undefined) query.andWhere('contact.isOptedIn = :optedIn', { optedIn: filters.optedIn });
         if (filters?.search) {
             query.andWhere(
                 '(contact.name ILIKE :search OR contact.phone ILIKE :search OR contact.email ILIKE :search)',
                 { search: `%${filters.search}%` }
             );
         }
+        const contacts = await query.getMany();
 
-        return query.getMany();
+        // Also include leads as virtual contacts (unless filter is applied for lists/tags)
+        if (!filters?.listId && !filters?.tagId) {
+            const leadQuery: any = { companyId };
+            if (filters?.search) {
+                // can't use ILIKE easily here — filter post-fetch
+            }
+            const leads = await this.leadRepo.find({ where: leadQuery });
+            const existingPhones = new Set(contacts.map(c => c.phone));
+
+            for (const lead of leads) {
+                if (!lead.phone) continue;
+                if (existingPhones.has(lead.phone)) continue; // already in contacts
+                if (filters?.search) {
+                    const q = filters.search.toLowerCase();
+                    if (!lead.name?.toLowerCase().includes(q) &&
+                        !lead.phone?.toLowerCase().includes(q) &&
+                        !lead.email?.toLowerCase().includes(q)) continue;
+                }
+                // Present lead as a contact with source='lead'
+                contacts.push({
+                    id: `lead_${lead.id}`,
+                    companyId,
+                    name: lead.name,
+                    phone: lead.phone,
+                    email: lead.email,
+                    isOptedIn: false,
+                    isOptedOut: false,
+                    lists: [{ id: 'leads', name: 'Leads' }],
+                    tags: [],
+                    source: 'lead',
+                    leadId: lead.id,
+                    createdAt: lead.createdAt,
+                } as any);
+                existingPhones.add(lead.phone);
+            }
+        }
+
+        return contacts;
     }
 
     async updateContactOptIn(id: string, optedIn: boolean, source?: string): Promise<WhatsAppContact> {
@@ -291,8 +327,11 @@ export class WhatsAppCRMService {
     }
 
     async getTemplates(companyId: string): Promise<WhatsAppTemplate[]> {
+        // Auto-sync from Meta so sidebar always shows current templates
+        await this.whatsappService.syncTemplatesToDB(companyId);
         return this.templateRepo.find({
             where: { companyId },
+            order: { name: 'ASC' },
         });
     }
 

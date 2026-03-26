@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WhatsAppConfig } from './whatsapp-config.entity';
 import { WhatsAppMessage, MessageDirection, MessageStatus } from './whatsapp-message.entity';
+import { WhatsAppTemplate, TemplateStatus, TemplateCategory } from './entities/whatsapp-template.entity';
 import { SaveWhatsAppConfigDto } from './dto/save-config.dto';
 import { Lead, LeadSource, LeadStatus } from '../leads/lead.entity';
 import { Activity, ActivityType } from '../leads/activity.entity';
@@ -17,6 +18,8 @@ export class WhatsAppService {
         private configRepo: Repository<WhatsAppConfig>,
         @InjectRepository(WhatsAppMessage)
         private messageRepo: Repository<WhatsAppMessage>,
+        @InjectRepository(WhatsAppTemplate)
+        private templateRepo: Repository<WhatsAppTemplate>,
         @InjectRepository(Lead)
         private leadRepo: Repository<Lead>,
         @InjectRepository(Activity)
@@ -442,12 +445,31 @@ export class WhatsAppService {
             status = MessageStatus.FAILED;
         }
 
-        // Save message record
+        // Resolve the actual template body text from DB (fill in variables)
+        let templateContent: string;
+        try {
+            const tpl = await this.templateRepo.findOne({ where: { companyId, name: templateName } });
+            if (tpl?.content) {
+                let body = tpl.content;
+                if (variables?.length) {
+                    variables.forEach((val, i) => {
+                        body = body.replace(new RegExp(`\\{\\{${i + 1}\\}}`, 'g'), val);
+                    });
+                }
+                templateContent = body;
+            } else {
+                templateContent = `[Template: ${templateName}]${variables?.length ? ' (' + variables.join(', ') + ')' : ''}`;
+            }
+        } catch {
+            templateContent = `[Template: ${templateName}]`;
+        }
+
+        // Save message record with actual template body
         const msg = this.messageRepo.create({
             companyId,
             leadId,
             direction: MessageDirection.OUTBOUND,
-            content: `[Template: ${templateName}]${variables?.length ? ' Variables: ' + variables.join(', ') : ''}`,
+            content: templateContent,
             status,
             whatsappMessageId: whatsappMessageId || undefined,
             errorDetail: errorDetail || undefined,
@@ -509,6 +531,44 @@ export class WhatsAppService {
             if (error instanceof BadRequestException) throw error;
             this.logger.error(`Failed to fetch templates: ${error.message}`);
             throw new BadRequestException('Failed to fetch templates from Meta');
+        }
+    }
+
+    /**
+     * Sync approved Meta templates into the local whatsapp_templates DB table.
+     * Called before listing templates so the sidebar always shows current data.
+     */
+    async syncTemplatesToDB(companyId: string): Promise<void> {
+        try {
+            const metaTemplates = await this.fetchTemplates(companyId);
+            for (const t of metaTemplates) {
+                // Extract body text from components
+                const bodyComponent = (t.components || []).find((c: any) => c.type === 'BODY');
+                const bodyText = bodyComponent?.text || '';
+                const variables = (bodyText.match(/\{\{\d+\}\}/g) || []).map((_: any, i: number) => `var${i + 1}`);
+
+                const existing = await this.templateRepo.findOne({ where: { companyId, name: t.name } });
+                if (existing) {
+                    existing.content = bodyText || existing.content;
+                    existing.language = t.language || existing.language;
+                    existing.status = TemplateStatus.APPROVED;
+                    existing.variables = variables.length ? variables : existing.variables;
+                    await this.templateRepo.save(existing);
+                } else {
+                    await this.templateRepo.save(this.templateRepo.create({
+                        companyId,
+                        name: t.name,
+                        content: bodyText || t.name,
+                        language: t.language || 'en',
+                        status: TemplateStatus.APPROVED,
+                        category: (t.category?.toLowerCase() as any) || 'marketing',
+                        variables,
+                    }));
+                }
+            }
+        } catch (err: any) {
+            // Non-fatal: if Meta API fails or no businessAccountId, just skip sync
+            this.logger.warn(`Template sync skipped: ${err.message}`);
         }
     }
 

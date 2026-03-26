@@ -22,10 +22,10 @@ export class WhatsAppMessage {
     @Column()
     companyId: string;
 
-    @Column()
+    @Column({ nullable: true })
     leadId: string;
 
-    @ManyToOne(() => Lead, { onDelete: 'CASCADE' })
+    @ManyToOne(() => Lead, { onDelete: 'SET NULL', nullable: true })
     @JoinColumn({ name: 'leadId' })
     lead: Lead;
 
