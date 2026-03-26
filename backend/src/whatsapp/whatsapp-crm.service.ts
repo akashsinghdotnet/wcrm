@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { WhatsAppContact } from './entities/whatsapp-contact.entity';
@@ -7,6 +7,7 @@ import { WhatsAppTag } from './entities/whatsapp-tag.entity';
 import { WhatsAppTemplate } from './entities/whatsapp-template.entity';
 import { WhatsAppBroadcast } from './entities/whatsapp-broadcast.entity';
 import { WhatsAppBroadcastLog, MessageStatus } from './entities/whatsapp-broadcast-log.entity';
+import { WhatsAppConfig } from '../whatsapp/whatsapp-config.entity';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { ImportContactsDto } from './dto/import-contacts.dto';
 import { CreateListDto } from './dto/create-list.dto';
@@ -15,12 +16,14 @@ import { CreateTemplateDto } from './dto/create-template.dto';
 import { CreateBroadcastDto } from './dto/create-broadcast.dto';
 import { BroadcastStatus } from './entities/whatsapp-broadcast.entity';
 import { TemplateStatus } from './entities/whatsapp-template.entity';
-import { WhatsAppService } from './whatsapp.service';
 import { Lead } from '../leads/lead.entity';
 
 @Injectable()
 export class WhatsAppCRMService {
+    private readonly logger = new Logger(WhatsAppCRMService.name);
     constructor(
+        @InjectRepository(WhatsAppConfig)
+        private configRepo: Repository<WhatsAppConfig>,
         @InjectRepository(WhatsAppContact)
         private contactRepo: Repository<WhatsAppContact>,
         @InjectRepository(WhatsAppList)
@@ -35,8 +38,6 @@ export class WhatsAppCRMService {
         private broadcastLogRepo: Repository<WhatsAppBroadcastLog>,
         @InjectRepository(Lead)
         private leadRepo: Repository<Lead>,
-        @Inject(forwardRef(() => WhatsAppService))
-        private whatsappService: WhatsAppService,
     ) {}
 
     // ==================== CONTACT MANAGEMENT ====================
@@ -327,12 +328,59 @@ export class WhatsAppCRMService {
     }
 
     async getTemplates(companyId: string): Promise<WhatsAppTemplate[]> {
-        // Auto-sync from Meta so sidebar always shows current templates
-        await this.whatsappService.syncTemplatesToDB(companyId);
+        // Auto-sync from Meta API before returning
+        await this.syncTemplatesFromMeta(companyId);
         return this.templateRepo.find({
             where: { companyId },
             order: { name: 'ASC' },
         });
+    }
+
+    /**
+     * Fetch approved templates from Meta and upsert into local DB.
+     * Inlined here to avoid circular dependency with WhatsAppService.
+     */
+    private async syncTemplatesFromMeta(companyId: string): Promise<void> {
+        try {
+            const config = await this.configRepo.findOne({ where: { companyId } });
+            if (!config?.businessAccountId || !config?.accessToken) {
+                this.logger.warn(`Template sync skipped for ${companyId}: missing businessAccountId or token`);
+                return;
+            }
+            const response = await fetch(
+                `https://graph.facebook.com/v21.0/${config.businessAccountId}/message_templates?status=APPROVED&limit=100`,
+                { headers: { 'Authorization': `Bearer ${config.accessToken}` } }
+            );
+            if (!response.ok) {
+                this.logger.warn(`Meta templates API returned ${response.status}`);
+                return;
+            }
+            const data = await response.json();
+            for (const t of (data.data || [])) {
+                const bodyComp = (t.components || []).find((c: any) => c.type === 'BODY');
+                const bodyText = bodyComp?.text || t.name;
+                const vars = (bodyText.match(/\{\{\d+\}\}/g) || []).map((_: any, i: number) => `var${i + 1}`);
+                const existing = await this.templateRepo.findOne({ where: { companyId, name: t.name } });
+                if (existing) {
+                    existing.content = bodyText;
+                    existing.status = TemplateStatus.APPROVED;
+                    existing.language = t.language || existing.language;
+                    existing.variables = vars.length ? vars : existing.variables;
+                    await this.templateRepo.save(existing);
+                } else {
+                    await this.templateRepo.save(this.templateRepo.create({
+                        companyId, name: t.name, content: bodyText,
+                        language: t.language || 'en',
+                        status: TemplateStatus.APPROVED,
+                        category: (t.category?.toLowerCase() as any) || 'marketing',
+                        variables: vars,
+                    }));
+                }
+            }
+            this.logger.log(`Synced ${(data.data || []).length} templates for company ${companyId}`);
+        } catch (err: any) {
+            this.logger.warn(`Template sync failed: ${err.message}`);
+        }
     }
 
     async getApprovedTemplates(companyId: string): Promise<WhatsAppTemplate[]> {
