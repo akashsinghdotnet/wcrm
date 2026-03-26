@@ -50,12 +50,12 @@ export default function EmailHistoryPage() {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">Email History</h1>
-                        <p className="text-slate-400">Log of all system-sent emails</p>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Email History</h1>
+                        <p className="text-gray-500 dark:text-slate-400">Log of all system-sent emails</p>
                     </div>
                     <button
                         onClick={fetchLogs}
-                        className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors border border-slate-700"
+                        className="p-2 bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-lg transition-colors border border-gray-300 dark:border-slate-700"
                     >
                         <RefreshCw size={20} />
                     </button>
@@ -63,40 +63,40 @@ export default function EmailHistoryPage() {
 
                 {/* Search */}
                 <div className="relative max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 w-5 h-5" />
                     <input
                         type="text"
                         placeholder="Search by recipient or subject..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                 </div>
 
                 {/* Table */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-slate-800 bg-slate-900/50">
-                                    <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
-                                    <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Recipient</th>
-                                    <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Subject</th>
-                                    <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Date</th>
+                                <tr className="border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
+                                    <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                                    <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Recipient</th>
+                                    <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Subject</th>
+                                    <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-800">
+                            <tbody className="divide-y divide-gray-200 dark:divide-slate-800">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="4" className="p-8 text-center text-slate-500">Loading logs...</td>
+                                        <td colSpan="4" className="p-8 text-center text-gray-400 dark:text-slate-500">Loading logs...</td>
                                     </tr>
                                 ) : filteredLogs.length === 0 ? (
                                     <tr>
-                                        <td colSpan="4" className="p-8 text-center text-slate-500">No email logs found</td>
+                                        <td colSpan="4" className="p-8 text-center text-gray-400 dark:text-slate-500">No email logs found</td>
                                     </tr>
                                 ) : (
                                     filteredLogs.map((log) => (
-                                        <tr key={log.id} className="hover:bg-slate-800/50 transition-colors">
+                                        <tr key={log.id} className="hover:bg-gray-100 dark:bg-slate-800/50 transition-colors">
                                             <td className="p-4">
                                                 <StatusBadge status={log.status} />
                                                 {log.status === 'failed' && (
@@ -106,13 +106,13 @@ export default function EmailHistoryPage() {
                                                 )}
                                             </td>
                                             <td className="p-4">
-                                                <div className="text-sm font-medium text-white">{log.to}</div>
+                                                <div className="text-sm font-medium text-gray-900 dark:text-white">{log.to}</div>
                                             </td>
                                             <td className="p-4">
-                                                <div className="text-sm text-slate-300">{log.subject}</div>
+                                                <div className="text-sm text-gray-600 dark:text-slate-300">{log.subject}</div>
                                             </td>
                                             <td className="p-4">
-                                                <div className="flex items-center gap-2 text-sm text-slate-400">
+                                                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
                                                     <Calendar size={14} />
                                                     {new Date(log.sentAt).toLocaleString()}
                                                 </div>

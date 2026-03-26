@@ -23,7 +23,7 @@ const sourceColors = {
     tradeindia: 'bg-emerald-500/20 text-emerald-400',
     website: 'bg-purple-500/20 text-purple-400',
     whatsapp: 'bg-green-600/20 text-green-400',
-    manual: 'bg-slate-600/20 text-slate-400',
+    manual: 'bg-slate-600/20 text-gray-500 dark:text-slate-400',
 };
 
 const emptyForm = {
@@ -344,21 +344,21 @@ export default function LeadsPage() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-white">Leads</h2>
-                    <p className="text-slate-400 mt-1">{total} leads total</p>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Leads</h2>
+                    <p className="text-gray-500 dark:text-slate-400 mt-1">{total} leads total</p>
                 </div>
                 {canAssign && (
                     <div className="flex items-center gap-2">
                         <button
                             onClick={handleExportCsv}
-                            className="flex items-center gap-2 px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-xl transition-all border border-slate-700"
+                            className="flex items-center gap-2 px-3 py-2.5 bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-sm font-medium rounded-xl transition-all border border-gray-300 dark:border-slate-700"
                         >
                             <Download className="w-4 h-4" />
                             Export
                         </button>
                         <button
                             onClick={handleImportCsv}
-                            className="flex items-center gap-2 px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-xl transition-all border border-slate-700"
+                            className="flex items-center gap-2 px-3 py-2.5 bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-sm font-medium rounded-xl transition-all border border-gray-300 dark:border-slate-700"
                         >
                             <Upload className="w-4 h-4" />
                             Import
@@ -401,8 +401,8 @@ export default function LeadsPage() {
                                 setPage(1);
                             }}
                             className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${isActive
-                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25'
-                                : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700'
+                                ? 'bg-indigo-600 text-gray-900 dark:text-white shadow-lg shadow-indigo-600/25'
+                                : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:text-white hover:bg-gray-200 dark:bg-slate-700 border border-gray-300 dark:border-slate-700'
                             }`}
                         >
                             {tab.label}
@@ -413,11 +413,11 @@ export default function LeadsPage() {
 
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-3">
-                <Filter className="w-4 h-4 text-slate-400" />
+                <Filter className="w-4 h-4 text-gray-500 dark:text-slate-400" />
                 <select
                     value={filters.status}
                     onChange={(e) => { setFilters({ ...filters, status: e.target.value }); setPage(1); }}
-                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="px-3 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                     <option value="">All Status</option>
                     <option value="new">New</option>
@@ -429,7 +429,7 @@ export default function LeadsPage() {
                 <select
                     value={filters.source}
                     onChange={(e) => { setFilters({ ...filters, source: e.target.value }); setPage(1); }}
-                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="px-3 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                     <option value="">All Sources</option>
                     {activeSources.map(s => (
@@ -439,7 +439,7 @@ export default function LeadsPage() {
                 <select
                     value={filters.dateRange}
                     onChange={(e) => { setFilters({ ...filters, dateRange: e.target.value }); setPage(1); }}
-                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="px-3 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                     <option value="">All Time</option>
                     <option value="today">Today</option>
@@ -454,21 +454,21 @@ export default function LeadsPage() {
                             type="date"
                             value={customDateFrom}
                             onChange={(e) => { setCustomDateFrom(e.target.value); setPage(1); }}
-                            className="px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="px-2 py-1.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
-                        <span className="text-slate-500 text-xs">to</span>
+                        <span className="text-gray-400 dark:text-slate-500 text-xs">to</span>
                         <input
                             type="date"
                             value={customDateTo}
                             onChange={(e) => { setCustomDateTo(e.target.value); setPage(1); }}
-                            className="px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="px-2 py-1.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                     </div>
                 )}
                 {(filters.status || filters.source || filters.dateRange || filters.assigned) && (
                     <button
                         onClick={() => { setFilters({ status: '', source: '', dateRange: '', assigned: '' }); setCustomDateFrom(''); setCustomDateTo(''); setPage(1); }}
-                        className="text-xs text-slate-400 hover:text-white px-3 py-2 bg-slate-800 rounded-xl"
+                        className="text-xs text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white px-3 py-2 bg-white dark:bg-slate-800 rounded-xl"
                     >
                         Clear
                     </button>
@@ -476,73 +476,73 @@ export default function LeadsPage() {
             </div>
 
             {/* Leads Table */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-slate-800">
+                            <tr className="border-b border-gray-200 dark:border-slate-800">
                                 <th className="w-12 px-6 py-4">
                                     <input
                                         type="checkbox"
                                         checked={leads.length > 0 && selectedIds.length === leads.length}
                                         onChange={handleSelectAll}
-                                        className="rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500 transition-all"
+                                        className="rounded border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-indigo-600 focus:ring-indigo-500 transition-all"
                                     />
                                 </th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Name</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Contact</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Source</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Assigned To</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Updated By</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Date</th>
-                                <th className="px-6 py-4 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Name</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Contact</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Source</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Assigned To</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Updated By</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800">
+                        <tbody className="divide-y divide-gray-200 dark:divide-slate-800">
                             {leads.map((lead) => (
-                                <tr key={lead.id} className={`hover:bg-slate-800/40 transition-colors cursor-pointer ${selectedIds.includes(lead.id) ? 'bg-slate-800/60' : ''}`} onClick={() => setSelectedLead(lead)}>
+                                <tr key={lead.id} className={`hover:bg-gray-100 dark:bg-slate-800/40 transition-colors cursor-pointer ${selectedIds.includes(lead.id) ? 'bg-gray-100 dark:bg-slate-800/60' : ''}`} onClick={() => setSelectedLead(lead)}>
                                     <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                                         <input
                                             type="checkbox"
                                             checked={selectedIds.includes(lead.id)}
                                             onChange={() => handleSelectOne(lead.id)}
-                                            className="rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500 transition-all"
+                                            className="rounded border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-indigo-600 focus:ring-indigo-500 transition-all"
                                         />
                                     </td>
                                     <td className="px-6 py-4">
-                                        <p className="text-sm font-medium text-white">{lead.name}</p>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{lead.name}</p>
                                         {lead.notes && (
-                                            <p className="text-xs text-slate-500 mt-0.5 truncate max-w-[200px]">{lead.notes}</p>
+                                            <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 truncate max-w-[200px]">{lead.notes}</p>
                                         )}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <p className="text-sm text-slate-300">{lead.phone || '—'}</p>
-                                        <p className="text-xs text-slate-500">{lead.email || ''}</p>
+                                        <p className="text-sm text-gray-600 dark:text-slate-300">{lead.phone || '—'}</p>
+                                        <p className="text-xs text-gray-400 dark:text-slate-500">{lead.email || ''}</p>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${sourceColors[lead.source] || 'bg-slate-700 text-slate-300'}`}>
+                                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${sourceColors[lead.source] || 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300'}`}>
                                             {lead.source?.replace('_', ' ')}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${statusColors[lead.status] || 'bg-slate-700 text-slate-300'}`}>
+                                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${statusColors[lead.status] || 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300'}`}>
                                             {lead.status?.replace('_', ' ')}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-slate-400">
+                                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
                                         {lead.assignedUser?.email?.split('@')[0] || '—'}
                                     </td>
                                     <td className="px-6 py-4 text-sm">
                                         {lead.lastUpdatedByUser ? (
-                                            <span className={lead.lastUpdatedBy !== lead.assignedTo ? 'text-amber-400 font-medium' : 'text-slate-400'}>
+                                            <span className={lead.lastUpdatedBy !== lead.assignedTo ? 'text-amber-400 font-medium' : 'text-gray-500 dark:text-slate-400'}>
                                                 {lead.lastUpdatedByUser.name || lead.lastUpdatedByUser.email?.split('@')[0]}
                                             </span>
                                         ) : (
-                                            <span className="text-slate-500">—</span>
+                                            <span className="text-gray-400 dark:text-slate-500">—</span>
                                         )}
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-slate-400">
+                                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
                                         {new Date(lead.createdAt).toLocaleDateString('en-IN')}
                                     </td>
                                     <td className="px-6 py-4 text-right">
@@ -551,14 +551,14 @@ export default function LeadsPage() {
                                                 <>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); setCallingLead(lead); }}
-                                                        className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all cursor-pointer"
+                                                        className="p-2 text-gray-500 dark:text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all cursor-pointer"
                                                         title="Call"
                                                     >
                                                         <Phone className="w-4 h-4" />
                                                     </button>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); setWhatsAppLead(lead); }}
-                                                        className="p-2 text-slate-400 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all cursor-pointer"
+                                                        className="p-2 text-gray-500 dark:text-slate-400 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all cursor-pointer"
                                                         title="WhatsApp Chat"
                                                     >
                                                         <MessageCircle className="w-4 h-4" />
@@ -567,14 +567,14 @@ export default function LeadsPage() {
                                             )}
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); openEdit(lead); }}
-                                                className="p-2 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-all cursor-pointer"
+                                                className="p-2 text-gray-500 dark:text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-all cursor-pointer"
                                             >
                                                 <Pencil className="w-4 h-4" />
                                             </button>
                                             {canDelete && (
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }}
-                                                    className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer"
+                                                    className="p-2 text-gray-500 dark:text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
@@ -585,7 +585,7 @@ export default function LeadsPage() {
                             ))}
                             {leads.length === 0 && (
                                 <tr>
-                                    <td colSpan={9} className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan={9} className="px-6 py-12 text-center text-gray-400 dark:text-slate-500">
                                         No leads found. {canAssign ? 'Click "Add Lead" to create one.' : 'No leads assigned to you yet.'}
                                     </td>
                                 </tr>
@@ -596,7 +596,7 @@ export default function LeadsPage() {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between text-sm text-slate-400">
+            <div className="flex items-center justify-between text-sm text-gray-500 dark:text-slate-400">
                 <div>
                     Showing {Math.min((page - 1) * limit + 1, total)} to {Math.min(page * limit, total)} of {total} leads
                 </div>
@@ -604,15 +604,15 @@ export default function LeadsPage() {
                     <button
                         onClick={() => setPage(p => Math.max(1, p - 1))}
                         disabled={page === 1}
-                        className="p-2 bg-slate-800 border border-slate-700 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="p-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg hover:bg-gray-200 dark:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         <ChevronLeft className="w-4 h-4" />
                     </button>
-                    <span className="px-2 text-white font-medium">Page {page} of {Math.max(1, Math.ceil(total / limit))}</span>
+                    <span className="px-2 text-gray-900 dark:text-white font-medium">Page {page} of {Math.max(1, Math.ceil(total / limit))}</span>
                     <button
                         onClick={() => setPage(p => Math.min(Math.ceil(total / limit), p + 1))}
                         disabled={page >= Math.ceil(total / limit)}
-                        className="p-2 bg-slate-800 border border-slate-700 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="p-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg hover:bg-gray-200 dark:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         <ChevronRight className="w-4 h-4" />
                     </button>
@@ -621,12 +621,12 @@ export default function LeadsPage() {
 
             {/* Bulk Actions Bar */}
             {selectedIds.length > 0 && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-4 flex items-center gap-4 z-40 animate-in slide-in-from-bottom-4">
-                    <span className="text-white font-medium">{selectedIds.length} selected</span>
-                    <div className="h-6 w-px bg-slate-700" />
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-2xl shadow-2xl p-4 flex items-center gap-4 z-40 animate-in slide-in-from-bottom-4">
+                    <span className="text-gray-900 dark:text-white font-medium">{selectedIds.length} selected</span>
+                    <div className="h-6 w-px bg-gray-200 dark:bg-slate-700" />
                     <div className="flex items-center gap-2">
                         <select
-                            className="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-900 dark:text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             onChange={(e) => handleBulkUpdate('status', e.target.value)}
                             value=""
                         >
@@ -639,7 +639,7 @@ export default function LeadsPage() {
                         </select>
                         {canAssign && (
                             <select
-                                className="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 text-gray-900 dark:text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 onChange={(e) => handleBulkUpdate('assign', e.target.value)}
                                 value=""
                             >
@@ -650,7 +650,7 @@ export default function LeadsPage() {
                                 ))}
                             </select>
                         )}
-                        <div className="h-6 w-px bg-slate-700" />
+                        <div className="h-6 w-px bg-gray-200 dark:bg-slate-700" />
                         {canDelete && (
                             <button
                                 onClick={handleBulkDelete}
@@ -662,7 +662,7 @@ export default function LeadsPage() {
                         )}
                         <button
                             onClick={() => setSelectedIds([])}
-                            className="p-2 text-slate-400 hover:bg-slate-800 rounded-lg transition-colors"
+                            className="p-2 text-gray-500 dark:text-slate-400 hover:bg-white dark:bg-slate-800 rounded-lg transition-colors"
                             title="Clear Selection"
                         >
                             <X className="w-4 h-4" />
@@ -675,58 +675,58 @@ export default function LeadsPage() {
             {
                 showModal && (
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                        <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
-                            <div className="flex items-center justify-between p-6 border-b border-slate-800 sticky top-0 bg-slate-900 z-10 rounded-t-2xl">
-                                <h3 className="text-lg font-semibold text-white">
+                        <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+                            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10 rounded-t-2xl">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                     {editingId ? 'Edit Lead' : 'New Lead'}
                                 </h3>
                                 <button
                                     onClick={() => setShowModal(false)}
-                                    className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg"
+                                    className="p-2 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:bg-white dark:bg-slate-800 rounded-lg"
                                 >
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
                             <form onSubmit={handleSubmit} className="p-6 space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Name *</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Name *</label>
                                     <input
                                         required
                                         value={form.name}
                                         onChange={(e) => setForm({ ...form, name: e.target.value })}
-                                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         placeholder="Lead name"
                                     />
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Phone</label>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Phone</label>
                                         <input
                                             value={form.phone}
                                             onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                             placeholder="9876543210"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Email</label>
                                         <input
                                             type="email"
                                             value={form.email}
                                             onChange={(e) => setForm({ ...form, email: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                             placeholder="lead@example.com"
                                         />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Source</label>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Source</label>
                                         <select
                                             value={form.source}
                                             onChange={(e) => setForm({ ...form, source: e.target.value })}
                                             disabled={!canAssign}
-                                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
                                         >
                                             {activeSources.map(src => (
                                                 <option key={src.key} value={src.key}>{src.label}</option>
@@ -734,11 +734,11 @@ export default function LeadsPage() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Status</label>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Status</label>
                                         <select
                                             value={form.status}
                                             onChange={(e) => setForm({ ...form, status: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         >
                                             <option value="new">New</option>
                                             <option value="contacted">Contacted</option>
@@ -750,12 +750,12 @@ export default function LeadsPage() {
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Assign To</label>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Assign To</label>
                                         <select
                                             value={form.assignedTo}
                                             onChange={(e) => setForm({ ...form, assignedTo: e.target.value })}
                                             disabled={!canAssign}
-                                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
                                         >
                                             <option value="">Unassigned</option>
                                             {users.map((u) => (
@@ -772,7 +772,7 @@ export default function LeadsPage() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">
                                             Follow-up Date & Time{form.status === 'follow_up' && <span className="text-red-400"> *</span>}
                                         </label>
                                         <input
@@ -781,8 +781,8 @@ export default function LeadsPage() {
                                             onChange={(e) => setForm({ ...form, followUpDate: e.target.value })}
                                             required={form.status === 'follow_up'}
                                             step="60"
-                                            className={`w-full px-4 py-2.5 bg-slate-800 border rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 [color-scheme:dark] ${
-                                                form.status === 'follow_up' ? 'border-orange-500' : 'border-slate-700'
+                                            className={`w-full px-4 py-2.5 bg-white dark:bg-slate-800 border rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 [color-scheme:dark] ${
+                                                form.status === 'follow_up' ? 'border-orange-500' : 'border-gray-300 dark:border-slate-700'
                                             }`}
                                             style={{ colorScheme: 'dark' }}
                                         />
@@ -792,12 +792,12 @@ export default function LeadsPage() {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Notes</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Notes</label>
                                     <textarea
                                         value={form.notes}
                                         onChange={(e) => setForm({ ...form, notes: e.target.value })}
                                         rows={3}
-                                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                                         placeholder="Add notes about this lead..."
                                     />
                                 </div>
@@ -805,7 +805,7 @@ export default function LeadsPage() {
                                     <button
                                         type="button"
                                         onClick={() => setShowModal(false)}
-                                        className="flex-1 py-2.5 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-all font-medium"
+                                        className="flex-1 py-2.5 border border-gray-300 dark:border-slate-700 text-gray-600 dark:text-slate-300 rounded-xl hover:bg-white dark:bg-slate-800 transition-all font-medium"
                                     >
                                         Cancel
                                     </button>

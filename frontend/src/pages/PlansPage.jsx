@@ -112,14 +112,14 @@ export default function PlansPage() {
         }
     };
 
-    if (loading) return <div className="text-white">Loading plans...</div>;
+    if (loading) return <div className="text-gray-900 dark:text-white">Loading plans...</div>;
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-white">Plans & Pricing</h2>
-                    <p className="text-slate-400 mt-1">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Plans & Pricing</h2>
+                    <p className="text-gray-500 dark:text-slate-400 mt-1">
                         {isSuperAdmin ? 'Manage subscription tiers for your customers.' : 'View and upgrade your subscription plan.'}
                     </p>
                 </div>
@@ -140,13 +140,13 @@ export default function PlansPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {plans.map((plan) => (
-                    <div key={plan.id} className={`bg-slate-900 border ${currentPlanId === plan.id ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-slate-800'} rounded-2xl p-6 relative group hover:border-indigo-500/50 transition-all`}>
+                    <div key={plan.id} className={`bg-white dark:bg-slate-900 border ${currentPlanId === plan.id ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-gray-200 dark:border-slate-800'} rounded-2xl p-6 relative group hover:border-indigo-500/50 transition-all`}>
                         {isSuperAdmin ? (
                             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleEdit(plan)} className="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg">
+                                <button onClick={() => handleEdit(plan)} className="p-2 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 rounded-lg">
                                     <Edit className="w-4 h-4" />
                                 </button>
-                                <button onClick={() => confirmDelete(plan)} className="p-2 text-red-400 hover:text-red-300 bg-slate-800 hover:bg-slate-700 rounded-lg">
+                                <button onClick={() => confirmDelete(plan)} className="p-2 text-red-400 hover:text-red-300 bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 rounded-lg">
                                     <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>
@@ -158,20 +158,20 @@ export default function PlansPage() {
                             )
                         )}
 
-                        <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{plan.name}</h3>
                         <div className="flex items-baseline gap-1 mb-6">
-                            <span className="text-3xl font-bold text-white">₹{plan.priceMonthly}</span>
-                            <span className="text-slate-400">/mo</span>
+                            <span className="text-3xl font-bold text-gray-900 dark:text-white">₹{plan.priceMonthly}</span>
+                            <span className="text-gray-500 dark:text-slate-400">/mo</span>
                         </div>
 
                         <div className="space-y-4 mb-8">
-                            <div className="flex items-center gap-3 text-slate-300">
+                            <div className="flex items-center gap-3 text-gray-600 dark:text-slate-300">
                                 <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
                                     <span className="font-bold">{plan.adminLimit}</span>
                                 </div>
                                 <span>Admins included</span>
                             </div>
-                            <div className="flex items-center gap-3 text-slate-300">
+                            <div className="flex items-center gap-3 text-gray-600 dark:text-slate-300">
                                 <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
                                     <span className="font-bold">{plan.employeeLimit}</span>
                                 </div>
@@ -180,9 +180,9 @@ export default function PlansPage() {
                         </div>
 
                         {plan.features && plan.features.length > 0 && (
-                            <div className="space-y-2 border-t border-slate-800 pt-4">
+                            <div className="space-y-2 border-t border-gray-200 dark:border-slate-800 pt-4">
                                 {plan.features.map((feature, i) => (
-                                    <div key={i} className="flex items-center gap-2 text-sm text-slate-400">
+                                    <div key={i} className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
                                         <Check className="w-4 h-4 text-indigo-500" />
                                         {feature}
                                     </div>
@@ -190,12 +190,12 @@ export default function PlansPage() {
                             </div>
                         )}
 
-                        <div className="mt-6 pt-4 border-t border-slate-800">
+                        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-slate-800">
                             {isSuperAdmin ? (
                                 <div className="space-y-2">
-                                    <p className="text-xs text-slate-500 font-medium">Checkout Links</p>
+                                    <p className="text-xs text-gray-400 dark:text-slate-500 font-medium">Checkout Links</p>
                                     <div>
-                                        <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">Monthly Billing</p>
+                                        <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-0.5">Monthly Billing</p>
                                         <a
                                             href={`/checkout/${plan.slug || plan.name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-')}?billing=monthly`}
                                             target="_blank"
@@ -206,7 +206,7 @@ export default function PlansPage() {
                                         </a>
                                     </div>
                                     <div>
-                                        <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">Yearly Billing</p>
+                                        <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-0.5">Yearly Billing</p>
                                         <a
                                             href={`/checkout/${plan.slug || plan.name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-')}?billing=yearly`}
                                             target="_blank"
@@ -226,7 +226,7 @@ export default function PlansPage() {
                                         Upgrade
                                     </a>
                                 ) : (
-                                    <button disabled className="block w-full py-2 text-center bg-slate-700 text-slate-400 rounded-xl font-medium text-sm cursor-not-allowed">
+                                    <button disabled className="block w-full py-2 text-center bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400 rounded-xl font-medium text-sm cursor-not-allowed">
                                         Active
                                     </button>
                                 )
@@ -239,27 +239,27 @@ export default function PlansPage() {
             {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl">
-                        <div className="flex items-center justify-between p-6 border-b border-slate-800">
-                            <h3 className="text-lg font-semibold text-white">{editingPlan ? 'Edit Plan' : 'New Plan'}</h3>
-                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white">
+                    <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-800">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{editingPlan ? 'Edit Plan' : 'New Plan'}</h3>
+                            <button onClick={() => setShowModal(false)} className="text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">Plan Name</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1">Plan Name</label>
                                 <input
                                     required
                                     value={form.name}
                                     onChange={e => setForm({ ...form, name: e.target.value })}
-                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="e.g. Starter, Pro, Enterprise"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Monthly Price ($)</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1">Monthly Price ($)</label>
                                     <input
                                         type="number"
                                         required
@@ -267,11 +267,11 @@ export default function PlansPage() {
                                         step="0.01"
                                         value={form.priceMonthly}
                                         onChange={e => setForm({ ...form, priceMonthly: e.target.value })}
-                                        className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Yearly Price ($)</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1">Yearly Price ($)</label>
                                     <input
                                         type="number"
                                         required
@@ -279,45 +279,45 @@ export default function PlansPage() {
                                         step="0.01"
                                         value={form.priceYearly}
                                         onChange={e => setForm({ ...form, priceYearly: e.target.value })}
-                                        className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Admin Limit</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1">Admin Limit</label>
                                     <input
                                         type="number"
                                         required
                                         min="1"
                                         value={form.adminLimit}
                                         onChange={e => setForm({ ...form, adminLimit: e.target.value })}
-                                        className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Employee Limit</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1">Employee Limit</label>
                                     <input
                                         type="number"
                                         required
                                         min="1"
                                         value={form.employeeLimit}
                                         onChange={e => setForm({ ...form, employeeLimit: e.target.value })}
-                                        className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">Features (comma separated)</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1">Features (comma separated)</label>
                                 <textarea
                                     value={form.features}
                                     onChange={e => setForm({ ...form, features: e.target.value })}
-                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 h-24"
+                                    className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 h-24"
                                     placeholder="Unlimited Leads, API Access, Priority Support..."
                                 />
                             </div>
                             <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800">Cancel</button>
+                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2 border border-gray-300 dark:border-slate-700 text-gray-600 dark:text-slate-300 rounded-xl hover:bg-white dark:bg-slate-800">Cancel</button>
                                 <button type="submit" className="flex-1 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500">Save Plan</button>
                             </div>
                         </form>
@@ -328,20 +328,20 @@ export default function PlansPage() {
             {/* Delete Confirmation Modal */}
             {showDeleteModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm shadow-2xl p-6">
+                    <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-2xl w-full max-w-sm shadow-2xl p-6">
                         <div className="text-center">
                             <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Trash2 className="w-6 h-6 text-red-400" />
                             </div>
-                            <h3 className="text-lg font-semibold text-white mb-2">Delete Plan</h3>
-                            <p className="text-sm text-slate-400 mb-6">
-                                Are you sure you want to delete <span className="text-white font-medium">{planToDelete?.name}</span>? This action cannot be undone.
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete Plan</h3>
+                            <p className="text-sm text-gray-500 dark:text-slate-400 mb-6">
+                                Are you sure you want to delete <span className="text-gray-900 dark:text-white font-medium">{planToDelete?.name}</span>? This action cannot be undone.
                             </p>
                         </div>
                         <div className="flex gap-3">
                             <button
                                 onClick={() => { setShowDeleteModal(false); setPlanToDelete(null); }}
-                                className="flex-1 py-2.5 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-all font-medium"
+                                className="flex-1 py-2.5 border border-gray-300 dark:border-slate-700 text-gray-600 dark:text-slate-300 rounded-xl hover:bg-white dark:bg-slate-800 transition-all font-medium"
                             >
                                 Cancel
                             </button>

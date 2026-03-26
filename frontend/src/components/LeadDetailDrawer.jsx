@@ -113,12 +113,12 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
             />
 
             {/* Drawer */}
-            <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col animate-slide-in">
+            <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-slate-900 border-l border-gray-200 dark:border-slate-800 shadow-2xl flex flex-col animate-slide-in">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-800">
+                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-800">
                     <div>
-                        <h2 className="text-xl font-bold text-white">{lead.name}</h2>
-                        <p className="text-sm text-slate-400 mt-0.5">
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">{lead.name}</h2>
+                        <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
                             Added {new Date(lead.createdAt).toLocaleDateString('en-IN', {
                                 day: 'numeric', month: 'short', year: 'numeric',
                             })}
@@ -126,7 +126,7 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                        className="p-2 rounded-lg text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:bg-white dark:bg-slate-800 transition-colors cursor-pointer"
                     >
                         <X size={20} />
                     </button>
@@ -136,11 +136,11 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     {/* Contact Info */}
                     <div className="space-y-3">
-                        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact</h3>
+                        <h3 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Contact</h3>
                         <div className="grid grid-cols-1 gap-2">
                             {lead.phone && (
-                                <div className="flex items-center gap-3 text-sm text-slate-300">
-                                    <Phone size={14} className="text-slate-500" />
+                                <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-slate-300">
+                                    <Phone size={14} className="text-gray-400 dark:text-slate-500" />
                                     <span>{lead.phone}</span>
                                     <div className="flex items-center gap-1.5 ml-auto">
                                         <button
@@ -163,13 +163,13 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                                 </div>
                             )}
                             {lead.email && (
-                                <div className="flex items-center gap-3 text-sm text-slate-300">
-                                    <Mail size={14} className="text-slate-500" />
+                                <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-slate-300">
+                                    <Mail size={14} className="text-gray-400 dark:text-slate-500" />
                                     <span>{lead.email}</span>
                                 </div>
                             )}
-                            <div className="flex items-center gap-3 text-sm text-slate-300">
-                                <MapPin size={14} className="text-slate-500" />
+                            <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-slate-300">
+                                <MapPin size={14} className="text-gray-400 dark:text-slate-500" />
                                 <span>{sourceLabels[lead.source] || lead.source}</span>
                             </div>
                         </div>
@@ -177,20 +177,20 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
 
                     {/* Status & Assignment */}
                     <div className="space-y-3">
-                        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Details</h3>
+                        <h3 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Details</h3>
                         <div className="flex items-center gap-3 flex-wrap">
-                            <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${statusColors[lead.status] || 'bg-slate-700 text-slate-300'}`}>
+                            <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${statusColors[lead.status] || 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300'}`}>
                                 {lead.status?.replace('_', ' ')}
                             </span>
                             {lead.assignedUser && (
-                                <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-slate-800 text-slate-300 rounded-full border border-slate-700">
+                                <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded-full border border-gray-300 dark:border-slate-700">
                                     <User size={12} />
                                     {lead.assignedUser.email}
                                 </span>
                             )}
                         </div>
                         {lead.notes && (
-                            <p className="text-sm text-slate-400 bg-slate-800/50 rounded-xl p-3 border border-slate-700/50">
+                            <p className="text-sm text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-800/50 rounded-xl p-3 border border-gray-300 dark:border-slate-700/50">
                                 {lead.notes}
                             </p>
                         )}
@@ -198,7 +198,7 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
 
                     {/* Add Activity Form */}
                     <div className="space-y-3">
-                        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Add Activity</h3>
+                        <h3 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Add Activity</h3>
                         <form onSubmit={handleAddActivity} className="space-y-3">
                             <div className="flex gap-2">
                                 {['note', 'call', 'email', 'whatsapp'].map((t) => {
@@ -210,7 +210,7 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                                             onClick={() => setNoteType(t)}
                                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${noteType === t
                                                     ? `${meta.bg} ${meta.color} border-current`
-                                                    : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                                                    : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-300 dark:border-slate-700 hover:text-gray-900 dark:text-white'
                                                 }`}
                                         >
                                             <meta.icon size={12} />
@@ -225,7 +225,7 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                                     value={noteContent}
                                     onChange={(e) => setNoteContent(e.target.value)}
                                     placeholder={`Add a ${noteType}...`}
-                                    className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                                    className="flex-1 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                                 />
                                 <button
                                     type="submit"
@@ -241,26 +241,26 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                     {/* Call History & Recordings */}
                     {callLogs.length > 0 && (
                         <div className="space-y-3">
-                            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                            <h3 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
                                 Call History ({callLogs.length})
                             </h3>
                             <div className="space-y-2">
                                 {callLogs.map((log) => (
-                                    <div key={log.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 space-y-2">
+                                    <div key={log.id} className="bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-slate-700/50 rounded-xl p-3 space-y-2">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <PhoneCall size={14} className="text-emerald-400" />
-                                                <span className="text-sm text-white">{log.phoneNumber}</span>
+                                                <span className="text-sm text-gray-900 dark:text-white">{log.phoneNumber}</span>
                                                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                                     log.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400' :
                                                     log.status === 'failed' || log.status === 'busy' ? 'bg-red-500/15 text-red-400' :
                                                     log.status === 'no-answer' ? 'bg-amber-500/15 text-amber-400' :
-                                                    'bg-slate-700 text-slate-400'
+                                                    'bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400'
                                                 }`}>
                                                     {log.status?.replace(/[_-]/g, ' ')}
                                                 </span>
                                             </div>
-                                            <span className="text-xs text-slate-500">
+                                            <span className="text-xs text-gray-400 dark:text-slate-500">
                                                 {new Date(log.createdAt).toLocaleString('en-IN', {
                                                     day: 'numeric', month: 'short',
                                                     hour: '2-digit', minute: '2-digit',
@@ -268,13 +268,13 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                                             </span>
                                         </div>
                                         {log.duration > 0 && (
-                                            <p className="text-xs text-slate-400">
+                                            <p className="text-xs text-gray-500 dark:text-slate-400">
                                                 Duration: {Math.floor(log.duration / 60)}m {log.duration % 60}s
                                             </p>
                                         )}
                                         {log.disposition && (
-                                            <p className="text-xs text-slate-400">
-                                                Outcome: <span className="text-slate-300 font-medium">{log.disposition.replace(/_/g, ' ')}</span>
+                                            <p className="text-xs text-gray-500 dark:text-slate-400">
+                                                Outcome: <span className="text-gray-600 dark:text-slate-300 font-medium">{log.disposition.replace(/_/g, ' ')}</span>
                                                 {log.notes && ` — ${log.notes}`}
                                             </p>
                                         )}
@@ -293,7 +293,7 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
 
                     {/* Activity Timeline */}
                     <div className="space-y-3">
-                        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        <h3 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
                             Timeline ({activities.length})
                         </h3>
                         {loading ? (
@@ -301,11 +301,11 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                                 <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
                             </div>
                         ) : activities.length === 0 ? (
-                            <p className="text-sm text-slate-500 text-center py-6">No activity yet</p>
+                            <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6">No activity yet</p>
                         ) : (
                             <div className="relative">
                                 {/* Timeline line */}
-                                <div className="absolute left-4 top-0 bottom-0 w-px bg-slate-700/50" />
+                                <div className="absolute left-4 top-0 bottom-0 w-px bg-gray-200 dark:bg-slate-700/50" />
 
                                 <div className="space-y-4">
                                     {activities.map((act) => {
@@ -317,7 +317,7 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                                                     <Icon size={14} className={meta.color} />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-sm text-white">{act.content}</p>
+                                                    <p className="text-sm text-gray-900 dark:text-white">{act.content}</p>
                                                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                                                         <span className={`text-xs font-medium ${meta.color}`}>{meta.label}</span>
                                                         {act.type === 'status_change' && act.userId && act.userId !== lead.assignedTo && (
@@ -325,14 +325,14 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                                                                 Manager Action
                                                             </span>
                                                         )}
-                                                        <span className="text-xs text-slate-500">
+                                                        <span className="text-xs text-gray-400 dark:text-slate-500">
                                                             {new Date(act.createdAt).toLocaleString('en-IN', {
                                                                 day: 'numeric', month: 'short',
                                                                 hour: '2-digit', minute: '2-digit',
                                                             })}
                                                         </span>
                                                         {act.user && (
-                                                            <span className="text-xs text-slate-500">
+                                                            <span className="text-xs text-gray-400 dark:text-slate-500">
                                                                 by {act.user.email}
                                                             </span>
                                                         )}

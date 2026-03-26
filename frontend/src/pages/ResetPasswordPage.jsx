@@ -47,12 +47,12 @@ export default function ResetPasswordPage() {
     if (!token) {
         return (
             <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4">
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center max-w-md w-full">
+                <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-8 text-center max-w-md w-full">
                     <div className="p-3 bg-red-500/10 text-red-400 rounded-full inline-block mb-4">
                         <Lock size={32} />
                     </div>
-                    <h2 className="text-xl font-bold text-white mb-2">Invalid Link</h2>
-                    <p className="text-slate-400 mb-6">This password reset link is invalid or missing a token.</p>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Invalid Link</h2>
+                    <p className="text-gray-500 dark:text-slate-400 mb-6">This password reset link is invalid or missing a token.</p>
                     <Link to="/forgot-password" className="text-indigo-400 hover:text-indigo-300">
                         Request a new link
                     </Link>
@@ -76,13 +76,13 @@ export default function ResetPasswordPage() {
                             <Lock className="w-8 h-8 text-indigo-400" />
                         </div>
                     </div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Reset Password</h1>
-                    <p className="text-slate-400">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Reset Password</h1>
+                    <p className="text-gray-500 dark:text-slate-400">
                         Enter your new password below.
                     </p>
                 </div>
 
-                <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-xl">
+                <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-gray-200 dark:border-slate-800 rounded-2xl p-8 shadow-xl">
                     {success ? (
                         <div className="text-center space-y-6">
                             <div className="flex justify-center">
@@ -91,8 +91,8 @@ export default function ResetPasswordPage() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <h3 className="text-xl font-semibold text-white">Password Reset Complete</h3>
-                                <p className="text-slate-400 text-sm">
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Password Reset Complete</h3>
+                                <p className="text-gray-500 dark:text-slate-400 text-sm">
                                     Your password has been successfully updated. <br />
                                     Redirecting to login...
                                 </p>
@@ -110,9 +110,9 @@ export default function ResetPasswordPage() {
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-300">New Password</label>
+                                    <label className="text-sm font-medium text-gray-600 dark:text-slate-300">New Password</label>
                                     <div className="relative">
-                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500">
                                             <Lock size={18} />
                                         </div>
                                         <input
@@ -120,13 +120,13 @@ export default function ResetPasswordPage() {
                                             required
                                             value={passwords.newPassword}
                                             onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
-                                            className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-10 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all pr-12"
+                                            className="w-full bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-slate-700 rounded-xl px-10 py-3 text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all pr-12"
                                             placeholder="••••••••"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:text-white transition-colors"
                                         >
                                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                         </button>
@@ -134,9 +134,9 @@ export default function ResetPasswordPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-300">Confirm Password</label>
+                                    <label className="text-sm font-medium text-gray-600 dark:text-slate-300">Confirm Password</label>
                                     <div className="relative">
-                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500">
                                             <Lock size={18} />
                                         </div>
                                         <input
@@ -144,7 +144,7 @@ export default function ResetPasswordPage() {
                                             required
                                             value={passwords.confirmPassword}
                                             onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
-                                            className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-10 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                                            className="w-full bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-slate-700 rounded-xl px-10 py-3 text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
                                             placeholder="••••••••"
                                         />
                                     </div>
@@ -169,7 +169,7 @@ export default function ResetPasswordPage() {
                             <div className="text-center">
                                 <Link
                                     to="/login"
-                                    className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+                                    className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white transition-colors"
                                 >
                                     <ArrowLeft size={16} />
                                     Back to log in

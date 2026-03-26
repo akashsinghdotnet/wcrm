@@ -82,19 +82,19 @@ export default function WhatsAppChatsPage() {
         <div className="space-y-6 max-w-7xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                         <MessageCircle className="w-6 h-6 text-green-400" />
                         WhatsApp
                     </h2>
-                    <p className="text-slate-400 mt-1">Manage conversations, contacts, broadcasts, and templates</p>
+                    <p className="text-gray-500 dark:text-slate-400 mt-1">Manage conversations, contacts, broadcasts, and templates</p>
                 </div>
                 {activeTab === 'chats' && (
-                    <span className="text-xs text-slate-500">{conversations.length} conversations</span>
+                    <span className="text-xs text-gray-400 dark:text-slate-500">{conversations.length} conversations</span>
                 )}
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 border-b border-slate-800">
+            <div className="flex gap-2 border-b border-gray-200 dark:border-slate-800">
                 {tabs.map((tab) => {
                     const Icon = tab.icon;
                     return (
@@ -104,7 +104,7 @@ export default function WhatsAppChatsPage() {
                             className={`flex items-center gap-2 px-4 py-3 font-medium text-sm transition-colors border-b-2 ${
                                 activeTab === tab.id
                                     ? 'text-green-400 border-green-400'
-                                    : 'text-slate-400 border-transparent hover:text-slate-300'
+                                    : 'text-gray-500 dark:text-slate-400 border-transparent hover:text-gray-600 dark:text-slate-300'
                             }`}
                         >
                             <Icon className="w-4 h-4" />
@@ -119,13 +119,13 @@ export default function WhatsAppChatsPage() {
                 <div className="space-y-4">
                     {/* Search */}
                     <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search by name, phone, or email..."
-                            className="w-full pl-11 pr-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                            className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                         />
                     </div>
 
@@ -135,9 +135,9 @@ export default function WhatsAppChatsPage() {
                             <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
                         </div>
                     ) : filtered.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+                        <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-slate-500">
                             <MessageCircle size={48} className="mb-4 text-slate-600" />
-                            <p className="text-lg font-medium text-slate-400">
+                            <p className="text-lg font-medium text-gray-500 dark:text-slate-400">
                                 {conversations.length === 0 ? 'No conversations yet' : 'No matching conversations'}
                             </p>
                             <p className="text-sm mt-1">
@@ -147,12 +147,12 @@ export default function WhatsAppChatsPage() {
                             </p>
                         </div>
                     ) : (
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden divide-y divide-slate-800">
+                        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl overflow-hidden divide-y divide-gray-200 dark:divide-slate-800">
                             {filtered.map((conv) => (
                                 <button
                                     key={conv.lead.id}
                                     onClick={() => navigate(`/whatsapp-chats/${conv.lead.id}`)}
-                                    className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-800/50 transition-colors text-left cursor-pointer"
+                                    className="w-full flex items-center gap-4 px-5 py-4 hover:bg-gray-100 dark:bg-slate-800/50 transition-colors text-left cursor-pointer"
                                 >
                                     {/* Avatar */}
                                     <div className="relative flex-shrink-0">
@@ -167,9 +167,9 @@ export default function WhatsAppChatsPage() {
                                     {/* Info */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between mb-1">
-                                            <h3 className="text-sm font-semibold text-white truncate">{conv.lead.name}</h3>
+                                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">{conv.lead.name}</h3>
                                             {conv.lastMessage && (
-                                                <span className="text-[10px] text-slate-500 ml-2 flex-shrink-0">
+                                                <span className="text-[10px] text-gray-400 dark:text-slate-500 ml-2 flex-shrink-0">
                                                     {formatTime(conv.lastMessage.createdAt)}
                                                 </span>
                                             )}
@@ -183,7 +183,7 @@ export default function WhatsAppChatsPage() {
                                                         ) : (
                                                             <ArrowDownLeft size={12} className="text-blue-400 flex-shrink-0" />
                                                         )}
-                                                        <p className="text-xs text-slate-400 truncate">
+                                                        <p className="text-xs text-gray-500 dark:text-slate-400 truncate">
                                                             {conv.lastMessage.content?.includes('(Media)') ? 'Media attached' : conv.lastMessage.content}
                                                         </p>
                                                     </>
@@ -199,7 +199,7 @@ export default function WhatsAppChatsPage() {
                                         </div>
                                         <div className="flex items-center gap-3 mt-1">
                                             {conv.lead.phone && (
-                                                <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                                                <span className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-slate-500">
                                                     <Phone size={9} /> {conv.lead.phone}
                                                 </span>
                                             )}
@@ -208,7 +208,7 @@ export default function WhatsAppChatsPage() {
                                                     <Clock size={9} /> {conv.unreadCount} unread
                                                 </span>
                                             ) : (
-                                                <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                                                <span className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-slate-500">
                                                     <Clock size={9} /> {conv.messageCount} messages
                                                 </span>
                                             )}

@@ -118,7 +118,7 @@ export default function WhatsAppBroadcastPage() {
 
     const getStatusBadge = (status) => {
         const badges = {
-            draft: { bg: 'bg-slate-700', text: 'text-slate-300', label: 'Draft', icon: Clock },
+            draft: { bg: 'bg-gray-200 dark:bg-slate-700', text: 'text-gray-600 dark:text-slate-300', label: 'Draft', icon: Clock },
             scheduled: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Scheduled', icon: Calendar },
             sending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: 'Sending', icon: Send },
             sent: { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Sent', icon: CheckCircle },
@@ -142,11 +142,11 @@ export default function WhatsAppBroadcastPage() {
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                             <Send className="w-8 h-8 text-green-400" />
                             WhatsApp Broadcasts
                         </h1>
-                        <p className="text-slate-400 mt-1">Send bulk messages to your opted-in contacts</p>
+                        <p className="text-gray-500 dark:text-slate-400 mt-1">Send bulk messages to your opted-in contacts</p>
                     </div>
                     <button
                         onClick={() => setShowComposer(true)}
@@ -174,45 +174,45 @@ export default function WhatsAppBroadcastPage() {
             </div>
 
             {/* Broadcasts List */}
-            <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-300 dark:border-slate-700 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-slate-900">
+                        <thead className="bg-white dark:bg-slate-900">
                             <tr>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase">Name</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase">Template</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase">Recipients</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase">Status</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase">Progress</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase">Created</th>
-                                <th className="px-6 py-4 text-right text-xs font-medium text-slate-400 uppercase">Actions</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Name</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Template</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Recipients</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Status</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Progress</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Created</th>
+                                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-700">
+                        <tbody className="divide-y divide-gray-300 dark:divide-slate-700">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-500">Loading...</td>
+                                    <td colSpan={7} className="px-6 py-12 text-center text-gray-400 dark:text-slate-500">Loading...</td>
                                 </tr>
                             ) : broadcasts.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan={7} className="px-6 py-12 text-center text-gray-400 dark:text-slate-500">
                                         No broadcasts yet. Click "New Broadcast" to create one.
                                     </td>
                                 </tr>
                             ) : (
                                 broadcasts.map(broadcast => (
-                                    <tr key={broadcast.id} className="hover:bg-slate-700/50">
+                                    <tr key={broadcast.id} className="hover:bg-gray-200 dark:bg-slate-700/50">
                                         <td className="px-6 py-4">
-                                            <div className="text-white font-medium">{broadcast.name}</div>
-                                            <div className="text-xs text-slate-400 mt-1">By {broadcast.creator?.email}</div>
+                                            <div className="text-gray-900 dark:text-white font-medium">{broadcast.name}</div>
+                                            <div className="text-xs text-gray-500 dark:text-slate-400 mt-1">By {broadcast.creator?.email}</div>
                                         </td>
-                                        <td className="px-6 py-4 text-slate-300">
+                                        <td className="px-6 py-4 text-gray-600 dark:text-slate-300">
                                             {broadcast.template?.name || 'Custom Message'}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <Users className="w-4 h-4 text-slate-400" />
-                                                <span className="text-white font-medium">{broadcast.totalRecipients}</span>
+                                                <Users className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                                                <span className="text-gray-900 dark:text-white font-medium">{broadcast.totalRecipients}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -222,10 +222,10 @@ export default function WhatsAppBroadcastPage() {
                                             {broadcast.status === 'sent' || broadcast.status === 'sending' ? (
                                                 <div className="space-y-1">
                                                     <div className="flex justify-between text-xs">
-                                                        <span className="text-slate-400">Sent</span>
+                                                        <span className="text-gray-500 dark:text-slate-400">Sent</span>
                                                         <span className="text-green-400">{broadcast.sentCount}/{broadcast.totalRecipients}</span>
                                                     </div>
-                                                    <div className="w-full bg-slate-700 rounded-full h-2">
+                                                    <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
                                                         <div
                                                             className="bg-green-500 h-2 rounded-full"
                                                             style={{ width: `${(broadcast.sentCount / broadcast.totalRecipients) * 100}%` }}
@@ -233,10 +233,10 @@ export default function WhatsAppBroadcastPage() {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <span className="text-slate-500 text-sm">—</span>
+                                                <span className="text-gray-400 dark:text-slate-500 text-sm">—</span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-slate-400">
+                                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
                                             {new Date(broadcast.createdAt).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4 text-right">
@@ -269,32 +269,32 @@ export default function WhatsAppBroadcastPage() {
             {/* Broadcast Composer Modal */}
             {showComposer && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-                    <div className="bg-slate-800 rounded-2xl max-w-4xl w-full p-6 border border-slate-700 my-8">
-                        <h2 className="text-2xl font-bold text-white mb-6">Create Broadcast</h2>
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-4xl w-full p-6 border border-gray-300 dark:border-slate-700 my-8">
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create Broadcast</h2>
                         <form onSubmit={handleCreateBroadcast}>
                             <div className="grid grid-cols-2 gap-6">
                                 {/* Left Column */}
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-2">Broadcast Name *</label>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Broadcast Name *</label>
                                         <input
                                             type="text"
                                             value={form.name}
                                             onChange={(e) => setForm({ ...form, name: e.target.value })}
                                             required
                                             placeholder="e.g., March Promotion Campaign"
-                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                            className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">
                                             Template (Meta-approved only)
                                         </label>
                                         <select
                                             value={form.templateId}
                                             onChange={(e) => setForm({ ...form, templateId: e.target.value })}
-                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                                            className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                                         >
                                             <option value="">Select Template</option>
                                             {templates.map(template => (
@@ -311,7 +311,7 @@ export default function WhatsAppBroadcastPage() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">
                                             Message (if no template)
                                         </label>
                                         <textarea
@@ -319,30 +319,30 @@ export default function WhatsAppBroadcastPage() {
                                             onChange={(e) => setForm({ ...form, message: e.target.value })}
                                             rows={4}
                                             placeholder="Enter your message..."
-                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                            className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">
                                             Schedule (optional)
                                         </label>
                                         <input
                                             type="datetime-local"
                                             value={form.scheduledAt}
                                             onChange={(e) => setForm({ ...form, scheduledAt: e.target.value })}
-                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                                            className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                                         />
-                                        <p className="text-xs text-slate-500 mt-1">Leave empty to send immediately</p>
+                                        <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Leave empty to send immediately</p>
                                     </div>
                                 </div>
 
                                 {/* Right Column */}
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-3">Target Audience</label>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-3">Target Audience</label>
                                         <div className="space-y-2 mb-4">
-                                            <label className="flex items-center gap-3 cursor-pointer bg-slate-900 p-3 rounded-xl border border-slate-700 hover:border-green-500/50 transition-colors">
+                                            <label className="flex items-center gap-3 cursor-pointer bg-white dark:bg-slate-900 p-3 rounded-xl border border-gray-300 dark:border-slate-700 hover:border-green-500/50 transition-colors">
                                                 <input
                                                     type="radio"
                                                     name="targetType"
@@ -352,11 +352,11 @@ export default function WhatsAppBroadcastPage() {
                                                     className="w-4 h-4 text-green-600"
                                                 />
                                                 <div className="flex-1">
-                                                    <span className="text-sm font-medium text-slate-200 block">All Contacts</span>
-                                                    <span className="text-xs text-slate-500">Send to all contacts in your database</span>
+                                                    <span className="text-sm font-medium text-gray-700 dark:text-slate-200 block">All Contacts</span>
+                                                    <span className="text-xs text-gray-400 dark:text-slate-500">Send to all contacts in your database</span>
                                                 </div>
                                             </label>
-                                            <label className="flex items-center gap-3 cursor-pointer bg-slate-900 p-3 rounded-xl border border-slate-700 hover:border-green-500/50 transition-colors">
+                                            <label className="flex items-center gap-3 cursor-pointer bg-white dark:bg-slate-900 p-3 rounded-xl border border-gray-300 dark:border-slate-700 hover:border-green-500/50 transition-colors">
                                                 <input
                                                     type="radio"
                                                     name="targetType"
@@ -366,11 +366,11 @@ export default function WhatsAppBroadcastPage() {
                                                     className="w-4 h-4 text-green-600"
                                                 />
                                                 <div className="flex-1">
-                                                    <span className="text-sm font-medium text-slate-200 block">Unorganized Contacts</span>
-                                                    <span className="text-xs text-slate-500">Contacts not in any list or tag</span>
+                                                    <span className="text-sm font-medium text-gray-700 dark:text-slate-200 block">Unorganized Contacts</span>
+                                                    <span className="text-xs text-gray-400 dark:text-slate-500">Contacts not in any list or tag</span>
                                                 </div>
                                             </label>
-                                            <label className="flex items-center gap-3 cursor-pointer bg-slate-900 p-3 rounded-xl border border-slate-700 hover:border-green-500/50 transition-colors">
+                                            <label className="flex items-center gap-3 cursor-pointer bg-white dark:bg-slate-900 p-3 rounded-xl border border-gray-300 dark:border-slate-700 hover:border-green-500/50 transition-colors">
                                                 <input
                                                     type="radio"
                                                     name="targetType"
@@ -380,8 +380,8 @@ export default function WhatsAppBroadcastPage() {
                                                     className="w-4 h-4 text-green-600"
                                                 />
                                                 <div className="flex-1">
-                                                    <span className="text-sm font-medium text-slate-200 block">Specific Lists/Tags</span>
-                                                    <span className="text-xs text-slate-500">Choose specific lists or tags</span>
+                                                    <span className="text-sm font-medium text-gray-700 dark:text-slate-200 block">Specific Lists/Tags</span>
+                                                    <span className="text-xs text-gray-400 dark:text-slate-500">Choose specific lists or tags</span>
                                                 </div>
                                             </label>
                                         </div>
@@ -390,10 +390,10 @@ export default function WhatsAppBroadcastPage() {
                                     {form.targetType === 'lists_tags' && (
                                         <>
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-300 mb-2">Target Lists</label>
-                                        <div className="space-y-2 max-h-32 overflow-y-auto bg-slate-900 rounded-xl p-3 border border-slate-700">
+                                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Target Lists</label>
+                                        <div className="space-y-2 max-h-32 overflow-y-auto bg-white dark:bg-slate-900 rounded-xl p-3 border border-gray-300 dark:border-slate-700">
                                             {lists.map(list => (
-                                                <label key={list.id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-2 rounded">
+                                                <label key={list.id} className="flex items-center gap-2 cursor-pointer hover:bg-white dark:bg-slate-800 p-2 rounded">
                                                     <input
                                                         type="checkbox"
                                                         checked={form.targetListIds.includes(list.id)}
@@ -404,10 +404,10 @@ export default function WhatsAppBroadcastPage() {
                                                                 setForm({ ...form, targetListIds: form.targetListIds.filter(id => id !== list.id) });
                                                             }
                                                         }}
-                                                        className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-green-600"
+                                                        className="w-4 h-4 rounded border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-green-600"
                                                     />
-                                                    <span className="text-sm text-slate-300">{list.name}</span>
-                                                    <span className="text-xs text-slate-500 ml-auto">
+                                                    <span className="text-sm text-gray-600 dark:text-slate-300">{list.name}</span>
+                                                    <span className="text-xs text-gray-400 dark:text-slate-500 ml-auto">
                                                         ({list.contacts?.length || 0} contacts)
                                                     </span>
                                                 </label>
@@ -416,10 +416,10 @@ export default function WhatsAppBroadcastPage() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-2">Target Tags</label>
-                                        <div className="space-y-2 max-h-32 overflow-y-auto bg-slate-900 rounded-xl p-3 border border-slate-700">
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Target Tags</label>
+                                        <div className="space-y-2 max-h-32 overflow-y-auto bg-white dark:bg-slate-900 rounded-xl p-3 border border-gray-300 dark:border-slate-700">
                                             {tags.map(tag => (
-                                                <label key={tag.id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-800 p-2 rounded">
+                                                <label key={tag.id} className="flex items-center gap-2 cursor-pointer hover:bg-white dark:bg-slate-800 p-2 rounded">
                                                     <input
                                                         type="checkbox"
                                                         checked={form.targetTagIds.includes(tag.id)}
@@ -430,9 +430,9 @@ export default function WhatsAppBroadcastPage() {
                                                                 setForm({ ...form, targetTagIds: form.targetTagIds.filter(id => id !== tag.id) });
                                                             }
                                                         }}
-                                                        className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-green-600"
+                                                        className="w-4 h-4 rounded border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-green-600"
                                                     />
-                                                    <span className="text-sm text-slate-300">{tag.name}</span>
+                                                    <span className="text-sm text-gray-600 dark:text-slate-300">{tag.name}</span>
                                                 </label>
                                             ))}
                                         </div>
@@ -446,7 +446,7 @@ export default function WhatsAppBroadcastPage() {
                                                 type="checkbox"
                                                 checked={form.onlyOptedIn}
                                                 onChange={(e) => setForm({ ...form, onlyOptedIn: e.target.checked })}
-                                                className="w-5 h-5 rounded border-slate-700 bg-slate-900 text-green-600 mt-0.5"
+                                                className="w-5 h-5 rounded border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-green-600 mt-0.5"
                                             />
                                             <div>
                                                 <span className="text-sm font-medium text-green-400 block">Only send to opted-in contacts</span>
@@ -457,23 +457,23 @@ export default function WhatsAppBroadcastPage() {
                                         </label>
                                     </div>
 
-                                    <div className="bg-slate-900 rounded-xl p-4 border border-slate-700">
-                                        <h4 className="text-sm font-medium text-slate-300 mb-3">Estimated Recipients</h4>
+                                    <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-gray-300 dark:border-slate-700">
+                                        <h4 className="text-sm font-medium text-gray-600 dark:text-slate-300 mb-3">Estimated Recipients</h4>
                                         <div className="text-3xl font-bold text-green-400 mb-1">
                                             {form.targetType === 'all' || form.targetType === 'unorganized' ||
                                              (form.targetType === 'lists_tags' && (form.targetListIds.length > 0 || form.targetTagIds.length > 0))
                                              ? '~' : '0'} contacts
                                         </div>
-                                        <p className="text-xs text-slate-500">Will be calculated when broadcast is created</p>
+                                        <p className="text-xs text-gray-400 dark:text-slate-500">Will be calculated when broadcast is created</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex gap-3 mt-6 pt-6 border-t border-slate-700">
+                            <div className="flex gap-3 mt-6 pt-6 border-t border-gray-300 dark:border-slate-700">
                                 <button
                                     type="button"
                                     onClick={() => setShowComposer(false)}
-                                    className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-xl hover:bg-slate-600"
+                                    className="flex-1 px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-900 dark:text-white rounded-xl hover:bg-slate-600"
                                 >
                                     Cancel
                                 </button>
@@ -493,38 +493,38 @@ export default function WhatsAppBroadcastPage() {
             {/* Stats Modal */}
             {showStatsModal && broadcastStats && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 rounded-2xl max-w-2xl w-full p-6 border border-slate-700">
-                        <h2 className="text-2xl font-bold text-white mb-6">Broadcast Statistics</h2>
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full p-6 border border-gray-300 dark:border-slate-700">
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Broadcast Statistics</h2>
                         <div className="space-y-4">
                             <div>
-                                <h3 className="text-lg font-medium text-slate-300 mb-2">{selectedBroadcast?.name}</h3>
-                                <p className="text-sm text-slate-500">Created {new Date(selectedBroadcast?.createdAt).toLocaleString()}</p>
+                                <h3 className="text-lg font-medium text-gray-600 dark:text-slate-300 mb-2">{selectedBroadcast?.name}</h3>
+                                <p className="text-sm text-gray-400 dark:text-slate-500">Created {new Date(selectedBroadcast?.createdAt).toLocaleString()}</p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-slate-900 rounded-xl p-4 border border-slate-700">
-                                    <div className="text-slate-400 text-sm mb-1">Total Recipients</div>
-                                    <div className="text-2xl font-bold text-white">{broadcastStats.total}</div>
+                                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-gray-300 dark:border-slate-700">
+                                    <div className="text-gray-500 dark:text-slate-400 text-sm mb-1">Total Recipients</div>
+                                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{broadcastStats.total}</div>
                                 </div>
-                                <div className="bg-slate-900 rounded-xl p-4 border border-green-500/20">
-                                    <div className="text-slate-400 text-sm mb-1">Sent</div>
+                                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-green-500/20">
+                                    <div className="text-gray-500 dark:text-slate-400 text-sm mb-1">Sent</div>
                                     <div className="text-2xl font-bold text-green-400">{broadcastStats.sent}</div>
                                 </div>
-                                <div className="bg-slate-900 rounded-xl p-4 border border-blue-500/20">
-                                    <div className="text-slate-400 text-sm mb-1">Delivered</div>
+                                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-blue-500/20">
+                                    <div className="text-gray-500 dark:text-slate-400 text-sm mb-1">Delivered</div>
                                     <div className="text-2xl font-bold text-blue-400">{broadcastStats.delivered}</div>
                                 </div>
-                                <div className="bg-slate-900 rounded-xl p-4 border border-purple-500/20">
-                                    <div className="text-slate-400 text-sm mb-1">Read</div>
+                                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-purple-500/20">
+                                    <div className="text-gray-500 dark:text-slate-400 text-sm mb-1">Read</div>
                                     <div className="text-2xl font-bold text-purple-400">{broadcastStats.read}</div>
                                 </div>
-                                <div className="bg-slate-900 rounded-xl p-4 border border-red-500/20">
-                                    <div className="text-slate-400 text-sm mb-1">Failed</div>
+                                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-red-500/20">
+                                    <div className="text-gray-500 dark:text-slate-400 text-sm mb-1">Failed</div>
                                     <div className="text-2xl font-bold text-red-400">{broadcastStats.failed}</div>
                                 </div>
-                                <div className="bg-slate-900 rounded-xl p-4 border border-slate-700">
-                                    <div className="text-slate-400 text-sm mb-1">Success Rate</div>
-                                    <div className="text-2xl font-bold text-white">
+                                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-gray-300 dark:border-slate-700">
+                                    <div className="text-gray-500 dark:text-slate-400 text-sm mb-1">Success Rate</div>
+                                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
                                         {broadcastStats.total > 0
                                             ? ((broadcastStats.delivered / broadcastStats.total) * 100).toFixed(1)
                                             : 0}%
@@ -534,7 +534,7 @@ export default function WhatsAppBroadcastPage() {
                         </div>
                         <button
                             onClick={() => setShowStatsModal(false)}
-                            className="w-full mt-6 px-4 py-2 bg-slate-700 text-white rounded-xl hover:bg-slate-600"
+                            className="w-full mt-6 px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-900 dark:text-white rounded-xl hover:bg-slate-600"
                         >
                             Close
                         </button>

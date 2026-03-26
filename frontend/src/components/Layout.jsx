@@ -255,9 +255,9 @@ export default function Layout() {
                     <div className="flex items-center gap-3">
                         {config?.sidebar_logo_link ? (
                             <a href={config.sidebar_logo_link} target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
-                                {(config?.sidebar_logo_url || config?.app_logo) ? (
+                                {((isDark ? config?.sidebar_logo_url : config?.sidebar_logo_light_url) || config?.sidebar_logo_url || config?.app_logo) ? (
                                     <img
-                                        src={config.sidebar_logo_url || config.app_logo}
+                                        src={(isDark ? config?.sidebar_logo_url : (config?.sidebar_logo_light_url || config?.sidebar_logo_url)) || config?.app_logo}
                                         alt="Logo"
                                         className="object-contain rounded-xl hover:opacity-80 transition-opacity"
                                         style={{ width: config.sidebar_logo_width ? `${config.sidebar_logo_width}px` : '40px', height: 'auto', maxHeight: '80px' }}
@@ -270,9 +270,9 @@ export default function Layout() {
                             </a>
                         ) : (
                             <>
-                                {(config?.sidebar_logo_url || config?.app_logo) ? (
+                                {((isDark ? config?.sidebar_logo_url : config?.sidebar_logo_light_url) || config?.sidebar_logo_url || config?.app_logo) ? (
                                     <img
-                                        src={config.sidebar_logo_url || config.app_logo}
+                                        src={(isDark ? config?.sidebar_logo_url : (config?.sidebar_logo_light_url || config?.sidebar_logo_url)) || config?.app_logo}
                                         alt="Logo"
                                         className="object-contain rounded-xl"
                                         style={{ width: config.sidebar_logo_width ? `${config.sidebar_logo_width}px` : '40px', height: 'auto', maxHeight: '80px' }}

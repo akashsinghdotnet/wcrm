@@ -26,41 +26,41 @@ const ViewEmailModal = ({ email, onClose }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
-                <div className="flex items-center justify-between p-4 border-b border-slate-800">
-                    <h3 className="text-lg font-semibold text-white">Email Details</h3>
-                    <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-800">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Email Details</h3>
+                    <button onClick={onClose} className="text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white transition-colors">
                         <X size={20} />
                     </button>
                 </div>
                 <div className="p-6 overflow-y-auto space-y-4">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                            <span className="text-slate-500 block mb-1">To</span>
-                            <span className="text-white font-medium">{email.to}</span>
+                            <span className="text-gray-400 dark:text-slate-500 block mb-1">To</span>
+                            <span className="text-gray-900 dark:text-white font-medium">{email.to}</span>
                         </div>
                         <div>
-                            <span className="text-slate-500 block mb-1">Sent At</span>
-                            <span className="text-white font-medium">{new Date(email.sentAt).toLocaleString()}</span>
+                            <span className="text-gray-400 dark:text-slate-500 block mb-1">Sent At</span>
+                            <span className="text-gray-900 dark:text-white font-medium">{new Date(email.sentAt).toLocaleString()}</span>
                         </div>
                         <div className="col-span-2">
-                            <span className="text-slate-500 block mb-1">Subject</span>
-                            <span className="text-white font-medium">{email.subject}</span>
+                            <span className="text-gray-400 dark:text-slate-500 block mb-1">Subject</span>
+                            <span className="text-gray-900 dark:text-white font-medium">{email.subject}</span>
                         </div>
                     </div>
 
-                    <div className="border-t border-slate-800 pt-4">
-                        <span className="text-slate-500 block mb-2 text-sm">Content</span>
+                    <div className="border-t border-gray-200 dark:border-slate-800 pt-4">
+                        <span className="text-gray-400 dark:text-slate-500 block mb-2 text-sm">Content</span>
                         <div
                             className="bg-white text-black p-4 rounded-xl min-h-[200px] prose prose-sm max-w-none"
                             dangerouslySetInnerHTML={{ __html: email.body }}
                         />
                     </div>
                 </div>
-                <div className="p-4 border-t border-slate-800 flex justify-end">
+                <div className="p-4 border-t border-gray-200 dark:border-slate-800 flex justify-end">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm font-medium transition-colors"
+                        className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg text-sm font-medium transition-colors"
                     >
                         Close
                     </button>
@@ -75,43 +75,43 @@ const BroadcastConfirmModal = ({ isOpen, onClose, onConfirm, summary }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl transform transition-all">
+            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl w-full max-w-md shadow-2xl transform transition-all">
                 <div className="p-6">
                     <div className="flex items-center gap-4 mb-4">
                         <div className="p-3 bg-indigo-500/10 rounded-full text-indigo-400">
                             <Send size={24} />
                         </div>
                         <div>
-                            <h3 className="text-lg font-semibold text-white">Confirm Broadcast</h3>
-                            <p className="text-sm text-slate-400">Are you sure you want to send this email?</p>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Confirm Broadcast</h3>
+                            <p className="text-sm text-gray-500 dark:text-slate-400">Are you sure you want to send this email?</p>
                         </div>
                     </div>
 
-                    <div className="bg-slate-800/50 rounded-xl p-4 space-y-3 mb-6">
+                    <div className="bg-gray-100 dark:bg-slate-800/50 rounded-xl p-4 space-y-3 mb-6">
                         <div>
-                            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Subject</span>
-                            <p className="text-sm text-white font-medium truncate">{summary.subject}</p>
+                            <span className="text-xs font-medium text-gray-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Subject</span>
+                            <p className="text-sm text-gray-900 dark:text-white font-medium truncate">{summary.subject}</p>
                         </div>
                         <div>
-                            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Audience</span>
-                            <p className="text-sm text-white font-medium">{summary.audience}</p>
+                            <span className="text-xs font-medium text-gray-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Audience</span>
+                            <p className="text-sm text-gray-900 dark:text-white font-medium">{summary.audience}</p>
                         </div>
                         {summary.manualRecipients && (
                             <div>
-                                <span className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Recipients</span>
-                                <p className="text-sm text-white font-medium truncate">{summary.manualRecipients}</p>
+                                <span className="text-xs font-medium text-gray-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Recipients</span>
+                                <p className="text-sm text-gray-900 dark:text-white font-medium truncate">{summary.manualRecipients}</p>
                             </div>
                         )}
                         <div>
-                            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Attachments</span>
-                            <p className="text-sm text-white font-medium">{summary.attachmentCount} files</p>
+                            <span className="text-xs font-medium text-gray-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Attachments</span>
+                            <p className="text-sm text-gray-900 dark:text-white font-medium">{summary.attachmentCount} files</p>
                         </div>
                     </div>
 
                     <div className="flex gap-3">
                         <button
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-medium transition-colors"
+                            className="flex-1 px-4 py-2 bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 text-gray-900 dark:text-white rounded-xl font-medium transition-colors"
                         >
                             Cancel
                         </button>
@@ -280,16 +280,16 @@ export default function MarketingPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Marketing & Broadcasts</h1>
-                    <p className="text-slate-400">Send updates and marketing emails to your audience.</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Marketing & Broadcasts</h1>
+                    <p className="text-gray-500 dark:text-slate-400">Send updates and marketing emails to your audience.</p>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-slate-800">
+            <div className="flex border-b border-gray-200 dark:border-slate-800">
                 <button
                     onClick={() => setActiveTab('compose')}
-                    className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'compose' ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-400 hover:text-white'}`}
+                    className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'compose' ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white'}`}
                 >
                     <div className="flex items-center gap-2">
                         <Mail className="w-4 h-4" />
@@ -298,7 +298,7 @@ export default function MarketingPage() {
                 </button>
                 <button
                     onClick={() => setActiveTab('history')}
-                    className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'history' ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-400 hover:text-white'}`}
+                    className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'history' ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white'}`}
                 >
                     <div className="flex items-center gap-2">
                         <History className="w-4 h-4" />
@@ -307,7 +307,7 @@ export default function MarketingPage() {
                 </button>
                 <button
                     onClick={() => setActiveTab('settings')}
-                    className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'settings' ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-400 hover:text-white'}`}
+                    className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'settings' ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white'}`}
                 >
                     <div className="flex items-center gap-2">
                         <Settings className="w-4 h-4" />
@@ -318,16 +318,16 @@ export default function MarketingPage() {
 
             {/* Compose Tab */}
             {activeTab === 'compose' && (
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6">
                     <form onSubmit={initiateBroadcast} className="space-y-6">
                         {/* Audience Selection */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Target Audience</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Target Audience</label>
                                 <select
                                     value={emailData.audience}
                                     onChange={e => setEmailData(prev => ({ ...prev, audience: e.target.value }))}
-                                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 >
                                     {user?.role === 'super_admin' ? (
                                         <>
@@ -348,39 +348,39 @@ export default function MarketingPage() {
 
                         {/* Manual Recipients Input */}
                         {emailData.audience === 'MANUAL' && (
-                            <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                            <div className="p-4 bg-gray-100 dark:bg-slate-800/50 rounded-xl border border-gray-300 dark:border-slate-700">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">
                                     Recipients (Comma separated)
                                 </label>
                                 <textarea
                                     rows={3}
                                     value={emailData.manualRecipients}
                                     onChange={e => setEmailData(prev => ({ ...prev, manualRecipients: e.target.value }))}
-                                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="email1@example.com, email2@example.com"
                                 />
                             </div>
                         )}
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Subject</label>
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Subject</label>
                             <input
                                 type="text"
                                 required
                                 value={emailData.subject}
                                 onChange={e => setEmailData(prev => ({ ...prev, subject: e.target.value }))}
-                                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="e.g. Monthly Newsletter"
                             />
                         </div>
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Email Body</label>
-                            <div className="quill-dark-theme rounded-xl overflow-hidden border border-slate-700">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Email Body</label>
+                            <div className="quill-dark-theme rounded-xl overflow-hidden border border-gray-300 dark:border-slate-700">
                                 <ReactQuill
                                     theme="snow"
                                     value={emailData.body}
                                     onChange={content => setEmailData(prev => ({ ...prev, body: content }))}
-                                    className="bg-slate-800 text-white"
+                                    className="bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
                                     style={{ minHeight: '250px' }}
                                     modules={{
                                         toolbar: [
@@ -454,7 +454,7 @@ export default function MarketingPage() {
                         {/* Attachments */}
                         <div>
                             <div className="flex items-center justify-between mb-2">
-                                <label className="block text-sm font-medium text-slate-300">Attachments</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300">Attachments</label>
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
@@ -474,12 +474,12 @@ export default function MarketingPage() {
                             {emailData.attachments.length > 0 && (
                                 <div className="space-y-2">
                                     {emailData.attachments.map((file, index) => (
-                                        <div key={index} className="flex items-center justify-between bg-slate-800 p-2 rounded-lg border border-slate-700">
-                                            <span className="text-sm text-slate-300 truncate max-w-[200px]">{file.name}</span>
+                                        <div key={index} className="flex items-center justify-between bg-white dark:bg-slate-800 p-2 rounded-lg border border-gray-300 dark:border-slate-700">
+                                            <span className="text-sm text-gray-600 dark:text-slate-300 truncate max-w-[200px]">{file.name}</span>
                                             <button
                                                 type="button"
                                                 onClick={() => removeAttachment(index)}
-                                                className="text-slate-400 hover:text-red-400"
+                                                className="text-gray-500 dark:text-slate-400 hover:text-red-400"
                                             >
                                                 <X size={14} />
                                             </button>
@@ -489,7 +489,7 @@ export default function MarketingPage() {
                             )}
                         </div>
 
-                        <div className="flex justify-end pt-4 border-t border-slate-800">
+                        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-800">
                             <button
                                 type="submit"
                                 disabled={loading}
@@ -505,30 +505,30 @@ export default function MarketingPage() {
 
             {/* History Tab */}
             {activeTab === 'history' && (
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-slate-800 bg-slate-900/50">
-                                    <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
-                                    <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Recipient</th>
-                                    <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Subject</th>
-                                    <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Date</th>
-                                    <th className="p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider text-right">Actions</th>
+                                <tr className="border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
+                                    <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                                    <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Recipient</th>
+                                    <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Subject</th>
+                                    <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                                    <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-800">
+                            <tbody className="divide-y divide-gray-200 dark:divide-slate-800">
                                 {logsLoading ? (
                                     <tr>
-                                        <td colSpan="5" className="p-8 text-center text-slate-500">Loading logs...</td>
+                                        <td colSpan="5" className="p-8 text-center text-gray-400 dark:text-slate-500">Loading logs...</td>
                                     </tr>
                                 ) : logs.length === 0 ? (
                                     <tr>
-                                        <td colSpan="5" className="p-8 text-center text-slate-500">No sent email history found.</td>
+                                        <td colSpan="5" className="p-8 text-center text-gray-400 dark:text-slate-500">No sent email history found.</td>
                                     </tr>
                                 ) : (
                                     logs.map((log) => (
-                                        <tr key={log.id} className="hover:bg-slate-800/50 transition-colors">
+                                        <tr key={log.id} className="hover:bg-gray-100 dark:bg-slate-800/50 transition-colors">
                                             <td className="p-4">
                                                 <StatusBadge status={log.status} />
                                                 {log.status === 'failed' && (
@@ -538,13 +538,13 @@ export default function MarketingPage() {
                                                 )}
                                             </td>
                                             <td className="p-4">
-                                                <div className="text-sm font-medium text-white">{log.to}</div>
+                                                <div className="text-sm font-medium text-gray-900 dark:text-white">{log.to}</div>
                                             </td>
                                             <td className="p-4">
-                                                <div className="text-sm text-slate-300">{log.subject}</div>
+                                                <div className="text-sm text-gray-600 dark:text-slate-300">{log.subject}</div>
                                             </td>
                                             <td className="p-4">
-                                                <div className="flex items-center gap-2 text-sm text-slate-400">
+                                                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
                                                     <Calendar size={14} />
                                                     {new Date(log.sentAt).toLocaleString()}
                                                 </div>
@@ -552,7 +552,7 @@ export default function MarketingPage() {
                                             <td className="p-4 text-right">
                                                 <button
                                                     onClick={() => setSelectedEmail(log)}
-                                                    className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all"
+                                                    className="p-2 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:bg-slate-700/50 rounded-lg transition-all"
                                                     title="View Content"
                                                 >
                                                     <Eye size={16} />
@@ -569,29 +569,29 @@ export default function MarketingPage() {
 
             {/* Settings Tab */}
             {activeTab === 'settings' && (
-                <div className="max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                    <h3 className="text-lg font-semibold text-white mb-6">SMTP Configuration</h3>
+                <div className="max-w-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">SMTP Configuration</h3>
                     <form onSubmit={handleSaveSettings} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">SMTP Host</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">SMTP Host</label>
                                 <input
                                     type="text"
                                     required
                                     value={settings.smtpHost}
                                     onChange={e => setSettings(prev => ({ ...prev, smtpHost: e.target.value }))}
-                                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="smtp.example.com"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">SMTP Port</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">SMTP Port</label>
                                 <input
                                     type="number"
                                     required
                                     value={settings.smtpPort}
                                     onChange={e => setSettings(prev => ({ ...prev, smtpPort: parseInt(e.target.value) }))}
-                                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="587"
                                 />
                             </div>
@@ -599,24 +599,24 @@ export default function MarketingPage() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">SMTP Username</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">SMTP Username</label>
                                 <input
                                     type="text"
                                     required
                                     value={settings.smtpUser}
                                     onChange={e => setSettings(prev => ({ ...prev, smtpUser: e.target.value }))}
-                                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="user@example.com"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">SMTP Password</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">SMTP Password</label>
                                 <input
                                     type="password"
                                     required
                                     value={settings.smtpPassword}
                                     onChange={e => setSettings(prev => ({ ...prev, smtpPassword: e.target.value }))}
-                                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="••••••••"
                                 />
                             </div>
@@ -628,38 +628,38 @@ export default function MarketingPage() {
                                 id="smtpSecure"
                                 checked={settings.smtpSecure}
                                 onChange={e => setSettings(prev => ({ ...prev, smtpSecure: e.target.checked }))}
-                                className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
+                                className="w-4 h-4 rounded border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-indigo-600 focus:ring-indigo-500"
                             />
-                            <label htmlFor="smtpSecure" className="text-sm font-medium text-slate-300">
+                            <label htmlFor="smtpSecure" className="text-sm font-medium text-gray-600 dark:text-slate-300">
                                 Use Secure Connection (SSL/TLS - Port 465)
                             </label>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">From Email</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">From Email</label>
                                 <input
                                     type="email"
                                     required
                                     value={settings.fromEmail}
                                     onChange={e => setSettings(prev => ({ ...prev, fromEmail: e.target.value }))}
-                                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="marketing@example.com"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">From Name</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">From Name</label>
                                 <input
                                     type="text"
                                     value={settings.fromName}
                                     onChange={e => setSettings(prev => ({ ...prev, fromName: e.target.value }))}
-                                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="My Company"
                                 />
                             </div>
                         </div>
 
-                        <div className="flex justify-end pt-4 border-t border-slate-800">
+                        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-800">
                             <button
                                 type="submit"
                                 disabled={loading}

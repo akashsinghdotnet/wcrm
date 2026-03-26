@@ -132,18 +132,18 @@ export default function InvoiceSettings() {
     };
 
     if (loading) {
-        return <div className="text-slate-500 animate-pulse">Loading settings...</div>;
+        return <div className="text-gray-400 dark:text-slate-500 animate-pulse">Loading settings...</div>;
     }
 
     return (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-2xl">
+        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 max-w-2xl">
             <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-indigo-600/20 rounded-xl flex items-center justify-center">
                     <FileText className="w-5 h-5 text-indigo-400" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-semibold text-white">Invoice Settings</h3>
-                    <p className="text-sm text-slate-400">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Invoice Settings</h3>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">
                         {isSuperadminTeam
                             ? 'Configure invoice settings for system-generated and manually created invoices.'
                             : 'Configure how your invoices appear to clients.'}
@@ -153,28 +153,28 @@ export default function InvoiceSettings() {
 
             <form onSubmit={handleSave} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Company Logo</label>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Company Logo</label>
                     <div className="flex flex-col sm:flex-row gap-4 items-start">
                         <div className="w-full sm:flex-1 space-y-2">
                             <input
                                 value={form.logoUrl?.startsWith('data:') ? '' : (form.logoUrl || '')}
                                 onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
-                                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="https://example.com/logo.png"
                             />
-                            <label className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 border-dashed rounded-xl text-slate-400 hover:text-white hover:border-indigo-500 cursor-pointer transition-all text-sm w-full justify-center sm:justify-start">
+                            <label className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 border-dashed rounded-xl text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:border-indigo-500 cursor-pointer transition-all text-sm w-full justify-center sm:justify-start">
                                 <Upload className="w-4 h-4" />
                                 Upload Logo (max 5MB)
                                 <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
                             </label>
                         </div>
                         {form.logoUrl && (
-                            <div className="w-16 h-16 bg-slate-800 rounded-lg border border-slate-700 flex items-center justify-center p-1 relative group">
+                            <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center justify-center p-1 relative group">
                                 <img src={form.logoUrl} alt="Preview" className="max-w-full max-h-full object-contain" />
                                 <button
                                     type="button"
                                     onClick={() => setForm({ ...form, logoUrl: '' })}
-                                    className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-gray-900 dark:text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                 >x</button>
                             </div>
                         )}
@@ -183,126 +183,126 @@ export default function InvoiceSettings() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">GST Number (Optional)</label>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">GST Number (Optional)</label>
                         <input
                             value={form.gstNo}
                             onChange={(e) => setForm({ ...form, gstNo: e.target.value })}
-                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             placeholder="GSTIN123..."
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Invoice Prefix</label>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Invoice Prefix</label>
                         <input
                             value={form.prefix}
                             onChange={(e) => setForm({ ...form, prefix: e.target.value })}
-                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             placeholder="INV-"
                         />
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Company Address</label>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Company Address</label>
                     <textarea
                         value={form.address}
                         onChange={(e) => setForm({ ...form, address: e.target.value })}
                         rows={3}
-                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                         placeholder="123 Business Avenue, Tech Hub..."
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Default Terms & Conditions</label>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Default Terms & Conditions</label>
                     <textarea
                         value={form.terms}
                         onChange={(e) => setForm({ ...form, terms: e.target.value })}
                         rows={3}
-                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                         placeholder="Payment is due within 15 days..."
                     />
                 </div>
 
                 {/* Payment Details Section */}
-                <div className="pt-4 border-t border-slate-800">
-                    <h4 className="text-md font-semibold text-white mb-4">Payment Details</h4>
-                    <p className="text-xs text-slate-400 mb-4">These details will be shown on your invoices for clients to make payments.</p>
+                <div className="pt-4 border-t border-gray-200 dark:border-slate-800">
+                    <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-4">Payment Details</h4>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">These details will be shown on your invoices for clients to make payments.</p>
 
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Bank Name</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Bank Name</label>
                                 <input
                                     value={form.bankName}
                                     onChange={(e) => setForm({ ...form, bankName: e.target.value })}
-                                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="State Bank of India"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Account Holder Name</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Account Holder Name</label>
                                 <input
                                     value={form.accountHolderName}
                                     onChange={(e) => setForm({ ...form, accountHolderName: e.target.value })}
-                                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="Your Business Name"
                                 />
                             </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Account Number</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Account Number</label>
                                 <input
                                     value={form.accountNumber}
                                     onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
-                                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="1234567890"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">IFSC Code</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">IFSC Code</label>
                                 <input
                                     value={form.ifscCode}
                                     onChange={(e) => setForm({ ...form, ifscCode: e.target.value })}
-                                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="SBIN0001234"
                                 />
                             </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">UPI ID</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">UPI ID</label>
                                 <input
                                     value={form.upiId}
                                     onChange={(e) => setForm({ ...form, upiId: e.target.value })}
-                                    className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="business@upi"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">UPI QR Code</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">UPI QR Code</label>
                                 <div className="flex flex-col sm:flex-row gap-4 items-start">
                                     <div className="w-full sm:flex-1 space-y-2">
                                         <input
                                             value={form.upiQrUrl?.startsWith('data:') ? '' : (form.upiQrUrl || '')}
                                             onChange={(e) => setForm({ ...form, upiQrUrl: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                             placeholder="https://example.com/qr.png"
                                         />
-                                        <label className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 border-dashed rounded-xl text-slate-400 hover:text-white hover:border-indigo-500 cursor-pointer transition-all text-sm w-full justify-center sm:justify-start">
+                                        <label className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 border-dashed rounded-xl text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:border-indigo-500 cursor-pointer transition-all text-sm w-full justify-center sm:justify-start">
                                             <Upload className="w-4 h-4" />
                                             Upload QR (max 5MB)
                                             <input type="file" accept="image/*" onChange={handleQrUpload} className="hidden" />
                                         </label>
                                     </div>
                                     {form.upiQrUrl && (
-                                        <div className="w-16 h-16 bg-slate-800 rounded-lg border border-slate-700 flex items-center justify-center p-1 relative group">
+                                        <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center justify-center p-1 relative group">
                                             <img src={form.upiQrUrl} alt="QR Preview" className="max-w-full max-h-full object-contain" />
                                             <button
                                                 type="button"
                                                 onClick={() => setForm({ ...form, upiQrUrl: '' })}
-                                                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-gray-900 dark:text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                             >x</button>
                                         </div>
                                     )}
@@ -313,30 +313,30 @@ export default function InvoiceSettings() {
                 </div>
 
                 {/* Signature Section */}
-                <div className="pt-4 border-t border-slate-800">
-                    <h4 className="text-md font-semibold text-white mb-4">Authorized Signature</h4>
-                    <p className="text-xs text-slate-400 mb-4">Upload a signature image that will be displayed on your invoices.</p>
+                <div className="pt-4 border-t border-gray-200 dark:border-slate-800">
+                    <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-4">Authorized Signature</h4>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">Upload a signature image that will be displayed on your invoices.</p>
                     <div className="flex flex-col sm:flex-row gap-4 items-start">
                         <div className="w-full sm:flex-1 space-y-2">
                             <input
                                 value={form.signatureUrl?.startsWith('data:') ? '' : (form.signatureUrl || '')}
                                 onChange={(e) => setForm({ ...form, signatureUrl: e.target.value })}
-                                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="https://example.com/signature.png"
                             />
-                            <label className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 border-dashed rounded-xl text-slate-400 hover:text-white hover:border-indigo-500 cursor-pointer transition-all text-sm w-full justify-center sm:justify-start">
+                            <label className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 border-dashed rounded-xl text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:border-indigo-500 cursor-pointer transition-all text-sm w-full justify-center sm:justify-start">
                                 <Upload className="w-4 h-4" />
                                 Upload Signature (max 5MB)
                                 <input type="file" accept="image/*" onChange={handleSignatureUpload} className="hidden" />
                             </label>
                         </div>
                         {form.signatureUrl && (
-                            <div className="w-24 h-16 bg-slate-800 rounded-lg border border-slate-700 flex items-center justify-center p-1 relative group">
+                            <div className="w-24 h-16 bg-white dark:bg-slate-800 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center justify-center p-1 relative group">
                                 <img src={form.signatureUrl} alt="Signature Preview" className="max-w-full max-h-full object-contain" />
                                 <button
                                     type="button"
                                     onClick={() => setForm({ ...form, signatureUrl: '' })}
-                                    className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-gray-900 dark:text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                 >x</button>
                             </div>
                         )}

@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { ArrowLeft, Send, MessageCircle, CheckCheck, Clock, AlertCircle, Paperclip, FileText, Image as ImageIcon } from 'lucide-react';
 
 const statusIcons = {
-    sent: <CheckCheck size={12} className="text-slate-500" />,
+    sent: <CheckCheck size={12} className="text-gray-400 dark:text-slate-500" />,
     delivered: <CheckCheck size={12} className="text-blue-400" />,
     read: <CheckCheck size={12} className="text-green-400" />,
     failed: <AlertCircle size={12} className="text-red-400" />,
@@ -160,18 +160,18 @@ export default function WhatsAppChatPage() {
         return (
             <div className="flex justify-center flex-col gap-4 items-center h-[60vh]">
                 <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-slate-400">Loading chat...</p>
+                <p className="text-gray-500 dark:text-slate-400">Loading chat...</p>
             </div>
         );
     }
 
     return (
-        <div className="h-[calc(100vh-8rem)] max-w-4xl mx-auto flex flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+        <div className="h-[calc(100vh-8rem)] max-w-4xl mx-auto flex flex-col bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xl">
             {/* Header */}
-            <div className="flex items-center gap-4 px-6 py-4 bg-slate-800/80 border-b border-slate-800">
+            <div className="flex items-center gap-4 px-6 py-4 bg-gray-100 dark:bg-slate-800/80 border-b border-gray-200 dark:border-slate-800">
                 <button
                     onClick={() => navigate('/whatsapp-chats')}
-                    className="p-2 -ml-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+                    className="p-2 -ml-2 rounded-lg text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:bg-slate-700 transition-colors"
                 >
                     <ArrowLeft size={20} />
                 </button>
@@ -179,19 +179,19 @@ export default function WhatsAppChatPage() {
                     <span className="text-green-400 font-semibold">{lead.name?.charAt(0)?.toUpperCase()}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h2 className="text-lg font-bold text-white truncate">{lead.name}</h2>
-                    <p className="text-slate-400 text-sm truncate">{lead.phone}</p>
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-white truncate">{lead.name}</h2>
+                    <p className="text-gray-500 dark:text-slate-400 text-sm truncate">{lead.phone}</p>
                 </div>
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 bg-slate-950/50" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23334155\' fill-opacity=\'0.08\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }}>
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 bg-gray-50 dark:bg-slate-950/50" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23334155\' fill-opacity=\'0.08\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }}>
                 {loading ? (
                     <div className="flex justify-center py-12">
                         <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
                     </div>
                 ) : messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+                    <div className="flex flex-col items-center justify-center py-20 text-gray-400 dark:text-slate-500">
                         <MessageCircle size={48} className="mb-4 text-slate-600" />
                         <p className="text-base font-medium">No messages yet</p>
                         <p className="text-sm mt-1">Send a message to start the conversation</p>
@@ -204,7 +204,7 @@ export default function WhatsAppChatPage() {
 
                         return (
                             <div key={msg.id} className={`flex ${isOut ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-md ${isOut ? 'bg-green-600 text-white rounded-br-md' : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-bl-md'
+                                <div className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-md ${isOut ? 'bg-green-600 text-white rounded-br-md' : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-300 dark:border-slate-700 rounded-bl-md'
                                     }`}>
                                     {isMedia ? (
                                         <div className="flex items-center gap-2 mb-1 bg-black/10 p-2.5 rounded-lg border border-white/10">
@@ -215,7 +215,7 @@ export default function WhatsAppChatPage() {
                                         <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                                     )}
                                     <div className={`flex items-center gap-1.5 mt-1.5 ${isOut ? 'justify-end' : 'justify-start'}`}>
-                                        <span className={`text-[10px] ${isOut ? 'text-green-200' : 'text-slate-500'}`}>
+                                        <span className={`text-[10px] ${isOut ? 'text-green-200' : 'text-gray-400 dark:text-slate-500'}`}>
                                             {formatTime(msg.createdAt)}
                                         </span>
                                         {isOut && statusIcons[msg.status]}
@@ -230,11 +230,11 @@ export default function WhatsAppChatPage() {
 
             {/* Input Area */}
             {!lead.phone ? (
-                <div className="px-6 py-4 bg-slate-800 border-t border-slate-700 text-center">
-                    <p className="text-sm text-slate-400">No phone number available for this lead</p>
+                <div className="px-6 py-4 bg-white dark:bg-slate-800 border-t border-gray-300 dark:border-slate-700 text-center">
+                    <p className="text-sm text-gray-500 dark:text-slate-400">No phone number available for this lead</p>
                 </div>
             ) : (
-                <div className="px-4 py-4 bg-slate-800 border-t border-slate-700">
+                <div className="px-4 py-4 bg-white dark:bg-slate-800 border-t border-gray-300 dark:border-slate-700">
                     <form onSubmit={handleSend} className="flex items-end gap-3 max-w-4xl mx-auto relative">
                         {/* Hidden file input */}
                         <input
@@ -249,13 +249,13 @@ export default function WhatsAppChatPage() {
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
                             disabled={sending}
-                            className="p-3 text-slate-400 hover:text-white hover:bg-slate-700 rounded-xl transition-colors flex-shrink-0"
+                            className="p-3 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:bg-slate-700 rounded-xl transition-colors flex-shrink-0"
                             title="Attach File"
                         >
                             <Paperclip size={22} />
                         </button>
 
-                        <div className="flex-1 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500 transition-all">
+                        <div className="flex-1 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl overflow-hidden focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500 transition-all">
                             <textarea
                                 ref={inputRef}
                                 value={text}
@@ -267,7 +267,7 @@ export default function WhatsAppChatPage() {
                                     }
                                 }}
                                 placeholder="Message..."
-                                className="w-full max-h-32 bg-transparent px-4 py-3.5 text-sm text-white placeholder-slate-500 focus:outline-none resize-none"
+                                className="w-full max-h-32 bg-transparent px-4 py-3.5 text-sm text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none resize-none"
                                 rows="1"
                                 style={{ minHeight: '48px' }}
                             />
@@ -282,7 +282,7 @@ export default function WhatsAppChatPage() {
                         </button>
                     </form>
                     <div className="text-center mt-2.5">
-                        <span className="text-[10px] text-slate-500">Press Enter to send, Shift+Enter for new line</span>
+                        <span className="text-[10px] text-gray-400 dark:text-slate-500">Press Enter to send, Shift+Enter for new line</span>
                     </div>
                 </div>
             )}

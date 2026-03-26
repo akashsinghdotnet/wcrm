@@ -242,23 +242,23 @@ export default function WhatsAppContactsPage() {
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                             <Users className="w-8 h-8 text-green-400" />
                             WhatsApp Contacts
                         </h1>
-                        <p className="text-slate-400 mt-1">Manage your WhatsApp contacts, lists, and tags</p>
+                        <p className="text-gray-500 dark:text-slate-400 mt-1">Manage your WhatsApp contacts, lists, and tags</p>
                     </div>
                     <div className="flex gap-3">
                         <button
                             onClick={() => setShowListModal(true)}
-                            className="px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 flex items-center gap-2"
+                            className="px-4 py-2 bg-purple-600 text-gray-900 dark:text-white rounded-xl hover:bg-purple-700 flex items-center gap-2"
                         >
                             <List className="w-4 h-4" />
                             New List
                         </button>
                         <button
                             onClick={() => setShowTagModal(true)}
-                            className="px-4 py-2 bg-pink-600 text-white rounded-xl hover:bg-pink-700 flex items-center gap-2"
+                            className="px-4 py-2 bg-pink-600 text-gray-900 dark:text-white rounded-xl hover:bg-pink-700 flex items-center gap-2"
                         >
                             <Tag className="w-4 h-4" />
                             New Tag
@@ -282,49 +282,49 @@ export default function WhatsAppContactsPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-4 gap-4 mb-6">
-                    <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
-                        <div className="text-slate-400 text-sm mb-1">Total Contacts</div>
-                        <div className="text-2xl font-bold text-white">{stats.total}</div>
+                    <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-gray-300 dark:border-slate-700">
+                        <div className="text-gray-500 dark:text-slate-400 text-sm mb-1">Total Contacts</div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</div>
                     </div>
-                    <div className="bg-slate-800 rounded-xl p-4 border border-green-500/20">
-                        <div className="text-slate-400 text-sm mb-1 flex items-center gap-2">
+                    <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-green-500/20">
+                        <div className="text-gray-500 dark:text-slate-400 text-sm mb-1 flex items-center gap-2">
                             <UserCheck className="w-4 h-4 text-green-400" />
                             Opted In
                         </div>
                         <div className="text-2xl font-bold text-green-400">{stats.optedIn}</div>
                     </div>
-                    <div className="bg-slate-800 rounded-xl p-4 border border-red-500/20">
-                        <div className="text-slate-400 text-sm mb-1 flex items-center gap-2">
+                    <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-red-500/20">
+                        <div className="text-gray-500 dark:text-slate-400 text-sm mb-1 flex items-center gap-2">
                             <UserX className="w-4 h-4 text-red-400" />
                             Opted Out
                         </div>
                         <div className="text-2xl font-bold text-red-400">{stats.optedOut}</div>
                     </div>
-                    <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
-                        <div className="text-slate-400 text-sm mb-1">Pending</div>
-                        <div className="text-2xl font-bold text-slate-400">{stats.pending}</div>
+                    <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-gray-300 dark:border-slate-700">
+                        <div className="text-gray-500 dark:text-slate-400 text-sm mb-1">Pending</div>
+                        <div className="text-2xl font-bold text-gray-500 dark:text-slate-400">{stats.pending}</div>
                     </div>
                 </div>
 
                 {/* Filters */}
-                <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
+                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-gray-300 dark:border-slate-700">
                     <div className="flex items-center gap-4">
-                        <Filter className="w-5 h-5 text-slate-400" />
+                        <Filter className="w-5 h-5 text-gray-500 dark:text-slate-400" />
                         <div className="flex-1 flex gap-3">
                             <div className="relative flex-1">
-                                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                                <Search className="w-4 h-4 absolute left-3 top-3 text-gray-500 dark:text-slate-400" />
                                 <input
                                     type="text"
                                     placeholder="Search contacts..."
                                     value={filters.search}
                                     onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                                    className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 />
                             </div>
                             <select
                                 value={filters.listId}
                                 onChange={(e) => setFilters({ ...filters, listId: e.target.value })}
-                                className="px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                             >
                                 <option value="">All Lists</option>
                                 {lists.map(list => (
@@ -334,7 +334,7 @@ export default function WhatsAppContactsPage() {
                             <select
                                 value={filters.tagId}
                                 onChange={(e) => setFilters({ ...filters, tagId: e.target.value })}
-                                className="px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                             >
                                 <option value="">All Tags</option>
                                 {tags.map(tag => (
@@ -344,7 +344,7 @@ export default function WhatsAppContactsPage() {
                             <select
                                 value={filters.optedIn}
                                 onChange={(e) => setFilters({ ...filters, optedIn: e.target.value })}
-                                className="px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                             >
                                 <option value="">All Status</option>
                                 <option value="true">Opted In</option>
@@ -356,37 +356,37 @@ export default function WhatsAppContactsPage() {
             </div>
 
             {/* Contacts Table */}
-            <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-300 dark:border-slate-700 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-slate-900">
+                        <thead className="bg-white dark:bg-slate-900">
                             <tr>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase">Name</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase">Phone</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase">Email</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase">Lists</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase">Tags</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase">Opt-in Status</th>
-                                <th className="px-6 py-4 text-right text-xs font-medium text-slate-400 uppercase">Actions</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Name</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Phone</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Email</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Lists</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Tags</th>
+                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Opt-in Status</th>
+                                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-700">
+                        <tbody className="divide-y divide-gray-300 dark:divide-slate-700">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-500">Loading...</td>
+                                    <td colSpan={7} className="px-6 py-12 text-center text-gray-400 dark:text-slate-500">Loading...</td>
                                 </tr>
                             ) : contacts.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan={7} className="px-6 py-12 text-center text-gray-400 dark:text-slate-500">
                                         No contacts found. Click "Add Contact" or "Import CSV" to get started.
                                     </td>
                                 </tr>
                             ) : (
                                 contacts.map(contact => (
-                                    <tr key={contact.id} className="hover:bg-slate-700/50">
-                                        <td className="px-6 py-4 text-white">{contact.name}</td>
-                                        <td className="px-6 py-4 text-slate-300">{contact.phone}</td>
-                                        <td className="px-6 py-4 text-slate-300">{contact.email || '—'}</td>
+                                    <tr key={contact.id} className="hover:bg-gray-200 dark:bg-slate-700/50">
+                                        <td className="px-6 py-4 text-gray-900 dark:text-white">{contact.name}</td>
+                                        <td className="px-6 py-4 text-gray-600 dark:text-slate-300">{contact.phone}</td>
+                                        <td className="px-6 py-4 text-gray-600 dark:text-slate-300">{contact.email || '—'}</td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-wrap gap-1">
                                                 {contact.lists?.map(list => (
@@ -419,7 +419,7 @@ export default function WhatsAppContactsPage() {
                                                 className={`px-3 py-1 rounded-lg text-xs font-medium ${
                                                     contact.isOptedIn
                                                         ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                                                        : 'bg-slate-700 text-slate-400 border border-slate-600'
+                                                        : 'bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400 border border-gray-400 dark:border-slate-600'
                                                 }`}
                                             >
                                                 {contact.isOptedIn ? '✓ Opted In' : 'Not Opted In'}
@@ -455,18 +455,18 @@ export default function WhatsAppContactsPage() {
             {/* Import Modal */}
             {showImportModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 rounded-2xl max-w-2xl w-full p-6 border border-slate-700">
-                        <h2 className="text-2xl font-bold text-white mb-4">Import Contacts from CSV</h2>
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full p-6 border border-gray-300 dark:border-slate-700">
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Import Contacts from CSV</h2>
                         <form onSubmit={handleImportContacts}>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-slate-300 mb-2">CSV File</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">CSV File</label>
                                 <input
                                     type="file"
                                     accept=".csv"
                                     onChange={(e) => setImportFile(e.target.files[0])}
-                                    className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"
+                                    className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white"
                                 />
-                                <p className="text-xs text-slate-500 mt-2">
+                                <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">
                                     CSV should have columns: name, phone, email, notes, isOptedIn
                                 </p>
                             </div>
@@ -480,39 +480,39 @@ export default function WhatsAppContactsPage() {
                             </button>
                             <div className="grid grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Add all contacts to Lists (optional)</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Add all contacts to Lists (optional)</label>
                                     <select
                                         multiple
                                         value={importForm.listIds}
                                         onChange={(e) => setImportForm({ ...importForm, listIds: Array.from(e.target.selectedOptions, option => option.value) })}
-                                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white min-h-[100px]"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white min-h-[100px]"
                                     >
                                         {lists.map(list => (
                                             <option key={list.id} value={list.id}>{list.name}</option>
                                         ))}
                                     </select>
-                                    <p className="text-xs text-slate-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Add all contacts to Tags (optional)</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Add all contacts to Tags (optional)</label>
                                     <select
                                         multiple
                                         value={importForm.tagIds}
                                         onChange={(e) => setImportForm({ ...importForm, tagIds: Array.from(e.target.selectedOptions, option => option.value) })}
-                                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white min-h-[100px]"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white min-h-[100px]"
                                     >
                                         {tags.map(tag => (
                                             <option key={tag.id} value={tag.id}>{tag.name}</option>
                                         ))}
                                     </select>
-                                    <p className="text-xs text-slate-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
                                 </div>
                             </div>
                             <div className="flex gap-3">
                                 <button
                                     type="button"
                                     onClick={() => { setShowImportModal(false); setImportFile(null); }}
-                                    className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-xl hover:bg-slate-600"
+                                    className="flex-1 px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-900 dark:text-white rounded-xl hover:bg-slate-600"
                                 >
                                     Cancel
                                 </button>
@@ -531,47 +531,47 @@ export default function WhatsAppContactsPage() {
             {/* Contact Modal */}
             {showContactModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 rounded-2xl max-w-2xl w-full p-6 border border-slate-700">
-                        <h2 className="text-2xl font-bold text-white mb-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full p-6 border border-gray-300 dark:border-slate-700">
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                             {selectedContact ? 'Edit Contact' : 'Add Contact'}
                         </h2>
                         <form onSubmit={handleCreateContact}>
                             <div className="grid grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Name *</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Name *</label>
                                     <input
                                         type="text"
                                         value={contactForm.name}
                                         onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
                                         required
-                                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Phone *</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Phone *</label>
                                     <input
                                         type="tel"
                                         value={contactForm.phone}
                                         onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
                                         required
-                                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Email</label>
                                     <input
                                         type="email"
                                         value={contactForm.email}
                                         onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Opt-in Source</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Opt-in Source</label>
                                     <select
                                         value={contactForm.optInSource}
                                         onChange={(e) => setContactForm({ ...contactForm, optInSource: e.target.value })}
-                                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white"
                                     >
                                         <option value="manual">Manual</option>
                                         <option value="website">Website Form</option>
@@ -581,42 +581,42 @@ export default function WhatsAppContactsPage() {
                                 </div>
                             </div>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Notes</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Notes</label>
                                 <textarea
                                     value={contactForm.notes}
                                     onChange={(e) => setContactForm({ ...contactForm, notes: e.target.value })}
                                     rows={3}
-                                    className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"
+                                    className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Add to Lists</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Add to Lists</label>
                                     <select
                                         multiple
                                         value={contactForm.listIds}
                                         onChange={(e) => setContactForm({ ...contactForm, listIds: Array.from(e.target.selectedOptions, option => option.value) })}
-                                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white min-h-[100px]"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white min-h-[100px]"
                                     >
                                         {lists.map(list => (
                                             <option key={list.id} value={list.id}>{list.name}</option>
                                         ))}
                                     </select>
-                                    <p className="text-xs text-slate-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Add Tags</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Add Tags</label>
                                     <select
                                         multiple
                                         value={contactForm.tagIds}
                                         onChange={(e) => setContactForm({ ...contactForm, tagIds: Array.from(e.target.selectedOptions, option => option.value) })}
-                                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white min-h-[100px]"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white min-h-[100px]"
                                     >
                                         {tags.map(tag => (
                                             <option key={tag.id} value={tag.id}>{tag.name}</option>
                                         ))}
                                     </select>
-                                    <p className="text-xs text-slate-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
                                 </div>
                             </div>
                             <div className="flex gap-2 mb-4">
@@ -641,16 +641,16 @@ export default function WhatsAppContactsPage() {
                                         type="checkbox"
                                         checked={contactForm.isOptedIn}
                                         onChange={(e) => setContactForm({ ...contactForm, isOptedIn: e.target.checked })}
-                                        className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-green-600 focus:ring-green-500"
+                                        className="w-4 h-4 rounded border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-green-600 focus:ring-green-500"
                                     />
-                                    <span className="text-sm text-slate-300">Contact has opted in to receive WhatsApp messages</span>
+                                    <span className="text-sm text-gray-600 dark:text-slate-300">Contact has opted in to receive WhatsApp messages</span>
                                 </label>
                             </div>
                             <div className="flex gap-3">
                                 <button
                                     type="button"
                                     onClick={() => { setShowContactModal(false); setSelectedContact(null); }}
-                                    className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-xl hover:bg-slate-600"
+                                    className="flex-1 px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-900 dark:text-white rounded-xl hover:bg-slate-600"
                                 >
                                     Cancel
                                 </button>
@@ -669,48 +669,48 @@ export default function WhatsAppContactsPage() {
             {/* List Modal */}
             {showListModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 rounded-2xl max-w-md w-full p-6 border border-slate-700">
-                        <h2 className="text-2xl font-bold text-white mb-4">Create List</h2>
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 border border-gray-300 dark:border-slate-700">
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Create List</h2>
                         <form onSubmit={handleCreateList}>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-slate-300 mb-2">List Name *</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">List Name *</label>
                                 <input
                                     type="text"
                                     value={listForm.name}
                                     onChange={(e) => setListForm({ ...listForm, name: e.target.value })}
                                     required
-                                    className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"
+                                    className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white"
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Description</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Description</label>
                                 <textarea
                                     value={listForm.description}
                                     onChange={(e) => setListForm({ ...listForm, description: e.target.value })}
                                     rows={2}
-                                    className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"
+                                    className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white"
                                 />
                             </div>
                             <div className="mb-6">
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Color</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Color</label>
                                 <input
                                     type="color"
                                     value={listForm.color}
                                     onChange={(e) => setListForm({ ...listForm, color: e.target.value })}
-                                    className="w-full h-12 rounded-xl border border-slate-700 cursor-pointer"
+                                    className="w-full h-12 rounded-xl border border-gray-300 dark:border-slate-700 cursor-pointer"
                                 />
                             </div>
                             <div className="flex gap-3">
                                 <button
                                     type="button"
                                     onClick={() => setShowListModal(false)}
-                                    className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-xl hover:bg-slate-600"
+                                    className="flex-1 px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-900 dark:text-white rounded-xl hover:bg-slate-600"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700"
+                                    className="flex-1 px-4 py-2 bg-purple-600 text-gray-900 dark:text-white rounded-xl hover:bg-purple-700"
                                 >
                                     Create
                                 </button>
@@ -723,39 +723,39 @@ export default function WhatsAppContactsPage() {
             {/* Tag Modal */}
             {showTagModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 rounded-2xl max-w-md w-full p-6 border border-slate-700">
-                        <h2 className="text-2xl font-bold text-white mb-4">Create Tag</h2>
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 border border-gray-300 dark:border-slate-700">
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Create Tag</h2>
                         <form onSubmit={handleCreateTag}>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Tag Name *</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Tag Name *</label>
                                 <input
                                     type="text"
                                     value={tagForm.name}
                                     onChange={(e) => setTagForm({ ...tagForm, name: e.target.value })}
                                     required
-                                    className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"
+                                    className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white"
                                 />
                             </div>
                             <div className="mb-6">
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Color</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Color</label>
                                 <input
                                     type="color"
                                     value={tagForm.color}
                                     onChange={(e) => setTagForm({ ...tagForm, color: e.target.value })}
-                                    className="w-full h-12 rounded-xl border border-slate-700 cursor-pointer"
+                                    className="w-full h-12 rounded-xl border border-gray-300 dark:border-slate-700 cursor-pointer"
                                 />
                             </div>
                             <div className="flex gap-3">
                                 <button
                                     type="button"
                                     onClick={() => setShowTagModal(false)}
-                                    className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-xl hover:bg-slate-600"
+                                    className="flex-1 px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-900 dark:text-white rounded-xl hover:bg-slate-600"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-pink-600 text-white rounded-xl hover:bg-pink-700"
+                                    className="flex-1 px-4 py-2 bg-pink-600 text-gray-900 dark:text-white rounded-xl hover:bg-pink-700"
                                 >
                                     Create
                                 </button>

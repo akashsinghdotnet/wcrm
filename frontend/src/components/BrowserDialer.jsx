@@ -9,7 +9,7 @@ const DISPOSITIONS = [
     { value: 'interested', label: 'Interested', color: 'text-green-400 bg-green-500/10 border-green-500/30' },
     { value: 'not_interested', label: 'Not Interested', color: 'text-red-400 bg-red-500/10 border-red-500/30' },
     { value: 'callback', label: 'Callback Later', color: 'text-amber-400 bg-amber-500/10 border-amber-500/30' },
-    { value: 'no_answer', label: 'No Answer', color: 'text-slate-400 bg-slate-500/10 border-slate-500/30' },
+    { value: 'no_answer', label: 'No Answer', color: 'text-gray-500 dark:text-slate-400 bg-slate-500/10 border-slate-500/30' },
     { value: 'wrong_number', label: 'Wrong Number', color: 'text-orange-400 bg-orange-500/10 border-orange-500/30' },
     { value: 'other', label: 'Other', color: 'text-blue-400 bg-blue-500/10 border-blue-500/30' },
 ];
@@ -227,20 +227,20 @@ export default function BrowserDialer({ lead, onClose }) {
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
                 {/* Header */}
-                <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                <div className="p-4 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isCallActive ? 'bg-green-500/20' : isCallEnded ? 'bg-slate-700' : 'bg-blue-500/20'}`}>
-                            <Phone size={18} className={isCallActive ? 'text-green-400' : isCallEnded ? 'text-slate-400' : 'text-blue-400'} />
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isCallActive ? 'bg-green-500/20' : isCallEnded ? 'bg-gray-200 dark:bg-slate-700' : 'bg-blue-500/20'}`}>
+                            <Phone size={18} className={isCallActive ? 'text-green-400' : isCallEnded ? 'text-gray-500 dark:text-slate-400' : 'text-blue-400'} />
                         </div>
                         <div>
-                            <p className="text-white font-semibold text-sm">{lead.name || 'Unknown'}</p>
-                            <p className="text-slate-400 text-xs">{lead.phone}</p>
+                            <p className="text-gray-900 dark:text-white font-semibold text-sm">{lead.name || 'Unknown'}</p>
+                            <p className="text-gray-500 dark:text-slate-400 text-xs">{lead.phone}</p>
                         </div>
                     </div>
                     {!isCallActive && (
-                        <button onClick={onClose} className="p-1.5 text-slate-500 hover:text-white rounded-lg hover:bg-slate-800 cursor-pointer">
+                        <button onClick={onClose} className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:text-white rounded-lg hover:bg-white dark:bg-slate-800 cursor-pointer">
                             <X size={16} />
                         </button>
                     )}
@@ -251,20 +251,20 @@ export default function BrowserDialer({ lead, onClose }) {
                     {/* Status */}
                     <div>
                         {callState === 'idle' && loadingDevice && (
-                            <div className="flex items-center justify-center gap-2 text-slate-400">
+                            <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-slate-400">
                                 <Loader2 size={16} className="animate-spin" />
                                 <span className="text-sm">Initializing...</span>
                             </div>
                         )}
                         {callState === 'idle' && !loadingDevice && deviceReady && (
-                            <p className="text-slate-400 text-sm">Ready to call</p>
+                            <p className="text-gray-500 dark:text-slate-400 text-sm">Ready to call</p>
                         )}
                         {callState === 'idle' && !loadingDevice && !deviceReady && (
                             <div className="space-y-2">
                                 <p className="text-red-400 text-sm">Calling not available. Check Twilio settings.</p>
                                 <button
                                     onClick={() => { setLoadingDevice(true); initializeDevice(); }}
-                                    className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-700 transition-all cursor-pointer"
+                                    className="px-4 py-1.5 bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-xs rounded-lg border border-gray-300 dark:border-slate-700 transition-all cursor-pointer"
                                 >
                                     Retry Connection
                                 </button>
@@ -289,7 +289,7 @@ export default function BrowserDialer({ lead, onClose }) {
                             </div>
                         )}
                         {callState === 'completed' && (
-                            <div className="flex items-center justify-center gap-2 text-slate-300">
+                            <div className="flex items-center justify-center gap-2 text-gray-600 dark:text-slate-300">
                                 <CheckCircle size={16} />
                                 <span className="text-sm">Call Ended</span>
                             </div>
@@ -304,7 +304,7 @@ export default function BrowserDialer({ lead, onClose }) {
 
                     {/* Timer */}
                     {(isCallActive || isCallEnded) && (
-                        <div className="text-3xl font-mono text-white tracking-wider">
+                        <div className="text-3xl font-mono text-gray-900 dark:text-white tracking-wider">
                             {formatDuration(duration)}
                         </div>
                     )}
@@ -314,7 +314,7 @@ export default function BrowserDialer({ lead, onClose }) {
                         {callState === 'idle' && deviceReady && (
                             <button
                                 onClick={startCall}
-                                className="w-14 h-14 bg-green-500 hover:bg-green-400 rounded-full flex items-center justify-center text-white shadow-lg shadow-green-500/30 transition-all cursor-pointer"
+                                className="w-14 h-14 bg-green-500 hover:bg-green-400 rounded-full flex items-center justify-center text-gray-900 dark:text-white shadow-lg shadow-green-500/30 transition-all cursor-pointer"
                             >
                                 <Phone size={22} />
                             </button>
@@ -324,13 +324,13 @@ export default function BrowserDialer({ lead, onClose }) {
                             <>
                                 <button
                                     onClick={toggleMute}
-                                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${muted ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'}`}
+                                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${muted ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:bg-slate-700 border border-gray-300 dark:border-slate-700'}`}
                                 >
                                     {muted ? <MicOff size={18} /> : <Mic size={18} />}
                                 </button>
                                 <button
                                     onClick={endCall}
-                                    className="w-14 h-14 bg-red-500 hover:bg-red-400 rounded-full flex items-center justify-center text-white shadow-lg shadow-red-500/30 transition-all cursor-pointer"
+                                    className="w-14 h-14 bg-red-500 hover:bg-red-400 rounded-full flex items-center justify-center text-gray-900 dark:text-white shadow-lg shadow-red-500/30 transition-all cursor-pointer"
                                 >
                                     <PhoneOff size={22} />
                                 </button>
@@ -341,14 +341,14 @@ export default function BrowserDialer({ lead, onClose }) {
 
                 {/* Post-call: Disposition & Notes */}
                 {isCallEnded && callLogId && (
-                    <div className="p-4 border-t border-slate-800 space-y-3">
-                        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Call Outcome</p>
+                    <div className="p-4 border-t border-gray-200 dark:border-slate-800 space-y-3">
+                        <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">Call Outcome</p>
                         <div className="flex flex-wrap gap-2">
                             {DISPOSITIONS.map(d => (
                                 <button
                                     key={d.value}
                                     onClick={() => setDisposition(d.value)}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all cursor-pointer ${disposition === d.value ? d.color + ' ring-1 ring-current' : 'text-slate-400 bg-slate-800/50 border-slate-700 hover:border-slate-600'}`}
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all cursor-pointer ${disposition === d.value ? d.color + ' ring-1 ring-current' : 'text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-800/50 border-gray-300 dark:border-slate-700 hover:border-gray-400 dark:border-slate-600'}`}
                                 >
                                     {d.label}
                                 </button>
@@ -359,7 +359,7 @@ export default function BrowserDialer({ lead, onClose }) {
                             onChange={(e) => setNotes(e.target.value)}
                             placeholder="Call notes (optional)..."
                             rows={2}
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                            className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                         />
                         <div className="flex gap-2">
                             <button
@@ -372,7 +372,7 @@ export default function BrowserDialer({ lead, onClose }) {
                             </button>
                             <button
                                 onClick={onClose}
-                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm rounded-xl font-medium transition-all cursor-pointer border border-slate-700"
+                                className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-sm rounded-xl font-medium transition-all cursor-pointer border border-gray-300 dark:border-slate-700"
                             >
                                 Skip
                             </button>

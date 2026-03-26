@@ -182,7 +182,7 @@ export default function EditInvoicePage() {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center py-20 text-slate-400">
+            <div className="flex justify-center items-center py-20 text-gray-500 dark:text-slate-400">
                 <p>Loading invoice...</p>
             </div>
         );
@@ -193,24 +193,24 @@ export default function EditInvoicePage() {
             <div className="flex items-center gap-4">
                 <Link
                     to="/invoices"
-                    className="p-2 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl transition-colors"
+                    className="p-2 hover:bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white rounded-xl transition-colors"
                 >
                     <ArrowLeft className="w-5 h-5" />
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Edit Invoice</h1>
-                    <p className="text-sm text-slate-400 mt-1">Update the invoice details below.</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Edit Invoice</h1>
+                    <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Update the invoice details below.</p>
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+            <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden">
                 <div className="p-6 md:p-8 space-y-8">
 
                     {/* Header Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-4">
                             <div className="flex items-center justify-between mb-2">
-                                <label className="block text-sm font-medium text-slate-300 flex items-center gap-2">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 flex items-center gap-2">
                                     <Building className="w-4 h-4" /> Billed To
                                 </label>
                                 <button
@@ -229,7 +229,7 @@ export default function EditInvoicePage() {
                                 <select
                                     value={form.clientId}
                                     onChange={(e) => setForm({ ...form, clientId: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     required
                                 >
                                     <option value="" disabled>Select a client</option>
@@ -238,45 +238,45 @@ export default function EditInvoicePage() {
                                     ))}
                                 </select>
                             ) : (
-                                <div className="space-y-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                                <div className="space-y-3 p-4 bg-gray-100 dark:bg-slate-800/50 rounded-xl border border-gray-300 dark:border-slate-700">
                                     <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1">Client Name *</label>
+                                        <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Client Name *</label>
                                         <input
                                             type="text"
                                             required
                                             value={form.guestClientName}
                                             onChange={(e) => setForm({ ...form, guestClientName: e.target.value })}
-                                            className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                             placeholder="John Doe"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1">Email</label>
+                                        <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Email</label>
                                         <input
                                             type="email"
                                             value={form.guestClientEmail}
                                             onChange={(e) => setForm({ ...form, guestClientEmail: e.target.value })}
-                                            className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                             placeholder="john@example.com"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1">Phone</label>
+                                        <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Phone</label>
                                         <input
                                             type="tel"
                                             value={form.guestClientPhone}
                                             onChange={(e) => setForm({ ...form, guestClientPhone: e.target.value })}
-                                            className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                             placeholder="+91 98765 43210"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1">Address</label>
+                                        <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Address</label>
                                         <textarea
                                             value={form.guestClientAddress}
                                             onChange={(e) => setForm({ ...form, guestClientAddress: e.target.value })}
                                             rows={2}
-                                            className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                                            className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                                             placeholder="123 Main St, City, State"
                                         />
                                     </div>
@@ -285,34 +285,34 @@ export default function EditInvoicePage() {
 
                             {/* Client GST */}
                             <div className="mt-4">
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Client GST Number (Optional)</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Client GST Number (Optional)</label>
                                 <input
                                     type="text"
                                     value={form.clientGst}
                                     onChange={(e) => setForm({ ...form, clientGst: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="e.g. 27AABCU9603R1ZM"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+                        <div className="space-y-4 bg-gray-100 dark:bg-slate-800/50 p-4 rounded-xl border border-gray-300 dark:border-slate-700/50">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5 flex items-center gap-2">
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5 flex items-center gap-2">
                                         <FileText className="w-4 h-4" /> Invoice Number
                                     </label>
                                     <input
                                         type="text"
                                         value={form.invoiceNumber}
                                         onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })}
-                                        className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         placeholder="Original Invoice ID"
                                     />
                                 </div>
                                 <div className="hidden"></div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5 flex items-center gap-2">
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5 flex items-center gap-2">
                                         <Calendar className="w-4 h-4" /> Invoice Date
                                     </label>
                                     <input
@@ -320,11 +320,11 @@ export default function EditInvoicePage() {
                                         required
                                         value={form.invoiceDate}
                                         onChange={(e) => setForm({ ...form, invoiceDate: e.target.value })}
-                                        className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5 flex items-center gap-2">
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5 flex items-center gap-2">
                                         <Calendar className="w-4 h-4" /> Due Date
                                     </label>
                                     <input
@@ -332,16 +332,16 @@ export default function EditInvoicePage() {
                                         required
                                         value={form.dueDate}
                                         onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
-                                        className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Status</label>
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Status</label>
                                 <select
                                     value={form.status}
                                     onChange={(e) => setForm({ ...form, status: e.target.value })}
-                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 >
                                     <option value="pending">Pending</option>
                                     <option value="draft">Draft</option>
@@ -355,13 +355,13 @@ export default function EditInvoicePage() {
                     {/* Line Items */}
                     <div>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                 <FileText className="w-5 h-5 text-indigo-400" /> Line Items
                             </h3>
                         </div>
 
-                        <div className="border border-slate-700 rounded-xl overflow-hidden bg-slate-800/30">
-                            <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-700 bg-slate-800/80 text-sm font-medium text-slate-300">
+                        <div className="border border-gray-300 dark:border-slate-700 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800/30">
+                            <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-300 dark:border-slate-700 bg-gray-100 dark:bg-slate-800/80 text-sm font-medium text-gray-600 dark:text-slate-300">
                                 <div className="col-span-6 md:col-span-7">Description</div>
                                 <div className="col-span-2 text-right">Qty</div>
                                 <div className="col-span-2 text-right">Rate</div>
@@ -370,7 +370,7 @@ export default function EditInvoicePage() {
 
                             <div className="p-2 space-y-2">
                                 {items.map((item) => (
-                                    <div key={item.id} className="grid grid-cols-12 gap-4 items-center p-2 rounded-lg hover:bg-slate-800/50 transition-colors">
+                                    <div key={item.id} className="grid grid-cols-12 gap-4 items-center p-2 rounded-lg hover:bg-gray-100 dark:bg-slate-800/50 transition-colors">
                                         <div className="col-span-6 md:col-span-7">
                                             <input
                                                 type="text"
@@ -378,7 +378,7 @@ export default function EditInvoicePage() {
                                                 placeholder="Item description"
                                                 value={item.description}
                                                 onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
-                                                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-indigo-500 text-sm"
+                                                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 text-sm"
                                             />
                                         </div>
                                         <div className="col-span-2">
@@ -388,7 +388,7 @@ export default function EditInvoicePage() {
                                                 required
                                                 value={item.quantity}
                                                 onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value)}
-                                                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-right focus:outline-none focus:border-indigo-500 text-sm"
+                                                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white text-right focus:outline-none focus:border-indigo-500 text-sm"
                                             />
                                         </div>
                                         <div className="col-span-2">
@@ -399,7 +399,7 @@ export default function EditInvoicePage() {
                                                 required
                                                 value={item.rate}
                                                 onChange={(e) => handleItemChange(item.id, 'rate', e.target.value)}
-                                                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-right focus:outline-none focus:border-indigo-500 text-sm"
+                                                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white text-right focus:outline-none focus:border-indigo-500 text-sm"
                                             />
                                         </div>
                                         <div className="col-span-2 md:col-span-1 flex justify-end">
@@ -407,7 +407,7 @@ export default function EditInvoicePage() {
                                                 type="button"
                                                 onClick={() => handleRemoveItem(item.id)}
                                                 disabled={items.length === 1}
-                                                className="p-2 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+                                                className="p-2 text-gray-400 dark:text-slate-500 hover:text-red-400 hover:bg-white dark:bg-slate-800 rounded-lg transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
@@ -416,7 +416,7 @@ export default function EditInvoicePage() {
                                 ))}
                             </div>
 
-                            <div className="p-4 border-t border-slate-700 bg-slate-800/30">
+                            <div className="p-4 border-t border-gray-300 dark:border-slate-700 bg-gray-100 dark:bg-slate-800/30">
                                 <button
                                     type="button"
                                     onClick={handleAddItem}
@@ -431,22 +431,22 @@ export default function EditInvoicePage() {
                     {/* Footer Calculations */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Notes / Terms</label>
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Notes / Terms</label>
                             <textarea
                                 value={form.notes}
                                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                                 rows={4}
-                                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                                 placeholder="Thank you for your business!"
                             />
                         </div>
 
-                        <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6 space-y-4">
-                            <div className="flex justify-between items-center text-sm text-slate-300">
+                        <div className="bg-gray-100 dark:bg-slate-800/50 rounded-xl border border-gray-300 dark:border-slate-700 p-6 space-y-4">
+                            <div className="flex justify-between items-center text-sm text-gray-600 dark:text-slate-300">
                                 <span>Subtotal</span>
                                 <span>₹{subtotal.toFixed(2)}</span>
                             </div>
-                            <div className="flex justify-between items-center text-sm text-slate-300">
+                            <div className="flex justify-between items-center text-sm text-gray-600 dark:text-slate-300">
                                 <div className="flex items-center gap-2">
                                     <span>GST (%)</span>
                                     <input
@@ -455,13 +455,13 @@ export default function EditInvoicePage() {
                                         step="0.1"
                                         value={form.taxRate}
                                         onChange={(e) => setForm({ ...form, taxRate: e.target.value })}
-                                        className="w-16 px-2 py-1 bg-slate-900 border border-slate-700 rounded text-white text-right focus:outline-none"
+                                        className="w-16 px-2 py-1 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded text-gray-900 dark:text-white text-right focus:outline-none"
                                     />
                                 </div>
                                 <span>₹{taxAmount.toFixed(2)}</span>
                             </div>
-                            <div className="pt-4 border-t border-slate-700 flex justify-between items-center">
-                                <span className="text-lg font-bold text-white">Total</span>
+                            <div className="pt-4 border-t border-gray-300 dark:border-slate-700 flex justify-between items-center">
+                                <span className="text-lg font-bold text-gray-900 dark:text-white">Total</span>
                                 <span className="text-2xl font-bold text-indigo-400">₹{total.toFixed(2)}</span>
                             </div>
                         </div>
@@ -469,10 +469,10 @@ export default function EditInvoicePage() {
 
                 </div>
 
-                <div className="p-6 md:p-8 bg-slate-800/50 border-t border-slate-800 flex justify-end gap-4">
+                <div className="p-6 md:p-8 bg-gray-100 dark:bg-slate-800/50 border-t border-gray-200 dark:border-slate-800 flex justify-end gap-4">
                     <Link
                         to="/invoices"
-                        className="px-6 py-2.5 text-slate-300 hover:text-white font-medium transition-colors"
+                        className="px-6 py-2.5 text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:text-white font-medium transition-colors"
                     >
                         Cancel
                     </Link>

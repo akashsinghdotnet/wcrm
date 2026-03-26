@@ -39,13 +39,13 @@ export default function ForgotPasswordPage() {
                             <Mail className="w-8 h-8 text-indigo-400" />
                         </div>
                     </div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Forgot Password?</h1>
-                    <p className="text-slate-400">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Forgot Password?</h1>
+                    <p className="text-gray-500 dark:text-slate-400">
                         No worries, we'll send you reset instructions.
                     </p>
                 </div>
 
-                <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-xl">
+                <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-gray-200 dark:border-slate-800 rounded-2xl p-8 shadow-xl">
                     {submitted ? (
                         <div className="text-center space-y-6">
                             <div className="flex justify-center">
@@ -54,16 +54,16 @@ export default function ForgotPasswordPage() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <h3 className="text-xl font-semibold text-white">Check your email</h3>
-                                <p className="text-slate-400 text-sm">
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Check your email</h3>
+                                <p className="text-gray-500 dark:text-slate-400 text-sm">
                                     We've sent a password reset link to <br />
-                                    <span className="text-white font-medium">{email}</span>
+                                    <span className="text-gray-900 dark:text-white font-medium">{email}</span>
                                 </p>
                             </div>
                             <div className="pt-4">
                                 <Link
                                     to="/login"
-                                    className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+                                    className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white transition-colors"
                                 >
                                     <ArrowLeft size={16} />
                                     Back to log in
@@ -73,11 +73,11 @@ export default function ForgotPasswordPage() {
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="space-y-2">
-                                <label htmlFor="email" className="text-sm font-medium text-slate-300">
+                                <label htmlFor="email" className="text-sm font-medium text-gray-600 dark:text-slate-300">
                                     Email Address
                                 </label>
                                 <div className="relative">
-                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500">
                                         <Mail size={18} />
                                     </div>
                                     <input
@@ -86,7 +86,7 @@ export default function ForgotPasswordPage() {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-10 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                                        className="w-full bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-slate-700 rounded-xl px-10 py-3 text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
                                         placeholder="Enter your email"
                                     />
                                 </div>
@@ -110,7 +110,7 @@ export default function ForgotPasswordPage() {
                             <div className="text-center">
                                 <Link
                                     to="/login"
-                                    className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+                                    className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white transition-colors"
                                 >
                                     <ArrowLeft size={16} />
                                     Back to log in

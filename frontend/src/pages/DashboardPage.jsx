@@ -103,8 +103,8 @@ export default function DashboardPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-2xl font-bold text-white">Dashboard</h2>
-                <p className="text-slate-400 mt-1">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
+                <p className="text-gray-500 dark:text-slate-400 mt-1">
                     {isSuperAdmin ? 'Platform management overview' : isAdmin ? 'Company overview and analytics' : 'Your assigned leads and follow-ups'}
                 </p>
             </div>
@@ -122,7 +122,7 @@ export default function DashboardPage() {
                                     <Building2 className="w-5 h-5 text-indigo-400" />
                                 </div>
                             </div>
-                            <p className="text-2xl font-bold text-white">{saStats.totalCompanies}</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{saStats.totalCompanies}</p>
                             <p className="text-sm text-indigo-400 mt-1">Total Companies</p>
                         </div>
                         <div className="bg-cyan-600/15 border border-cyan-500/30 rounded-2xl p-5 transition-all hover:scale-[1.02]">
@@ -131,7 +131,7 @@ export default function DashboardPage() {
                                     <IndianRupee className="w-5 h-5 text-cyan-400" />
                                 </div>
                             </div>
-                            <p className="text-lg font-bold text-white">
+                            <p className="text-lg font-bold text-gray-900 dark:text-white">
                                 ₹{(saStats?.todayRevenue || 0).toLocaleString('en-IN')}
                             </p>
                             <p className="text-sm text-cyan-400 mt-1">Today&apos;s Sale</p>
@@ -142,7 +142,7 @@ export default function DashboardPage() {
                                     <IndianRupee className="w-5 h-5 text-emerald-400" />
                                 </div>
                             </div>
-                            <p className="text-2xl font-bold text-white">₹{(saStats?.thisMonthRevenue || 0).toLocaleString('en-IN')}</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-white">₹{(saStats?.thisMonthRevenue || 0).toLocaleString('en-IN')}</p>
                             <p className="text-sm text-emerald-400 mt-1">This Month Sale</p>
                         </div>
                         <div
@@ -154,27 +154,27 @@ export default function DashboardPage() {
                                     <Sparkles className="w-5 h-5 text-purple-400" />
                                 </div>
                             </div>
-                            <p className="text-2xl font-bold text-white">{saStats.activePlans}</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{saStats.activePlans}</p>
                             <p className="text-sm text-purple-400 mt-1">Active Plans</p>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                            <h3 className="text-lg font-semibold text-white mb-4">Recent Companies</h3>
+                        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Companies</h3>
                             {saStats.companies.length === 0 ? (
-                                <p className="text-slate-500 text-sm">No companies registered yet.</p>
+                                <p className="text-gray-400 dark:text-slate-500 text-sm">No companies registered yet.</p>
                             ) : (
                                 <div className="space-y-3">
                                     {(saStats?.companies || []).slice(0, 5).map((company) => (
-                                        <div key={company.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => navigate(`/companies/${company.id}`)}>
+                                        <div key={company.id} className="flex items-center justify-between p-3 bg-gray-100 dark:bg-slate-800/50 rounded-xl cursor-pointer hover:bg-white dark:bg-slate-800 transition-colors" onClick={() => navigate(`/companies/${company.id}`)}>
                                             <div className="flex items-center gap-3 min-w-0">
                                                 <div className="w-9 h-9 rounded-lg bg-indigo-600/20 flex items-center justify-center flex-shrink-0">
                                                     <Building2 className="w-4 h-4 text-indigo-400" />
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <p className="text-sm font-medium text-white truncate">{company.companyName}</p>
-                                                    <p className="text-xs text-slate-500">{company.users?.length || 0} users</p>
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{company.companyName}</p>
+                                                    <p className="text-xs text-gray-400 dark:text-slate-500">{company.users?.length || 0} users</p>
                                                 </div>
                                             </div>
                                             <span className="px-2.5 py-1 text-xs font-medium bg-emerald-500/10 text-emerald-400 rounded-full flex-shrink-0">
@@ -186,21 +186,21 @@ export default function DashboardPage() {
                             )}
                         </div>
 
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                            <h3 className="text-lg font-semibold text-white mb-4">Available Plans</h3>
+                        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Available Plans</h3>
                             {saStats.plans.length === 0 ? (
-                                <p className="text-slate-500 text-sm">No plans created yet.</p>
+                                <p className="text-gray-400 dark:text-slate-500 text-sm">No plans created yet.</p>
                             ) : (
                                 <div className="space-y-3">
                                     {(saStats?.plans || []).map((plan) => (
-                                        <div key={plan.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
+                                        <div key={plan.id} className="flex items-center justify-between p-3 bg-gray-100 dark:bg-slate-800/50 rounded-xl">
                                             <div className="min-w-0">
-                                                <p className="text-sm font-medium text-white">{plan.name}</p>
-                                                <p className="text-xs text-slate-500">{plan.adminLimit} admin · {plan.employeeLimit} employees</p>
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white">{plan.name}</p>
+                                                <p className="text-xs text-gray-400 dark:text-slate-500">{plan.adminLimit} admin · {plan.employeeLimit} employees</p>
                                             </div>
                                             <div className="text-right flex-shrink-0">
-                                                <p className="text-sm font-bold text-white">₹{plan.priceMonthly}/mo</p>
-                                                <p className="text-xs text-slate-500">₹{plan.priceYearly}/yr</p>
+                                                <p className="text-sm font-bold text-gray-900 dark:text-white">₹{plan.priceMonthly}/mo</p>
+                                                <p className="text-xs text-gray-400 dark:text-slate-500">₹{plan.priceYearly}/yr</p>
                                             </div>
                                         </div>
                                     ))}
@@ -227,7 +227,7 @@ export default function DashboardPage() {
                                         <card.icon className={`w-5 h-5 ${c.text}`} />
                                     </div>
                                 </div>
-                                <p className="text-2xl font-bold text-white">{card.value}</p>
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{card.value}</p>
                                 <p className={`text-sm ${c.text} mt-1`}>{card.label}</p>
                             </div>
                         );
@@ -239,15 +239,15 @@ export default function DashboardPage() {
             {staffStats && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div
-                        className="bg-slate-900 border border-slate-800 rounded-2xl p-6 cursor-pointer hover:bg-slate-800/50 transition-colors"
+                        className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 cursor-pointer hover:bg-gray-100 dark:bg-slate-800/50 transition-colors"
                         onClick={() => navigate('/leads')}
                     >
-                        <p className="text-sm text-slate-400 mb-1">Your Assigned Leads</p>
-                        <p className="text-3xl font-bold text-white">{staffStats.assignedLeads}</p>
+                        <p className="text-sm text-gray-500 dark:text-slate-400 mb-1">Your Assigned Leads</p>
+                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{staffStats.assignedLeads}</p>
                     </div>
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                        <p className="text-sm text-slate-400 mb-1">Follow-ups Due Today</p>
-                        <p className="text-3xl font-bold text-white">{staffStats.followUpsDueToday}</p>
+                    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6">
+                        <p className="text-sm text-gray-500 dark:text-slate-400 mb-1">Follow-ups Due Today</p>
+                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{staffStats.followUpsDueToday}</p>
                     </div>
                 </div>
             )}
@@ -263,7 +263,7 @@ export default function DashboardPage() {
                         >
                             <div>
                                 <p className="text-sm text-amber-400">Pending Invoices</p>
-                                <p className="text-2xl font-bold text-white mt-1">₹{stats.pendingAmount.toLocaleString('en-IN')}</p>
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">₹{stats.pendingAmount.toLocaleString('en-IN')}</p>
                             </div>
                             <IndianRupee className="w-8 h-8 text-amber-400/30" />
                         </div>
@@ -280,14 +280,14 @@ export default function DashboardPage() {
                                 {followUps.overdue.map((lead) => (
                                     <div key={lead.id} className="flex items-center justify-between p-2.5 bg-red-500/5 rounded-xl cursor-pointer hover:bg-red-500/10 transition-colors" onClick={() => navigate('/leads')}>
                                         <div className="min-w-0">
-                                            <p className="text-sm font-medium text-white truncate">{lead.name}</p>
-                                            <p className="text-xs text-slate-400">{lead.phone || lead.email}</p>
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{lead.name}</p>
+                                            <p className="text-xs text-gray-500 dark:text-slate-400">{lead.phone || lead.email}</p>
                                         </div>
                                         <div className="text-right flex-shrink-0">
                                             <p className="text-xs text-red-400 font-medium">
                                                 {new Date(lead.followUpDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                                             </p>
-                                            {lead.assignedUser && <p className="text-[10px] text-slate-500">{lead.assignedUser.name}</p>}
+                                            {lead.assignedUser && <p className="text-[10px] text-gray-400 dark:text-slate-500">{lead.assignedUser.name}</p>}
                                         </div>
                                     </div>
                                 ))}
@@ -306,8 +306,8 @@ export default function DashboardPage() {
                                 {followUps.today.map((lead) => (
                                     <div key={lead.id} className="flex items-center justify-between p-2.5 bg-amber-500/5 rounded-xl cursor-pointer hover:bg-amber-500/10 transition-colors" onClick={() => navigate('/leads')}>
                                         <div className="min-w-0">
-                                            <p className="text-sm font-medium text-white truncate">{lead.name}</p>
-                                            <p className="text-xs text-slate-400">{lead.phone || lead.email}</p>
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{lead.name}</p>
+                                            <p className="text-xs text-gray-500 dark:text-slate-400">{lead.phone || lead.email}</p>
                                         </div>
                                         <span className="text-xs text-amber-400">{lead.notes?.slice(0, 40)}</span>
                                     </div>
@@ -321,8 +321,8 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Leads by Source Chart */}
                 {chartData.length > 0 && (
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                        <h3 className="text-lg font-semibold text-white mb-4">Leads by Source</h3>
+                    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Leads by Source</h3>
                         <ResponsiveContainer width="100%" height={250}>
                             <BarChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -344,23 +344,23 @@ export default function DashboardPage() {
 
                 {/* Recent Leads */}
                 {recentLeads.length > 0 && (
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold text-white">Recent Leads</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Leads</h3>
                             <button onClick={() => navigate('/leads')} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">View All</button>
                         </div>
                         <div className="space-y-3">
                             {recentLeads.map((lead) => (
                                 <div
                                     key={lead.id}
-                                    className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl cursor-pointer hover:bg-slate-800 transition-colors"
+                                    className="flex items-center justify-between p-3 bg-gray-100 dark:bg-slate-800/50 rounded-xl cursor-pointer hover:bg-white dark:bg-slate-800 transition-colors"
                                     onClick={() => navigate('/leads')}
                                 >
                                     <div className="min-w-0">
-                                        <p className="text-sm font-medium text-white truncate">{lead.name}</p>
-                                        <p className="text-xs text-slate-400">{lead.phone || lead.email}</p>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{lead.name}</p>
+                                        <p className="text-xs text-gray-500 dark:text-slate-400">{lead.phone || lead.email}</p>
                                     </div>
-                                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full shrink-0 ${statusBadgeColor[lead.status] || 'bg-slate-700 text-slate-300'}`}>
+                                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full shrink-0 ${statusBadgeColor[lead.status] || 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300'}`}>
                                         {lead.status?.replace('_', ' ')}
                                     </span>
                                 </div>

@@ -267,7 +267,7 @@ export default function IntegrationsPage({ embedded = false }) {
         const active = isActive(id);
         const hasCreds = hasCredentials(id);
         const platformCreds = PLATFORM_CREDENTIALS[id] || [];
-        if (!active) return { label: 'Inactive', color: 'bg-slate-700 text-slate-400' };
+        if (!active) return { label: 'Inactive', color: 'bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400' };
         if (platformCreds.length === 0 || hasCreds) return { label: 'Connected', color: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' };
         return { label: 'Needs Setup', color: 'bg-amber-500/15 text-amber-400 border border-amber-500/20' };
     };
@@ -388,17 +388,17 @@ function submitMagnetCRMForm(e) {
             {/* Header */}
             {!embedded && (
                 <div>
-                    <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                         <Plug className="w-6 h-6 text-indigo-400" />
                         Integrations
                     </h2>
-                    <p className="text-slate-400 mt-1">Connect external lead sources, configure credentials, and manage lead distribution</p>
+                    <p className="text-gray-500 dark:text-slate-400 mt-1">Connect external lead sources, configure credentials, and manage lead distribution</p>
                 </div>
             )}
 
             {/* Integrations List */}
             <div>
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                     <Globe className="w-5 h-5 text-indigo-400" />
                     Lead Sources
                 </h3>
@@ -411,7 +411,7 @@ function submitMagnetCRMForm(e) {
                         return (
                             <div
                                 key={integration.id}
-                                className={`bg-slate-900 border rounded-2xl overflow-hidden transition-all ${active ? 'border-slate-700' : 'border-slate-800 opacity-70'}`}
+                                className={`bg-white dark:bg-slate-900 border rounded-2xl overflow-hidden transition-all ${active ? 'border-gray-300 dark:border-slate-700' : 'border-gray-200 dark:border-slate-800 opacity-70'}`}
                             >
                                 {/* Color header bar */}
                                 <div className={`h-1.5 bg-gradient-to-r ${integration.color}`} />
@@ -425,12 +425,12 @@ function submitMagnetCRMForm(e) {
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-2.5 flex-wrap">
-                                                    <h4 className="text-base font-semibold text-white">{integration.name}</h4>
+                                                    <h4 className="text-base font-semibold text-gray-900 dark:text-white">{integration.name}</h4>
                                                     <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${status.color}`}>
                                                         {status.label}
                                                     </span>
                                                 </div>
-                                                <p className="text-xs text-slate-400 leading-relaxed mt-0.5">{integration.description}</p>
+                                                <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed mt-0.5">{integration.description}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -449,7 +449,7 @@ function submitMagnetCRMForm(e) {
                                                             toast.error('Failed to connect to backend', { id: toastId });
                                                         }
                                                     }}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:text-white bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg transition-all border border-emerald-500/20"
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:text-gray-900 dark:text-white bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg transition-all border border-emerald-500/20"
                                                 >
                                                     <RefreshCcw className="w-3.5 h-3.5" />
                                                     Fetch Leads
@@ -458,7 +458,7 @@ function submitMagnetCRMForm(e) {
                                             {active && platformCreds.length > 0 && (
                                                 <button
                                                     onClick={() => openConfigModal(integration.id)}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-all border border-slate-700"
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:text-white bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 rounded-lg transition-all border border-gray-300 dark:border-slate-700"
                                                 >
                                                     <Settings className="w-3.5 h-3.5" />
                                                     Configure
@@ -476,7 +476,7 @@ function submitMagnetCRMForm(e) {
                                             )}
                                             <button
                                                 onClick={() => toggleIntegration(integration.id)}
-                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer flex-shrink-0 ${active ? 'bg-indigo-600' : 'bg-slate-700'}`}
+                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer flex-shrink-0 ${active ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-slate-700'}`}
                                             >
                                                 <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${active ? 'translate-x-6' : 'translate-x-1'}`} />
                                             </button>
@@ -488,7 +488,7 @@ function submitMagnetCRMForm(e) {
                                         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                                             <div className="bg-black/30 rounded-xl p-3">
                                                 <div className="flex items-center justify-between mb-1.5">
-                                                    <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">Webhook URL</span>
+                                                    <span className="text-xs text-gray-400 dark:text-slate-500 font-medium uppercase tracking-wide">Webhook URL</span>
                                                     <button
                                                         onClick={() => copyWebhook(integration)}
                                                         className="text-indigo-400 hover:text-indigo-300 transition-colors"
@@ -497,14 +497,14 @@ function submitMagnetCRMForm(e) {
                                                         {copiedId === integration.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                                                     </button>
                                                 </div>
-                                                <p className="text-xs text-slate-300 font-mono break-all">
+                                                <p className="text-xs text-gray-600 dark:text-slate-300 font-mono break-all">
                                                     {baseUrl}{integration.webhookPath}
                                                 </p>
                                             </div>
 
                                             <div className="bg-black/30 rounded-xl p-3">
                                                 <div className="flex items-center justify-between mb-1.5">
-                                                    <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">Company ID</span>
+                                                    <span className="text-xs text-gray-400 dark:text-slate-500 font-medium uppercase tracking-wide">Company ID</span>
                                                     <button
                                                         onClick={() => {
                                                             navigator.clipboard.writeText(user.companyId);
@@ -516,7 +516,7 @@ function submitMagnetCRMForm(e) {
                                                         <Copy className="w-3.5 h-3.5" />
                                                     </button>
                                                 </div>
-                                                <p className="text-xs text-slate-300 font-mono break-all">
+                                                <p className="text-xs text-gray-600 dark:text-slate-300 font-mono break-all">
                                                     {user.companyId}
                                                 </p>
                                             </div>
@@ -525,7 +525,7 @@ function submitMagnetCRMForm(e) {
                                             {integration.id === 'meta' && (
                                                 <div className="bg-black/30 rounded-xl p-3 md:col-span-2">
                                                     <div className="flex items-center justify-between mb-1.5">
-                                                        <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">Verify Token (for Facebook Webhook setup)</span>
+                                                        <span className="text-xs text-gray-400 dark:text-slate-500 font-medium uppercase tracking-wide">Verify Token (for Facebook Webhook setup)</span>
                                                         <button
                                                             onClick={() => {
                                                                 navigator.clipboard.writeText('magnet-crm');
@@ -537,7 +537,7 @@ function submitMagnetCRMForm(e) {
                                                             <Copy className="w-3.5 h-3.5" />
                                                         </button>
                                                     </div>
-                                                    <p className="text-xs text-slate-300 font-mono">
+                                                    <p className="text-xs text-gray-600 dark:text-slate-300 font-mono">
                                                         magnet-crm
                                                     </p>
                                                 </div>
@@ -547,20 +547,20 @@ function submitMagnetCRMForm(e) {
 
                                     {/* Expanded Setup Guide */}
                                     {active && isExpanded && (
-                                        <div className="mt-4 space-y-4 border-t border-slate-800 pt-4">
+                                        <div className="mt-4 space-y-4 border-t border-gray-200 dark:border-slate-800 pt-4">
                                             {/* Setup Steps */}
                                             <div>
-                                                <h5 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                                                <h5 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                                                     <Info className="w-4 h-4 text-indigo-400" />
                                                     Setup Instructions
                                                 </h5>
                                                 <ol className="space-y-2">
                                                     {integration.setupSteps.map((step, idx) => (
                                                         <li key={idx} className="flex gap-3 text-sm">
-                                                            <span className="w-6 h-6 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                                                            <span className="w-6 h-6 rounded-full bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                                                                 {idx + 1}
                                                             </span>
-                                                            <span className="text-slate-300">{step}</span>
+                                                            <span className="text-gray-600 dark:text-slate-300">{step}</span>
                                                         </li>
                                                     ))}
                                                 </ol>
@@ -570,20 +570,20 @@ function submitMagnetCRMForm(e) {
                                             <div>
                                                 {integration.fields.length > 0 && (
                                                 <>
-                                                <h5 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                                                <h5 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                                                     <Shield className="w-4 h-4 text-indigo-400" />
                                                     Accepted Fields
                                                 </h5>
                                                 <div className="bg-black/20 rounded-xl overflow-hidden">
                                                     <table className="w-full text-xs">
                                                         <thead>
-                                                            <tr className="border-b border-slate-800">
-                                                                <th className="text-left px-3 py-2 text-slate-500 font-medium">Field</th>
-                                                                <th className="text-left px-3 py-2 text-slate-500 font-medium">Required</th>
-                                                                <th className="text-left px-3 py-2 text-slate-500 font-medium">Description</th>
+                                                            <tr className="border-b border-gray-200 dark:border-slate-800">
+                                                                <th className="text-left px-3 py-2 text-gray-400 dark:text-slate-500 font-medium">Field</th>
+                                                                <th className="text-left px-3 py-2 text-gray-400 dark:text-slate-500 font-medium">Required</th>
+                                                                <th className="text-left px-3 py-2 text-gray-400 dark:text-slate-500 font-medium">Description</th>
                                                             </tr>
                                                         </thead>
-                                                        <tbody className="divide-y divide-slate-800/50">
+                                                        <tbody className="divide-y divide-gray-200 dark:divide-slate-800/50">
                                                             {integration.fields.map((field) => (
                                                                 <tr key={field.name}>
                                                                     <td className="px-3 py-2 font-mono text-indigo-300">{field.name}</td>
@@ -591,10 +591,10 @@ function submitMagnetCRMForm(e) {
                                                                         {field.required ? (
                                                                             <span className="px-1.5 py-0.5 bg-red-500/10 text-red-400 rounded text-[10px] font-medium">Required</span>
                                                                         ) : (
-                                                                            <span className="px-1.5 py-0.5 bg-slate-700 text-slate-400 rounded text-[10px] font-medium">Optional</span>
+                                                                            <span className="px-1.5 py-0.5 bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400 rounded text-[10px] font-medium">Optional</span>
                                                                         )}
                                                                     </td>
-                                                                    <td className="px-3 py-2 text-slate-400">{field.description}</td>
+                                                                    <td className="px-3 py-2 text-gray-500 dark:text-slate-400">{field.description}</td>
                                                                 </tr>
                                                             ))}
                                                         </tbody>
@@ -605,7 +605,7 @@ function submitMagnetCRMForm(e) {
                                                 {integration.id === 'meta' && (
                                                     <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4">
                                                         <h5 className="text-sm font-semibold text-blue-400 mb-2">How it works</h5>
-                                                        <p className="text-xs text-slate-400 leading-relaxed">
+                                                        <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
                                                             Facebook sends lead events directly to your CRM webhook. When someone fills your Lead Ad form,
                                                             Facebook notifies your CRM with the lead ID. Your CRM then fetches the complete lead details
                                                             (name, phone, email) using the Facebook Graph API and your Page Access Token.
@@ -619,7 +619,7 @@ function submitMagnetCRMForm(e) {
                                             {integration.fields.length > 0 && (
                                             <div>
                                                 <div className="flex items-center justify-between mb-3">
-                                                    <h5 className="text-sm font-semibold text-white flex items-center gap-2">
+                                                    <h5 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                                         <Code className="w-4 h-4 text-indigo-400" />
                                                         Sample JSON Payload
                                                     </h5>
@@ -631,7 +631,7 @@ function submitMagnetCRMForm(e) {
                                                         Copy
                                                     </button>
                                                 </div>
-                                                <pre className="bg-black/30 rounded-xl p-4 text-xs text-slate-300 font-mono overflow-x-auto whitespace-pre">
+                                                <pre className="bg-black/30 rounded-xl p-4 text-xs text-gray-600 dark:text-slate-300 font-mono overflow-x-auto whitespace-pre">
                                                     {getSamplePayload(integration)}
                                                 </pre>
                                             </div>
@@ -642,7 +642,7 @@ function submitMagnetCRMForm(e) {
                                                 <div className="space-y-4">
                                                     {/* Live Preview */}
                                                     <div>
-                                                        <h5 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                                                        <h5 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                                                             <Eye className="w-4 h-4 text-indigo-400" />
                                                             Form Preview
                                                         </h5>
@@ -674,7 +674,7 @@ function submitMagnetCRMForm(e) {
                                                     {/* Embeddable Code */}
                                                     <div>
                                                         <div className="flex items-center justify-between mb-3">
-                                                            <h5 className="text-sm font-semibold text-white flex items-center gap-2">
+                                                            <h5 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                                                 <Code className="w-4 h-4 text-indigo-400" />
                                                                 Embeddable HTML Code
                                                             </h5>
@@ -683,7 +683,7 @@ function submitMagnetCRMForm(e) {
                                                                     navigator.clipboard.writeText(getWebsiteCodeSample());
                                                                     toast.success('Form code copied! Paste it into your website HTML.');
                                                                 }}
-                                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:text-white bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg transition-all border border-emerald-500/20"
+                                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:text-gray-900 dark:text-white bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg transition-all border border-emerald-500/20"
                                                             >
                                                                 <Copy className="w-3.5 h-3.5" />
                                                                 Copy Form Code
@@ -697,10 +697,10 @@ function submitMagnetCRMForm(e) {
                                                     {/* Instructions */}
                                                     <div className="flex gap-3 p-3 bg-indigo-500/5 border border-indigo-500/10 rounded-xl">
                                                         <Info className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
-                                                        <div className="text-xs text-slate-300">
+                                                        <div className="text-xs text-gray-600 dark:text-slate-300">
                                                             <p className="font-medium text-indigo-300 mb-1">How to use</p>
-                                                            <ol className="space-y-1 list-decimal list-inside text-slate-400">
-                                                                <li>Click <strong className="text-white">Copy Form Code</strong> above</li>
+                                                            <ol className="space-y-1 list-decimal list-inside text-gray-500 dark:text-slate-400">
+                                                                <li>Click <strong className="text-gray-900 dark:text-white">Copy Form Code</strong> above</li>
                                                                 <li>Paste it into your website's HTML (works with WordPress, Shopify, Wix, React, or any website)</li>
                                                                 <li>Customize the styles (colors, fonts, spacing) to match your website's look</li>
                                                                 <li>Leads submitted through the form will automatically appear in your CRM</li>
@@ -720,8 +720,8 @@ function submitMagnetCRMForm(e) {
             </div>
 
             {/* How It Works Section */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2">
+            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                     <MessageSquare className="w-4 h-4 text-indigo-400" />
                     How It Works
                 </h3>
@@ -729,29 +729,29 @@ function submitMagnetCRMForm(e) {
                     <div className="flex gap-3">
                         <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-sm flex-shrink-0">1</div>
                         <div>
-                            <p className="text-white font-medium">Enable & Configure</p>
-                            <p className="text-slate-400 text-xs mt-0.5">Toggle on the source and add your credentials</p>
+                            <p className="text-gray-900 dark:text-white font-medium">Enable & Configure</p>
+                            <p className="text-gray-500 dark:text-slate-400 text-xs mt-0.5">Toggle on the source and add your credentials</p>
                         </div>
                     </div>
                     <div className="flex gap-3">
                         <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-sm flex-shrink-0">2</div>
                         <div>
-                            <p className="text-white font-medium">Follow Setup Guide</p>
-                            <p className="text-slate-400 text-xs mt-0.5">Click "Guide" for step-by-step instructions</p>
+                            <p className="text-gray-900 dark:text-white font-medium">Follow Setup Guide</p>
+                            <p className="text-gray-500 dark:text-slate-400 text-xs mt-0.5">Click "Guide" for step-by-step instructions</p>
                         </div>
                     </div>
                     <div className="flex gap-3">
                         <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-sm flex-shrink-0">3</div>
                         <div>
-                            <p className="text-white font-medium">Configure Webhook</p>
-                            <p className="text-slate-400 text-xs mt-0.5">Paste URL & Company ID in your platform</p>
+                            <p className="text-gray-900 dark:text-white font-medium">Configure Webhook</p>
+                            <p className="text-gray-500 dark:text-slate-400 text-xs mt-0.5">Paste URL & Company ID in your platform</p>
                         </div>
                     </div>
                     <div className="flex gap-3">
                         <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-sm flex-shrink-0">4</div>
                         <div>
-                            <p className="text-white font-medium">Leads Flow In</p>
-                            <p className="text-slate-400 text-xs mt-0.5">Leads auto-appear and get assigned</p>
+                            <p className="text-gray-900 dark:text-white font-medium">Leads Flow In</p>
+                            <p className="text-gray-500 dark:text-slate-400 text-xs mt-0.5">Leads auto-appear and get assigned</p>
                         </div>
                     </div>
                 </div>
@@ -760,35 +760,35 @@ function submitMagnetCRMForm(e) {
             {/* Credentials Configuration Modal */}
             {configModalPlatform && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl">
-                        <div className="flex items-center justify-between p-6 border-b border-slate-800">
+                    <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-800">
                             <div>
-                                <h3 className="text-lg font-semibold text-white">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                     Configure {INTEGRATIONS.find(i => i.id === configModalPlatform)?.name}
                                 </h3>
-                                <p className="text-xs text-slate-400 mt-1">Enter your platform credentials to enable the integration</p>
+                                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Enter your platform credentials to enable the integration</p>
                             </div>
-                            <button onClick={() => setConfigModalPlatform(null)} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                            <button onClick={() => setConfigModalPlatform(null)} className="p-2 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:bg-white dark:bg-slate-800 rounded-lg transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
                         <div className="p-6 space-y-4">
                             {(PLATFORM_CREDENTIALS[configModalPlatform] || []).map((field) => (
                                 <div key={field.key}>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">{field.label}</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">{field.label}</label>
                                     <div className="relative">
                                         <input
                                             type={field.type === 'password' && !showPasswords[field.key] ? 'password' : 'text'}
                                             value={credentialForm[field.key] || ''}
                                             onChange={(e) => setCredentialForm({ ...credentialForm, [field.key]: e.target.value })}
                                             placeholder={field.placeholder}
-                                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
                                         />
                                         {field.type === 'password' && (
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPasswords({ ...showPasswords, [field.key]: !showPasswords[field.key] })}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300"
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-slate-400 hover:text-gray-600 dark:text-slate-300"
                                             >
                                                 {showPasswords[field.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                             </button>
@@ -800,7 +800,7 @@ function submitMagnetCRMForm(e) {
                                 <button
                                     type="button"
                                     onClick={() => setConfigModalPlatform(null)}
-                                    className="flex-1 py-2.5 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-all font-medium"
+                                    className="flex-1 py-2.5 border border-gray-300 dark:border-slate-700 text-gray-600 dark:text-slate-300 rounded-xl hover:bg-white dark:bg-slate-800 transition-all font-medium"
                                 >
                                     Cancel
                                 </button>

@@ -68,11 +68,11 @@ export default function WhatsAppTemplatesPage() {
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                             <FileText className="w-8 h-8 text-green-400" />
                             Message Templates
                         </h1>
-                        <p className="text-slate-400 mt-1">Manage Meta-approved message templates for broadcasts</p>
+                        <p className="text-gray-500 dark:text-slate-400 mt-1">Manage Meta-approved message templates for broadcasts</p>
                     </div>
                     <button
                         onClick={() => setShowModal(true)}
@@ -105,31 +105,31 @@ export default function WhatsAppTemplatesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {loading ? (
-                    <div className="col-span-full text-center py-12 text-slate-500">Loading...</div>
+                    <div className="col-span-full text-center py-12 text-gray-400 dark:text-slate-500">Loading...</div>
                 ) : templates.length === 0 ? (
-                    <div className="col-span-full text-center py-12 text-slate-500">
+                    <div className="col-span-full text-center py-12 text-gray-400 dark:text-slate-500">
                         No templates yet. Click "New Template" to create one.
                     </div>
                 ) : (
                     templates.map(template => (
-                        <div key={template.id} className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                        <div key={template.id} className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-300 dark:border-slate-700">
                             <div className="mb-4">
-                                <h3 className="text-lg font-bold text-white mb-2">{template.name}</h3>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{template.name}</h3>
                                 {getStatusBadge(template.status)}
                             </div>
                             <div className="mb-4">
-                                <div className="text-xs text-slate-500 mb-1">Category</div>
-                                <div className="text-sm text-slate-300 capitalize">{template.category}</div>
+                                <div className="text-xs text-gray-400 dark:text-slate-500 mb-1">Category</div>
+                                <div className="text-sm text-gray-600 dark:text-slate-300 capitalize">{template.category}</div>
                             </div>
                             <div className="mb-4">
-                                <div className="text-xs text-slate-500 mb-1">Content</div>
-                                <div className="text-sm text-slate-300 bg-slate-900 p-3 rounded-lg font-mono whitespace-pre-wrap">
+                                <div className="text-xs text-gray-400 dark:text-slate-500 mb-1">Content</div>
+                                <div className="text-sm text-gray-600 dark:text-slate-300 bg-white dark:bg-slate-900 p-3 rounded-lg font-mono whitespace-pre-wrap">
                                     {template.content}
                                 </div>
                             </div>
                             {template.variables && template.variables.length > 0 && (
                                 <div className="mb-4">
-                                    <div className="text-xs text-slate-500 mb-1">Variables</div>
+                                    <div className="text-xs text-gray-400 dark:text-slate-500 mb-1">Variables</div>
                                     <div className="flex flex-wrap gap-1">
                                         {template.variables.map((variable, index) => (
                                             <span key={index} className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs">
@@ -139,7 +139,7 @@ export default function WhatsAppTemplatesPage() {
                                     </div>
                                 </div>
                             )}
-                            <div className="text-xs text-slate-500">
+                            <div className="text-xs text-gray-400 dark:text-slate-500">
                                 Created {new Date(template.createdAt).toLocaleDateString()}
                             </div>
                         </div>
@@ -150,30 +150,30 @@ export default function WhatsAppTemplatesPage() {
             {/* Create Template Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 rounded-2xl max-w-2xl w-full p-6 border border-slate-700">
-                        <h2 className="text-2xl font-bold text-white mb-6">Create Message Template</h2>
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full p-6 border border-gray-300 dark:border-slate-700">
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create Message Template</h2>
                         <form onSubmit={handleCreateTemplate}>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Template Name *</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Template Name *</label>
                                     <input
                                         type="text"
                                         value={form.name}
                                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                                         required
                                         placeholder="e.g., monthly_newsletter"
-                                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white"
                                     />
-                                    <p className="text-xs text-slate-500 mt-1">Use lowercase and underscores only</p>
+                                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Use lowercase and underscores only</p>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-2">Category *</label>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Category *</label>
                                         <select
                                             value={form.category}
                                             onChange={(e) => setForm({ ...form, category: e.target.value })}
-                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"
+                                            className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white"
                                         >
                                             <option value="marketing">Marketing</option>
                                             <option value="utility">Utility</option>
@@ -181,11 +181,11 @@ export default function WhatsAppTemplatesPage() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-2">Language *</label>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Language *</label>
                                         <select
                                             value={form.language}
                                             onChange={(e) => setForm({ ...form, language: e.target.value })}
-                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"
+                                            className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white"
                                         >
                                             <option value="en">English</option>
                                             <option value="hi">Hindi</option>
@@ -195,16 +195,16 @@ export default function WhatsAppTemplatesPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Message Content *</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Message Content *</label>
                                     <textarea
                                         value={form.content}
                                         onChange={(e) => setForm({ ...form, content: e.target.value })}
                                         required
                                         rows={6}
                                         placeholder="Hello {{name}}, your order {{order_id}} has been confirmed..."
-                                        className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono"
+                                        className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white font-mono"
                                     />
-                                    <p className="text-xs text-slate-500 mt-1">Use {`{{variable}}`} for dynamic content</p>
+                                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Use {`{{variable}}`} for dynamic content</p>
                                 </div>
 
                                 <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 text-sm text-yellow-300">
@@ -217,7 +217,7 @@ export default function WhatsAppTemplatesPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-xl hover:bg-slate-600"
+                                    className="flex-1 px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-900 dark:text-white rounded-xl hover:bg-slate-600"
                                 >
                                     Cancel
                                 </button>

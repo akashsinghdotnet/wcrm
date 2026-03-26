@@ -230,17 +230,17 @@ export default function BillingPage() {
 
     const fmt = (n) => '₹' + Number(n || 0).toLocaleString('en-IN');
 
-    if (loading) return <div className="text-white">Loading billing...</div>;
-    if (!user) return <div className="text-slate-400">Please log in to view billing.</div>;
+    if (loading) return <div className="text-gray-900 dark:text-white">Loading billing...</div>;
+    if (!user) return <div className="text-gray-500 dark:text-slate-400">Please log in to view billing.</div>;
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-white">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                         {isSuperAdmin ? 'Global Sales History' : 'Billing & Invoices'}
                     </h2>
-                    <p className="text-slate-400 mt-1">
+                    <p className="text-gray-500 dark:text-slate-400 mt-1">
                         {isSuperAdmin ? 'View all subscription revenue from companies.' : 'Manage your invoices and payment history.'}
                     </p>
                 </div>
@@ -262,8 +262,8 @@ export default function BillingPage() {
                     <div className="relative z-10 flex items-center justify-between">
                         <div>
                             <p className="text-sm text-indigo-400 font-medium mb-1">Current Subscription</p>
-                            <h3 className="text-3xl font-bold text-white mb-2">{currentPlan.name}</h3>
-                            <div className="flex items-center gap-4 text-slate-300 text-sm">
+                            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{currentPlan.name}</h3>
+                            <div className="flex items-center gap-4 text-gray-600 dark:text-slate-300 text-sm">
                                 <span>₹{currentPlan.priceMonthly}/mo</span>
                                 <span>•</span>
                                 <span>{currentPlan.adminLimit} Admins</span>
@@ -284,24 +284,24 @@ export default function BillingPage() {
             {/* Summary Cards - Only for Company Admins (Client Invoicing) */}
             {!isSuperAdmin && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <div className="bg-slate-800/50 border border-emerald-500/20 rounded-2xl p-5">
+                    <div className="bg-gray-100 dark:bg-slate-800/50 border border-emerald-500/20 rounded-2xl p-5">
                         <div className="flex items-center gap-3 mb-2">
                             <CheckCircle size={20} className="text-emerald-400" />
-                            <span className="text-slate-400 text-sm">Paid</span>
+                            <span className="text-gray-500 dark:text-slate-400 text-sm">Paid</span>
                         </div>
                         <p className="text-2xl font-bold text-emerald-400">{fmt(totalPaid)}</p>
                     </div>
-                    <div className="bg-slate-800/50 border border-yellow-500/20 rounded-2xl p-5">
+                    <div className="bg-gray-100 dark:bg-slate-800/50 border border-yellow-500/20 rounded-2xl p-5">
                         <div className="flex items-center gap-3 mb-2">
                             <Clock size={20} className="text-yellow-400" />
-                            <span className="text-slate-400 text-sm">Pending</span>
+                            <span className="text-gray-500 dark:text-slate-400 text-sm">Pending</span>
                         </div>
                         <p className="text-2xl font-bold text-yellow-400">{fmt(totalPending)}</p>
                     </div>
-                    <div className="bg-slate-800/50 border border-red-500/20 rounded-2xl p-5">
+                    <div className="bg-gray-100 dark:bg-slate-800/50 border border-red-500/20 rounded-2xl p-5">
                         <div className="flex items-center gap-3 mb-2">
                             <AlertTriangle size={20} className="text-red-400" />
-                            <span className="text-slate-400 text-sm">Overdue</span>
+                            <span className="text-gray-500 dark:text-slate-400 text-sm">Overdue</span>
                         </div>
                         <p className="text-2xl font-bold text-red-400">{fmt(totalOverdue)}</p>
                     </div>
@@ -311,12 +311,12 @@ export default function BillingPage() {
             {/* Filter - Only for Company Admins */}
             {!isSuperAdmin && (
                 <div className="flex items-center gap-3 mb-6">
-                    <Filter size={16} className="text-slate-400" />
+                    <Filter size={16} className="text-gray-500 dark:text-slate-400" />
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm
-                        text-white focus:outline-none focus:border-indigo-500"
+                        className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm
+                        text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500"
                     >
                         <option value="">All Statuses</option>
                         <option value="pending">Pending</option>
@@ -327,37 +327,37 @@ export default function BillingPage() {
             )}
 
             {/* Table */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl overflow-hidden">
                 <table className="w-full">
                     <thead>
-                        <tr className="border-b border-slate-800 bg-slate-900/50">
+                        <tr className="border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
                             {isSuperAdmin ? (
                                 <>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Company</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Plan</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Date</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Amount</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Invoice #</th>
-                                    <th className="text-right px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Company</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Plan</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Invoice #</th>
+                                    <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                                 </>
                             ) : (
                                 <>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Client</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Date</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Amount</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
-                                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Paid Date</th>
-                                    <th className="text-right px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Client</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Paid Date</th>
+                                    <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                                 </>
                             )}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800">
+                    <tbody className="divide-y divide-gray-200 dark:divide-slate-800">
                         {loading ? (
-                            <tr><td colSpan={6} className="text-center py-12 text-slate-500">Loading...</td></tr>
+                            <tr><td colSpan={6} className="text-center py-12 text-gray-400 dark:text-slate-500">Loading...</td></tr>
                         ) : (isSuperAdmin ? globalHistory : safeInvoices).length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="text-center py-12 text-slate-500">
+                                <td colSpan={6} className="text-center py-12 text-gray-400 dark:text-slate-500">
                                     <IndianRupee size={32} className="mx-auto mb-3 opacity-50" />
                                     No records found
                                 </td>
@@ -365,12 +365,12 @@ export default function BillingPage() {
                         ) : (
                             isSuperAdmin ? (
                                 globalHistory.map((invoice) => (
-                                    <tr key={invoice.id} className="hover:bg-slate-800/50 transition-colors">
+                                    <tr key={invoice.id} className="hover:bg-gray-100 dark:bg-slate-800/50 transition-colors">
                                         <td className="px-6 py-4">
-                                            <div className="font-medium text-white">{invoice.companyName}</div>
+                                            <div className="font-medium text-gray-900 dark:text-white">{invoice.companyName}</div>
                                         </td>
-                                        <td className="px-6 py-4 text-slate-300">{invoice.planName}</td>
-                                        <td className="px-6 py-4 text-slate-300">
+                                        <td className="px-6 py-4 text-gray-600 dark:text-slate-300">{invoice.planName}</td>
+                                        <td className="px-6 py-4 text-gray-600 dark:text-slate-300">
                                             {new Date(invoice.date).toLocaleDateString('en-IN', {
                                                 year: 'numeric',
                                                 month: 'short',
@@ -378,7 +378,7 @@ export default function BillingPage() {
                                             })}
                                         </td>
                                         <td className="px-6 py-4 font-mono text-emerald-400">{fmt(invoice.amount)}</td>
-                                        <td className="px-6 py-4 text-slate-400 text-sm">{invoice.invoiceNumber}</td>
+                                        <td className="px-6 py-4 text-gray-500 dark:text-slate-400 text-sm">{invoice.invoiceNumber}</td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <button
@@ -416,7 +416,7 @@ export default function BillingPage() {
                                                         });
                                                         setShowViewModal(true);
                                                     }}
-                                                    className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors z-20 relative"
+                                                    className="p-2 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:bg-white dark:bg-slate-800 rounded-lg transition-colors z-20 relative"
                                                     title="View Invoice"
                                                     type="button"
                                                 >
@@ -437,7 +437,7 @@ export default function BillingPage() {
                                                         setInvoiceToDelete(invoice);
                                                         setShowDeleteModal(true);
                                                     }}
-                                                    className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors z-20 relative"
+                                                    className="p-2 text-gray-500 dark:text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors z-20 relative"
                                                     title="Delete Invoice"
                                                     type="button"
                                                 >
@@ -451,16 +451,16 @@ export default function BillingPage() {
                                 safeInvoices.map((inv) => {
                                     const s = STATUS_STYLES[inv.status] || STATUS_STYLES.pending;
                                     return (
-                                        <tr key={inv.id} className="hover:bg-slate-800/50 transition-colors">
-                                            <td className="px-6 py-4 text-white font-medium">{inv.client?.clientName || '—'}</td>
-                                            <td className="px-6 py-4 text-slate-300">
+                                        <tr key={inv.id} className="hover:bg-gray-100 dark:bg-slate-800/50 transition-colors">
+                                            <td className="px-6 py-4 text-gray-900 dark:text-white font-medium">{inv.client?.clientName || '—'}</td>
+                                            <td className="px-6 py-4 text-gray-600 dark:text-slate-300">
                                                 {inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString('en-IN') : inv.month}
                                             </td>
-                                            <td className="px-6 py-4 text-white font-mono">{fmt(inv.amount)}</td>
+                                            <td className="px-6 py-4 text-gray-900 dark:text-white font-mono">{fmt(inv.amount)}</td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${s.bg} ${s.text}`}>{s.label}</span>
                                             </td>
-                                            <td className="px-6 py-4 text-slate-400 text-sm">
+                                            <td className="px-6 py-4 text-gray-500 dark:text-slate-400 text-sm">
                                                 {inv.paidDate ? new Date(inv.paidDate).toLocaleDateString('en-IN') : '—'}
                                             </td>
                                             <td className="px-6 py-4 text-right">
@@ -470,7 +470,7 @@ export default function BillingPage() {
                                                             setSelectedInvoice(inv);
                                                             setShowViewModal(true);
                                                         }}
-                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                                                        className="p-1.5 rounded-lg text-gray-500 dark:text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
                                                         title="View Invoice"
                                                     >
                                                         <Eye size={16} />
@@ -485,7 +485,7 @@ export default function BillingPage() {
                                                     )}
                                                     <button
                                                         onClick={() => handleDelete(inv.id)}
-                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                                        className="p-1.5 rounded-lg text-gray-500 dark:text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                                                         title="Delete Invoice"
                                                     >
                                                         <Trash2 size={16} />
@@ -505,10 +505,10 @@ export default function BillingPage() {
             {
                 showModal && (
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                        <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
-                            <div className="flex items-center justify-between p-6 border-b border-slate-800 shrink-0">
-                                <h2 className="text-xl font-bold text-white">Create Invoice</h2>
-                                <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white">
+                        <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+                            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-800 shrink-0">
+                                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Create Invoice</h2>
+                                <button onClick={() => setShowModal(false)} className="text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white">
                                     <X size={20} />
                                 </button>
                             </div>
@@ -518,12 +518,12 @@ export default function BillingPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-300 mb-1.5">{isSuperAdmin ? 'Company' : 'Client'}</label>
+                                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">{isSuperAdmin ? 'Company' : 'Client'}</label>
                                             <select
                                                 value={form.clientId}
                                                 onChange={(e) => setForm({ ...form, clientId: e.target.value })}
                                                 required
-                                                className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                className="w-full bg-white dark:bg-slate-800 border border-gray-400 dark:border-slate-600 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                             >
                                                 <option value="">Select {isSuperAdmin ? 'company' : 'client'}</option>
                                                 {isSuperAdmin ? (
@@ -538,11 +538,11 @@ export default function BillingPage() {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Invoice Number</label>
+                                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Invoice Number</label>
                                             <input
                                                 value={form.invoiceNumber}
                                                 onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })}
-                                                className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                className="w-full bg-white dark:bg-slate-800 border border-gray-400 dark:border-slate-600 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                                 placeholder="INV-001"
                                             />
                                         </div>
@@ -550,22 +550,22 @@ export default function BillingPage() {
                                     <div className="space-y-4">
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Invoice Date</label>
+                                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Invoice Date</label>
                                                 <input
                                                     type="date"
                                                     value={form.invoiceDate}
                                                     onChange={(e) => setForm({ ...form, invoiceDate: e.target.value })}
                                                     required
-                                                    className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                    className="w-full bg-white dark:bg-slate-800 border border-gray-400 dark:border-slate-600 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Due Date</label>
+                                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Due Date</label>
                                                 <input
                                                     type="date"
                                                     value={form.dueDate}
                                                     onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
-                                                    className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                    className="w-full bg-white dark:bg-slate-800 border border-gray-400 dark:border-slate-600 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                                                 />
                                             </div>
                                         </div>
@@ -574,7 +574,7 @@ export default function BillingPage() {
 
                                 {/* Line Items */}
                                 <div className="space-y-4">
-                                    <h3 className="text-lg font-semibold text-white">Items</h3>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Items</h3>
                                     <div className="space-y-3">
                                         {form.items.map((item, index) => (
                                             <div key={index} className="grid grid-cols-12 gap-3 items-start">
@@ -583,7 +583,7 @@ export default function BillingPage() {
                                                         placeholder="Description"
                                                         value={item.description}
                                                         onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                        className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none"
+                                                        className="w-full bg-white dark:bg-slate-800 border border-gray-400 dark:border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-1 focus:ring-indigo-500 outline-none"
                                                     />
                                                 </div>
                                                 <div className="col-span-2">
@@ -592,7 +592,7 @@ export default function BillingPage() {
                                                         placeholder="Qty"
                                                         value={item.quantity}
                                                         onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-                                                        className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none"
+                                                        className="w-full bg-white dark:bg-slate-800 border border-gray-400 dark:border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-1 focus:ring-indigo-500 outline-none"
                                                     />
                                                 </div>
                                                 <div className="col-span-2">
@@ -601,17 +601,17 @@ export default function BillingPage() {
                                                         placeholder="Rate"
                                                         value={item.rate}
                                                         onChange={(e) => updateItem(index, 'rate', e.target.value)}
-                                                        className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-indigo-500 outline-none"
+                                                        className="w-full bg-white dark:bg-slate-800 border border-gray-400 dark:border-slate-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-1 focus:ring-indigo-500 outline-none"
                                                     />
                                                 </div>
-                                                <div className="col-span-2 py-2 text-right text-white font-mono">
+                                                <div className="col-span-2 py-2 text-right text-gray-900 dark:text-white font-mono">
                                                     {fmt(item.amount)}
                                                 </div>
                                                 <div className="col-span-1 flex justify-end">
                                                     <button
                                                         type="button"
                                                         onClick={() => removeItem(index)}
-                                                        className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                        className="p-2 text-gray-500 dark:text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                                                     >
                                                         <X size={16} />
                                                     </button>
@@ -628,32 +628,32 @@ export default function BillingPage() {
                                     </button>
                                 </div>
 
-                                <div className="border-t border-slate-800 pt-6 flex justify-end">
+                                <div className="border-t border-gray-200 dark:border-slate-800 pt-6 flex justify-end">
                                     <div className="w-64 space-y-2">
-                                        <div className="flex justify-between text-slate-400">
+                                        <div className="flex justify-between text-gray-500 dark:text-slate-400">
                                             <span>Subtotal</span>
-                                            <span className="text-white">{fmt(calculateTotal().subtotal)}</span>
+                                            <span className="text-gray-900 dark:text-white">{fmt(calculateTotal().subtotal)}</span>
                                         </div>
                                         {isSuperAdmin && (
-                                            <div className="flex justify-between text-slate-400">
+                                            <div className="flex justify-between text-gray-500 dark:text-slate-400">
                                                 <span>GST (18%)</span>
-                                                <span className="text-white">{fmt(calculateTotal().gst)}</span>
+                                                <span className="text-gray-900 dark:text-white">{fmt(calculateTotal().gst)}</span>
                                             </div>
                                         )}
-                                        <div className="flex justify-between text-slate-400 pt-2 border-t border-slate-700">
+                                        <div className="flex justify-between text-gray-500 dark:text-slate-400 pt-2 border-t border-gray-300 dark:border-slate-700">
                                             <span>Total</span>
-                                            <span className="text-white font-bold text-lg">{fmt(calculateTotal().total)}</span>
+                                            <span className="text-gray-900 dark:text-white font-bold text-lg">{fmt(calculateTotal().total)}</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Notes</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Notes</label>
                                     <textarea
                                         value={form.notes}
                                         onChange={(e) => setForm({ ...form, notes: e.target.value })}
                                         rows={2}
-                                        className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                                        className="w-full bg-white dark:bg-slate-800 border border-gray-400 dark:border-slate-600 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
                                         placeholder="Payment terms, notes..."
                                     />
                                 </div>
@@ -682,7 +682,7 @@ export default function BillingPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
                     onClick={() => setShowDeleteModal(false)}
                 >
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full shadow-xl"
+                    <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-2xl p-6 max-w-md w-full shadow-xl"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="flex items-center gap-4 mb-4">
@@ -690,18 +690,18 @@ export default function BillingPage() {
                                 <Trash2 size={24} />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-white">Delete Invoice</h3>
-                                <p className="text-slate-400 text-sm">Are you sure you want to delete this invoice?</p>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Delete Invoice</h3>
+                                <p className="text-gray-500 dark:text-slate-400 text-sm">Are you sure you want to delete this invoice?</p>
                             </div>
                         </div>
 
-                        <div className="bg-slate-800/50 rounded-lg p-4 mb-6 border border-slate-700">
+                        <div className="bg-gray-100 dark:bg-slate-800/50 rounded-lg p-4 mb-6 border border-gray-300 dark:border-slate-700">
                             <div className="flex justify-between mb-2">
-                                <span className="text-slate-400">Invoice #</span>
-                                <span className="text-white font-mono">{invoiceToDelete.invoiceNumber}</span>
+                                <span className="text-gray-500 dark:text-slate-400">Invoice #</span>
+                                <span className="text-gray-900 dark:text-white font-mono">{invoiceToDelete.invoiceNumber}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-slate-400">Amount</span>
+                                <span className="text-gray-500 dark:text-slate-400">Amount</span>
                                 <span className="text-emerald-400 font-mono">{fmt(invoiceToDelete.amount)}</span>
                             </div>
                         </div>
@@ -709,7 +709,7 @@ export default function BillingPage() {
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setShowDeleteModal(false)}
-                                className="flex-1 px-4 py-2 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+                                className="flex-1 px-4 py-2 rounded-lg font-medium text-gray-600 dark:text-slate-300 hover:bg-white dark:bg-slate-800 transition-colors"
                             >
                                 Cancel
                             </button>

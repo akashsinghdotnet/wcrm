@@ -38,7 +38,7 @@ export default function InvoiceViewModal({ invoice, company, onClose }) {
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white text-slate-900 w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
                 {/* Toolbar */}
-                <div className="bg-slate-900 text-white p-4 flex items-center justify-between shrink-0">
+                <div className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white p-4 flex items-center justify-between shrink-0">
                     <h2 className="font-bold text-lg">Invoice Details</h2>
                     <div className="flex items-center gap-2">
                         <button
@@ -49,7 +49,7 @@ export default function InvoiceViewModal({ invoice, company, onClose }) {
                         </button>
                         <button
                             onClick={onClose}
-                            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+                            className="p-2 hover:bg-white dark:bg-slate-800 rounded-lg transition-colors"
                         >
                             <X size={20} />
                         </button>
@@ -70,7 +70,7 @@ export default function InvoiceViewModal({ invoice, company, onClose }) {
                                         <span className="text-xl font-bold">{company?.companyName || 'Your Company'}</span>
                                     </div>
                                 )}
-                                <div className="text-sm text-slate-500 space-y-1">
+                                <div className="text-sm text-gray-400 dark:text-slate-500 space-y-1">
                                     {(settings?.address || company?.address) && <p className="max-w-[250px]">{settings?.address || company?.address}</p>}
                                     {company?.email && <p>{company.email}</p>}
                                     {company?.phone && <p>{company.phone}</p>}
@@ -79,10 +79,10 @@ export default function InvoiceViewModal({ invoice, company, onClose }) {
                             </div>
                             <div className="text-right">
                                 <h1 className="text-4xl font-light text-slate-900 mb-2">INVOICE</h1>
-                                <p className="text-slate-500 font-mono">#{invoice.invoiceNumber || invoice.id.slice(0, 8).toUpperCase()}</p>
+                                <p className="text-gray-400 dark:text-slate-500 font-mono">#{invoice.invoiceNumber || invoice.id.slice(0, 8).toUpperCase()}</p>
                                 <div className="mt-4 space-y-1 text-sm">
                                     <p>
-                                        <span className="text-slate-400">Date: </span>
+                                        <span className="text-gray-500 dark:text-slate-400">Date: </span>
                                         {new Date(invoice.invoiceDate || invoice.createdAt).toLocaleDateString('en-IN', {
                                             year: 'numeric',
                                             month: 'long',
@@ -91,7 +91,7 @@ export default function InvoiceViewModal({ invoice, company, onClose }) {
                                     </p>
                                     {invoice.dueDate && (
                                         <p>
-                                            <span className="text-slate-400">Due Date: </span>
+                                            <span className="text-gray-500 dark:text-slate-400">Due Date: </span>
                                             {new Date(invoice.dueDate).toLocaleDateString('en-IN', {
                                                 year: 'numeric',
                                                 month: 'long',
@@ -105,12 +105,12 @@ export default function InvoiceViewModal({ invoice, company, onClose }) {
 
                         {/* Client Info */}
                         <div className="mb-12">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Bill To</h3>
+                            <h3 className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-3">Bill To</h3>
                             <div className="text-slate-900">
                                 <p className="font-bold text-lg">{invoice.client?.clientName}</p>
-                                <p className="text-slate-500">{invoice.client?.email}</p>
-                                {invoice.client?.address && <p className="text-slate-500">{invoice.client.address}</p>}
-                                {invoice.client?.gstNo && <p className="text-slate-500 text-sm mt-1">GST: {invoice.client.gstNo}</p>}
+                                <p className="text-gray-400 dark:text-slate-500">{invoice.client?.email}</p>
+                                {invoice.client?.address && <p className="text-gray-400 dark:text-slate-500">{invoice.client.address}</p>}
+                                {invoice.client?.gstNo && <p className="text-gray-400 dark:text-slate-500 text-sm mt-1">GST: {invoice.client.gstNo}</p>}
                             </div>
                         </div>
 
@@ -159,25 +159,25 @@ export default function InvoiceViewModal({ invoice, company, onClose }) {
                         {/* Payment Details */}
                         {settings && (settings.bankName || settings.upiId || settings.upiQrUrl) && (
                             <div className="mt-12 pt-6 border-t border-slate-100">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Payment Details</h4>
+                                <h4 className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-3">Payment Details</h4>
                                 <div className="flex justify-between items-start gap-8">
                                     <div className="space-y-1 text-sm">
                                         {settings.bankName && (
                                             <div>
-                                                <p className="text-slate-500">Bank: <span className="text-slate-800 font-medium">{settings.bankName}</span></p>
-                                                {settings.accountHolderName && <p className="text-slate-500">A/C Holder: <span className="text-slate-800 font-medium">{settings.accountHolderName}</span></p>}
-                                                {settings.accountNumber && <p className="text-slate-500">A/C No: <span className="text-slate-800 font-medium">{settings.accountNumber}</span></p>}
-                                                {settings.ifscCode && <p className="text-slate-500">IFSC: <span className="text-slate-800 font-medium">{settings.ifscCode}</span></p>}
+                                                <p className="text-gray-400 dark:text-slate-500">Bank: <span className="text-slate-800 font-medium">{settings.bankName}</span></p>
+                                                {settings.accountHolderName && <p className="text-gray-400 dark:text-slate-500">A/C Holder: <span className="text-slate-800 font-medium">{settings.accountHolderName}</span></p>}
+                                                {settings.accountNumber && <p className="text-gray-400 dark:text-slate-500">A/C No: <span className="text-slate-800 font-medium">{settings.accountNumber}</span></p>}
+                                                {settings.ifscCode && <p className="text-gray-400 dark:text-slate-500">IFSC: <span className="text-slate-800 font-medium">{settings.ifscCode}</span></p>}
                                             </div>
                                         )}
                                         {settings.upiId && (
-                                            <p className="text-slate-500">UPI: <span className="text-slate-800 font-medium">{settings.upiId}</span></p>
+                                            <p className="text-gray-400 dark:text-slate-500">UPI: <span className="text-slate-800 font-medium">{settings.upiId}</span></p>
                                         )}
                                     </div>
                                     {settings.upiQrUrl && (
                                         <div className="flex-shrink-0">
                                             <img src={settings.upiQrUrl} alt="UPI QR Code" className="w-24 h-24 object-contain border border-slate-200 rounded-lg" />
-                                            <p className="text-xs text-slate-400 text-center mt-1">Scan to Pay</p>
+                                            <p className="text-xs text-gray-500 dark:text-slate-400 text-center mt-1">Scan to Pay</p>
                                         </div>
                                     )}
                                 </div>
@@ -188,7 +188,7 @@ export default function InvoiceViewModal({ invoice, company, onClose }) {
                         {(invoice.notes || settings?.terms) && (
                             <div className="mt-12 pt-6 border-t border-slate-100">
                                 <h4 className="text-sm font-semibold text-slate-700 mb-2">Notes & Terms</h4>
-                                <p className="text-sm text-slate-500 whitespace-pre-line">{invoice.notes || settings.terms}</p>
+                                <p className="text-sm text-gray-400 dark:text-slate-500 whitespace-pre-line">{invoice.notes || settings.terms}</p>
                             </div>
                         )}
                     </div>

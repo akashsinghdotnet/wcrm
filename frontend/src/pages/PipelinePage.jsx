@@ -110,10 +110,10 @@ export default function PipelinePage() {
         <div className="space-y-4 h-full">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-white">Pipeline</h2>
-                    <p className="text-slate-400 mt-1">Drag leads between stages to update their status</p>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Pipeline</h2>
+                    <p className="text-gray-500 dark:text-slate-400 mt-1">Drag leads between stages to update their status</p>
                 </div>
-                <div className="text-sm text-slate-500">{leads.length} total leads</div>
+                <div className="text-sm text-gray-400 dark:text-slate-500">{leads.length} total leads</div>
             </div>
 
             {/* Kanban Board */}
@@ -126,8 +126,8 @@ export default function PipelinePage() {
                             key={col.status}
                             ref={(el) => (columnsRef.current[col.status] = el)}
                             className={`flex-shrink-0 w-64 flex flex-col rounded-2xl transition-all duration-200 ${isOver
-                                ? `bg-slate-800/80 ring-2 ring-indigo-500/50 ${col.border}`
-                                : 'bg-slate-900/60'
+                                ? `bg-gray-100 dark:bg-slate-800/80 ring-2 ring-indigo-500/50 ${col.border}`
+                                : 'bg-white dark:bg-slate-900/60'
                                 }`}
                             onDragOver={(e) => handleDragOver(e, col.status)}
                             onDragLeave={handleDragLeave}
@@ -136,8 +136,8 @@ export default function PipelinePage() {
                             {/* Column Header */}
                             <div className={`p-3 rounded-t-2xl bg-gradient-to-r ${col.color}`}>
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-sm font-bold text-white">{col.label}</h3>
-                                    <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold rounded-full bg-white/20 text-white">
+                                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">{col.label}</h3>
+                                    <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold rounded-full bg-white/20 text-gray-900 dark:text-white">
                                         {colLeads.length}
                                     </span>
                                 </div>
@@ -146,7 +146,7 @@ export default function PipelinePage() {
                             {/* Lead Cards */}
                             <div className="flex-1 p-2 space-y-2 overflow-y-auto min-h-[100px]">
                                 {colLeads.length === 0 && (
-                                    <div className={`text-center py-8 text-xs text-slate-600 border-2 border-dashed rounded-xl transition-colors ${isOver ? 'border-indigo-500/50 text-indigo-400' : 'border-slate-800'
+                                    <div className={`text-center py-8 text-xs text-slate-600 border-2 border-dashed rounded-xl transition-colors ${isOver ? 'border-indigo-500/50 text-indigo-400' : 'border-gray-200 dark:border-slate-800'
                                         }`}>
                                         {isOver ? 'Drop here' : 'No leads'}
                                     </div>
@@ -160,28 +160,28 @@ export default function PipelinePage() {
                                             draggable
                                             onDragStart={(e) => handleDragStart(e, lead)}
                                             onDragEnd={handleDragEnd}
-                                            className={`p-3 bg-slate-800 border border-slate-700 rounded-xl cursor-grab active:cursor-grabbing hover:border-slate-600 transition-all group ${draggedLead?.id === lead.id ? 'ring-2 ring-indigo-500 opacity-50' : ''
+                                            className={`p-3 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl cursor-grab active:cursor-grabbing hover:border-gray-400 dark:border-slate-600 transition-all group ${draggedLead?.id === lead.id ? 'ring-2 ring-indigo-500 opacity-50' : ''
                                                 }`}
                                         >
                                             <div className="flex items-start justify-between gap-2">
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="text-sm font-semibold text-white truncate">{lead.name}</p>
+                                                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{lead.name}</p>
                                                     {lead.phone && (
-                                                        <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                                                        <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 flex items-center gap-1">
                                                             <Phone size={10} /> {lead.phone}
                                                         </p>
                                                     )}
                                                 </div>
-                                                <GripVertical size={14} className="text-slate-600 group-hover:text-slate-400 flex-shrink-0 mt-0.5" />
+                                                <GripVertical size={14} className="text-slate-600 group-hover:text-gray-500 dark:text-slate-400 flex-shrink-0 mt-0.5" />
                                             </div>
 
-                                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-700/50">
-                                                <div className="flex items-center gap-1 text-xs text-slate-500">
+                                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-300 dark:border-slate-700/50">
+                                                <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500">
                                                     <SrcIcon size={10} />
                                                     <span>{lead.source?.replace('_', ' ')}</span>
                                                 </div>
                                                 {lead.assignedUser && (
-                                                    <div className="flex items-center gap-1 text-xs text-slate-500" title={lead.assignedUser.email}>
+                                                    <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500" title={lead.assignedUser.email}>
                                                         <User size={10} />
                                                         <span className="truncate max-w-[60px]">
                                                             {lead.assignedUser.email?.split('@')[0]}

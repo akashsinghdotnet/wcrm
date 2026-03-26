@@ -17,11 +17,11 @@ export default function SettingsPage() {
     const { user, loading } = useAuth();
 
     if (loading) {
-        return <div className="p-8 text-center text-slate-400">Loading settings...</div>;
+        return <div className="p-8 text-center text-gray-500 dark:text-slate-400">Loading settings...</div>;
     }
 
     if (!user) {
-        return <div className="p-8 text-center text-slate-400">Please log in to view settings.</div>;
+        return <div className="p-8 text-center text-gray-500 dark:text-slate-400">Please log in to view settings.</div>;
     }
     const [userForm, setUserForm] = useState({ firstName: '', lastName: '', phone: '', email: '' });
     const [twoFactorData, setTwoFactorData] = useState(null);
@@ -131,12 +131,12 @@ export default function SettingsPage() {
     return (
         <div className="space-y-6 max-w-7xl">
             <div>
-                <h2 className="text-2xl font-bold text-white">Settings</h2>
-                <p className="text-slate-400 mt-1">Manage your account and preferences</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h2>
+                <p className="text-gray-500 dark:text-slate-400 mt-1">Manage your account and preferences</p>
             </div>
 
             {/* Tabs */}
-            <div className="border-b border-slate-800 flex gap-6 overflow-x-auto whitespace-nowrap scrollbar-hide pb-2">
+            <div className="border-b border-gray-200 dark:border-slate-800 flex gap-6 overflow-x-auto whitespace-nowrap scrollbar-hide pb-2">
                 {[
                     { id: 'general', label: 'General', icon: User },
                     { id: 'security', label: 'Security', icon: Lock },
@@ -152,7 +152,7 @@ export default function SettingsPage() {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 pb-2 text-sm font-medium transition-colors relative ${activeTab === tab.id ? 'text-indigo-400' : 'text-slate-400 hover:text-white'
+                        className={`flex items-center gap-2 pb-2 text-sm font-medium transition-colors relative ${activeTab === tab.id ? 'text-indigo-400' : 'text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white'
                             }`}
                     >
                         <tab.icon className="w-4 h-4 shrink-0" />
@@ -174,52 +174,52 @@ export default function SettingsPage() {
                         )}
 
                         {/* Profile Section */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 space-y-4">
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="w-10 h-10 bg-indigo-600/20 rounded-xl flex items-center justify-center">
                                     <User className="w-5 h-5 text-indigo-400" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-white">Profile</h3>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Profile</h3>
                             </div>
 
                             <form onSubmit={handleProfileUpdate} className="space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">First Name</label>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">First Name</label>
                                         <input
                                             type="text"
                                             value={userForm.firstName}
                                             onChange={e => setUserForm({ ...userForm, firstName: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
                                             placeholder="John"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Last Name</label>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Last Name</label>
                                         <input
                                             type="text"
                                             value={userForm.lastName}
                                             onChange={e => setUserForm({ ...userForm, lastName: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
                                             placeholder="Doe"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Email</label>
                                         <input
                                             type="email"
                                             value={userForm.email}
                                             disabled
-                                            className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-xl text-slate-400 cursor-not-allowed"
+                                            className="w-full px-4 py-2.5 bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-500 dark:text-slate-400 cursor-not-allowed"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Phone</label>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Phone</label>
                                         <input
                                             type="tel"
                                             value={userForm.phone}
                                             onChange={e => setUserForm({ ...userForm, phone: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
                                             placeholder="+91..."
                                         />
                                     </div>
@@ -235,12 +235,12 @@ export default function SettingsPage() {
 
                         {/* Company Section - For Admin */}
                         {user.role === 'admin' && (
-                            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 space-y-4">
                                 <div className="flex items-center gap-3 mb-2">
                                     <div className="w-10 h-10 bg-emerald-600/20 rounded-xl flex items-center justify-center">
                                         <Building2 className="w-5 h-5 text-emerald-400" />
                                     </div>
-                                    <h3 className="text-lg font-semibold text-white">Company Details</h3>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Company Details</h3>
                                 </div>
                                 <CompanyForm companyId={user.companyId} />
                             </div>
@@ -251,17 +251,17 @@ export default function SettingsPage() {
                 {activeTab === 'security' && (
                     <div className="max-w-2xl space-y-6">
                         {/* 2FA Section */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 space-y-4">
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="w-10 h-10 bg-cyan-600/20 rounded-xl flex items-center justify-center">
                                     <Shield className="w-5 h-5 text-cyan-400" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-white">Two-Factor Authentication</h3>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Two-Factor Authentication</h3>
                             </div>
 
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div>
-                                    <p className="text-sm text-slate-300">
+                                    <p className="text-sm text-gray-600 dark:text-slate-300">
                                         {user.isTwoFactorEnabled ? 'Two-factor authentication is enabled.' : 'Add an extra layer of security to your account.'}
                                     </p>
                                 </div>
@@ -283,15 +283,15 @@ export default function SettingsPage() {
                             </div>
 
                             {showTwoFactorSetup && twoFactorData && (
-                                <div className="mt-4 p-4 border border-slate-700 rounded-xl bg-slate-800/50">
-                                    <h4 className="text-sm font-medium text-white mb-3">Setup 2FA</h4>
+                                <div className="mt-4 p-4 border border-gray-300 dark:border-slate-700 rounded-xl bg-gray-100 dark:bg-slate-800/50">
+                                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Setup 2FA</h4>
                                     <div className="flex flex-col items-center gap-4">
                                         <div className="bg-white p-2 rounded-lg">
                                             <img src={twoFactorData.qrCode} alt="2FA QR Code" className="w-32 h-32" />
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-xs text-slate-400 mb-2">Scan this QR code with your authenticator app</p>
-                                            <p className="text-xs font-mono bg-slate-900 px-2 py-1 rounded text-slate-300">
+                                            <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">Scan this QR code with your authenticator app</p>
+                                            <p className="text-xs font-mono bg-white dark:bg-slate-900 px-2 py-1 rounded text-gray-600 dark:text-slate-300">
                                                 Secret: {twoFactorData.secret}
                                             </p>
                                         </div>
@@ -301,12 +301,12 @@ export default function SettingsPage() {
                                                 placeholder="Enter 6-digit code"
                                                 value={twoFactorToken}
                                                 onChange={e => setTwoFactorToken(e.target.value)}
-                                                className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-center tracking-widest outline-none focus:border-indigo-500"
+                                                className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white text-center tracking-widest outline-none focus:border-indigo-500"
                                                 maxLength={6}
                                             />
                                             <button
                                                 onClick={verifyAndEnableTwoFactor}
-                                                className="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-sm font-medium transition-colors"
+                                                className="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-gray-900 dark:text-white rounded-lg text-sm font-medium transition-colors"
                                             >
                                                 Verify & Enable
                                             </button>
@@ -316,30 +316,30 @@ export default function SettingsPage() {
                             )}
                         </div>
 
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 space-y-4">
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="w-10 h-10 bg-amber-600/20 rounded-xl flex items-center justify-center">
                                     <Lock className="w-5 h-5 text-amber-400" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-white">Change Password</h3>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Change Password</h3>
                             </div>
 
                             <form onSubmit={handlePasswordChange} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Current Password</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Current Password</label>
                                     <div className="relative">
                                         <input
                                             type={showOld ? 'text' : 'password'}
                                             required
                                             value={oldPassword}
                                             onChange={(e) => setOldPassword(e.target.value)}
-                                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
                                             placeholder="Enter current password"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowOld(!showOld)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white cursor-pointer"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:text-white cursor-pointer"
                                         >
                                             {showOld ? <EyeOff size={16} /> : <Eye size={16} />}
                                         </button>
@@ -347,20 +347,20 @@ export default function SettingsPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">New Password</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">New Password</label>
                                     <div className="relative">
                                         <input
                                             type={showNew ? 'text' : 'password'}
                                             required
                                             value={newPassword}
                                             onChange={(e) => setNewPassword(e.target.value)}
-                                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
                                             placeholder="Enter new password"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowNew(!showNew)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white cursor-pointer"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:text-white cursor-pointer"
                                         >
                                             {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
                                         </button>
@@ -368,13 +368,13 @@ export default function SettingsPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Confirm New Password</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Confirm New Password</label>
                                     <input
                                         type="password"
                                         required
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         placeholder="Confirm new password"
                                     />
                                 </div>
@@ -471,34 +471,34 @@ function CompanyForm({ companyId }) {
         }
     };
 
-    if (loading) return <div className="text-slate-500 text-sm">Loading company details...</div>;
+    if (loading) return <div className="text-gray-400 dark:text-slate-500 text-sm">Loading company details...</div>;
 
     return (
         <form onSubmit={handleSave} className="space-y-4">
             <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Company Name</label>
+                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Company Name</label>
                 <input
                     value={form.companyName}
                     readOnly
-                    className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-xl text-slate-400 cursor-not-allowed"
+                    className="w-full px-4 py-2.5 bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-500 dark:text-slate-400 cursor-not-allowed"
                 />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Address</label>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Address</label>
                     <input
                         value={form.address}
                         onChange={(e) => setForm({ ...form, address: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         placeholder="123 Business St, City"
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1.5">GST No</label>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">GST No</label>
                     <input
                         value={form.gstNo}
                         onChange={(e) => setForm({ ...form, gstNo: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         placeholder="GSTIN12345"
                     />
                 </div>
@@ -520,6 +520,7 @@ function GeneralSystemSettings() {
 
     // Login Settings
     const [loginLogoUrl, setLoginLogoUrl] = useState('');
+    const [loginLogoLightUrl, setLoginLogoLightUrl] = useState('');
     const [loginLogoWidth, setLoginLogoWidth] = useState('150');
     const [loginShowText, setLoginShowText] = useState(true);
     const [loginText, setLoginText] = useState('MagnetCRM');
@@ -527,6 +528,7 @@ function GeneralSystemSettings() {
 
     // Sidebar Settings
     const [sidebarLogoUrl, setSidebarLogoUrl] = useState('');
+    const [sidebarLogoLightUrl, setSidebarLogoLightUrl] = useState('');
     const [sidebarLogoWidth, setSidebarLogoWidth] = useState('40');
     const [sidebarShowText, setSidebarShowText] = useState(true);
     const [sidebarText, setSidebarText] = useState('MagnetCRM');
@@ -541,6 +543,8 @@ function GeneralSystemSettings() {
         if (config.login_logo_url !== undefined) setLoginLogoUrl(config.login_logo_url);
         else if (config.app_logo) setLoginLogoUrl(config.app_logo); // Fallback
 
+        if (config.login_logo_light_url !== undefined) setLoginLogoLightUrl(config.login_logo_light_url);
+
         if (config.login_logo_width) setLoginLogoWidth(config.login_logo_width);
         if (config.login_show_text !== undefined) setLoginShowText(config.login_show_text === 'true');
         if (config.login_text_content) setLoginText(config.login_text_content);
@@ -548,6 +552,8 @@ function GeneralSystemSettings() {
 
         if (config.sidebar_logo_url !== undefined) setSidebarLogoUrl(config.sidebar_logo_url);
         else if (config.app_logo) setSidebarLogoUrl(config.app_logo); // Fallback
+
+        if (config.sidebar_logo_light_url !== undefined) setSidebarLogoLightUrl(config.sidebar_logo_light_url);
 
         if (config.sidebar_logo_width) setSidebarLogoWidth(config.sidebar_logo_width);
         if (config.sidebar_show_text !== undefined) setSidebarShowText(config.sidebar_show_text === 'true');
@@ -574,12 +580,16 @@ function GeneralSystemSettings() {
             const base64String = reader.result;
             if (type === 'login') {
                 setLoginLogoUrl(base64String);
+            } else if (type === 'login-light') {
+                setLoginLogoLightUrl(base64String);
             } else if (type === 'sidebar') {
                 setSidebarLogoUrl(base64String);
+            } else if (type === 'sidebar-light') {
+                setSidebarLogoLightUrl(base64String);
             } else if (type === 'favicon') {
                 setFaviconUrl(base64String);
             }
-            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} logo uploaded. Click Save to apply changes.`);
+            toast.success(`${type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' ')} logo uploaded. Click Save to apply changes.`);
         };
         reader.readAsDataURL(file);
     };
@@ -590,11 +600,13 @@ function GeneralSystemSettings() {
         try {
             const updates = {
                 login_logo_url: loginLogoUrl,
+                login_logo_light_url: loginLogoLightUrl,
                 login_logo_width: loginLogoWidth,
                 login_show_text: String(loginShowText),
                 login_text_content: loginText,
                 login_logo_link: loginLogoLink,
                 sidebar_logo_url: sidebarLogoUrl,
+                sidebar_logo_light_url: sidebarLogoLightUrl,
                 sidebar_logo_width: sidebarLogoWidth,
                 sidebar_show_text: String(sidebarShowText),
                 sidebar_text_content: sidebarText,
@@ -620,12 +632,12 @@ function GeneralSystemSettings() {
     };
 
     return (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-            <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 space-y-6">
+            <div className="flex items-center gap-3 border-b border-gray-200 dark:border-slate-800 pb-4">
                 <div className="w-10 h-10 bg-indigo-600/20 rounded-xl flex items-center justify-center">
                     <Shield className="w-5 h-5 text-indigo-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">General System Settings</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">General System Settings</h3>
             </div>
 
             <form onSubmit={handleSave} className="space-y-8">
@@ -633,27 +645,27 @@ function GeneralSystemSettings() {
                 <div className="space-y-4">
                     <h4 className="text-md font-medium text-indigo-400 uppercase tracking-wider text-xs">Login Page Customization</h4>
 
-                    {/* Login Logo URL */}
+                    {/* Login Logo URL (Dark Mode) */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Login Logo</label>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Login Logo (Dark Mode)</label>
                         <div className="space-y-3">
                             <div className="flex gap-2 items-start">
                                 <input
                                     value={loginLogoUrl}
                                     onChange={(e) => setLoginLogoUrl(e.target.value)}
-                                    className="flex-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="https://example.com/logo.png or upload below"
                                 />
                                 {loginLogoUrl && (
-                                    <div className="w-12 h-12 bg-slate-800 rounded-lg border border-slate-700 flex items-center justify-center p-1">
+                                    <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center justify-center p-1">
                                         <img src={loginLogoUrl} alt="Preview" className="max-w-full max-h-full object-contain" />
                                     </div>
                                 )}
                             </div>
                             <div className="flex gap-2">
                                 <label className="flex-1 cursor-pointer">
-                                    <div className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm text-slate-300 text-center transition-colors">
-                                        📤 Upload Logo (Max 2MB)
+                                    <div className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 border border-gray-300 dark:border-slate-700 rounded-lg text-sm text-gray-600 dark:text-slate-300 text-center transition-colors">
+                                        📤 Upload Dark Mode Logo (Max 2MB)
                                     </div>
                                     <input
                                         type="file"
@@ -666,82 +678,115 @@ function GeneralSystemSettings() {
                         </div>
                     </div>
 
+                    {/* Login Logo URL (Light Mode) */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Login Logo (Light Mode)</label>
+                        <div className="space-y-3">
+                            <div className="flex gap-2 items-start">
+                                <input
+                                    value={loginLogoLightUrl}
+                                    onChange={(e) => setLoginLogoLightUrl(e.target.value)}
+                                    className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    placeholder="Optional: Alternate logo for light mode"
+                                />
+                                {loginLogoLightUrl && (
+                                    <div className="w-12 h-12 bg-gray-100 rounded-lg border border-gray-300 flex items-center justify-center p-1">
+                                        <img src={loginLogoLightUrl} alt="Preview Light" className="max-w-full max-h-full object-contain" />
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex gap-2">
+                                <label className="flex-1 cursor-pointer">
+                                    <div className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 border border-gray-300 dark:border-slate-700 rounded-lg text-sm text-gray-600 dark:text-slate-300 text-center transition-colors">
+                                        📤 Upload Light Mode Logo (Max 2MB)
+                                    </div>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => handleLogoUpload(e, 'login-light')}
+                                        className="hidden"
+                                    />
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Login Logo Link */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Logo Link (Optional)</label>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Logo Link (Optional)</label>
                         <input
                             type="url"
                             value={loginLogoLink}
                             onChange={(e) => setLoginLogoLink(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             placeholder="https://yourwebsite.com"
                         />
-                        <p className="text-xs text-slate-500 mt-1">Click on logo will redirect to this URL</p>
+                        <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Click on logo will redirect to this URL</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {/* Login Logo Width */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Logo Width (px)</label>
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Logo Width (px)</label>
                             <input
                                 type="number"
                                 value={loginLogoWidth}
                                 onChange={(e) => setLoginLogoWidth(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
                         {/* Login Text Content */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Brand Text</label>
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Brand Text</label>
                             <input
                                 type="text"
                                 value={loginText}
                                 onChange={(e) => setLoginText(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
                     </div>
 
                     {/* Login Show Text Toggle */}
-                    <div className="flex items-center justify-between bg-slate-800/50 p-3 rounded-xl border border-slate-700">
-                        <span className="text-sm font-medium text-white">Show Brand Text on Login Page</span>
+                    <div className="flex items-center justify-between bg-gray-100 dark:bg-slate-800/50 p-3 rounded-xl border border-gray-300 dark:border-slate-700">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">Show Brand Text on Login Page</span>
                         <button
                             type="button"
                             onClick={() => setLoginShowText(!loginShowText)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${loginShowText ? 'bg-indigo-600' : 'bg-slate-700'}`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${loginShowText ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-slate-700'}`}
                         >
                             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${loginShowText ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
                     </div>
                 </div>
 
-                <div className="border-t border-slate-800 my-4"></div>
+                <div className="border-t border-gray-200 dark:border-slate-800 my-4"></div>
 
                 {/* Sidebar Section */}
                 <div className="space-y-4">
                     <h4 className="text-md font-medium text-indigo-400 uppercase tracking-wider text-xs">Sidebar Customization</h4>
 
-                    {/* Sidebar Logo URL */}
+                    {/* Sidebar Logo URL (Dark Mode) */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Sidebar Logo</label>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Sidebar Logo (Dark Mode)</label>
                         <div className="space-y-3">
                             <div className="flex gap-2 items-start">
                                 <input
                                     value={sidebarLogoUrl}
                                     onChange={(e) => setSidebarLogoUrl(e.target.value)}
-                                    className="flex-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="https://example.com/logo-small.png or upload below"
                                 />
                                 {sidebarLogoUrl && (
-                                    <div className="w-12 h-12 bg-slate-800 rounded-lg border border-slate-700 flex items-center justify-center p-1">
+                                    <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center justify-center p-1">
                                         <img src={sidebarLogoUrl} alt="Preview" className="max-w-full max-h-full object-contain" />
                                     </div>
                                 )}
                             </div>
                             <div className="flex gap-2">
                                 <label className="flex-1 cursor-pointer">
-                                    <div className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm text-slate-300 text-center transition-colors">
-                                        📤 Upload Logo (Max 2MB)
+                                    <div className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 border border-gray-300 dark:border-slate-700 rounded-lg text-sm text-gray-600 dark:text-slate-300 text-center transition-colors">
+                                        📤 Upload Dark Mode Logo (Max 2MB)
                                     </div>
                                     <input
                                         type="file"
@@ -754,44 +799,77 @@ function GeneralSystemSettings() {
                         </div>
                     </div>
 
+                    {/* Sidebar Logo URL (Light Mode) */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Sidebar Logo (Light Mode)</label>
+                        <div className="space-y-3">
+                            <div className="flex gap-2 items-start">
+                                <input
+                                    value={sidebarLogoLightUrl}
+                                    onChange={(e) => setSidebarLogoLightUrl(e.target.value)}
+                                    className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    placeholder="Optional: Alternate logo for light mode"
+                                />
+                                {sidebarLogoLightUrl && (
+                                    <div className="w-12 h-12 bg-gray-100 rounded-lg border border-gray-300 flex items-center justify-center p-1">
+                                        <img src={sidebarLogoLightUrl} alt="Preview Light" className="max-w-full max-h-full object-contain" />
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex gap-2">
+                                <label className="flex-1 cursor-pointer">
+                                    <div className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 border border-gray-300 dark:border-slate-700 rounded-lg text-sm text-gray-600 dark:text-slate-300 text-center transition-colors">
+                                        📤 Upload Light Mode Logo (Max 2MB)
+                                    </div>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => handleLogoUpload(e, 'sidebar-light')}
+                                        className="hidden"
+                                    />
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Sidebar Logo Link */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Logo Link (Optional)</label>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Logo Link (Optional)</label>
                         <input
                             type="url"
                             value={sidebarLogoLink}
                             onChange={(e) => setSidebarLogoLink(e.target.value)}
-                            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             placeholder="https://yourwebsite.com"
                         />
-                        <p className="text-xs text-slate-500 mt-1">Click on logo will redirect to this URL</p>
+                        <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Click on logo will redirect to this URL</p>
                     </div>
 
-                    <div className="border-t border-slate-800 my-4"></div>
+                    <div className="border-t border-gray-200 dark:border-slate-800 my-4"></div>
 
                     {/* Favicon Settings */}
                     <div className="space-y-4">
                         <h4 className="text-md font-medium text-indigo-400 uppercase tracking-wider text-xs">Favicon Customization</h4>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Website Favicon</label>
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Website Favicon</label>
                             <div className="space-y-3">
                                 <div className="flex gap-2 items-start">
                                     <input
                                         value={faviconUrl}
                                         onChange={(e) => setFaviconUrl(e.target.value)}
-                                        className="flex-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         placeholder="https://example.com/favicon.ico or upload below"
                                     />
                                     {faviconUrl && (
-                                        <div className="w-12 h-12 bg-slate-800 rounded-lg border border-slate-700 flex items-center justify-center p-1">
+                                        <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-lg border border-gray-300 dark:border-slate-700 flex items-center justify-center p-1">
                                             <img src={faviconUrl} alt="Favicon Preview" className="max-w-full max-h-full object-contain" />
                                         </div>
                                     )}
                                 </div>
                                 <div className="flex gap-2">
                                     <label className="flex-1 cursor-pointer">
-                                        <div className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm text-slate-300 text-center transition-colors">
+                                        <div className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 border border-gray-300 dark:border-slate-700 rounded-lg text-sm text-gray-600 dark:text-slate-300 text-center transition-colors">
                                             📤 Upload Favicon (Max 2MB)
                                         </div>
                                         <input
@@ -810,51 +888,51 @@ function GeneralSystemSettings() {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {/* Sidebar Logo Width */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Logo Width (px)</label>
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Logo Width (px)</label>
                             <input
                                 type="number"
                                 value={sidebarLogoWidth}
                                 onChange={(e) => setSidebarLogoWidth(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
                         {/* Sidebar Text Content */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Brand Text</label>
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Brand Text</label>
                             <input
                                 type="text"
                                 value={sidebarText}
                                 onChange={(e) => setSidebarText(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
                         {/* Sidebar Vertical Padding */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Vertical Padding (px)</label>
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Vertical Padding (px)</label>
                             <input
                                 type="number"
                                 value={sidebarPaddingY}
                                 onChange={(e) => setSidebarPaddingY(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="e.g. 24"
                             />
                         </div>
                     </div>
 
                     {/* Sidebar Show Text Toggle */}
-                    <div className="flex items-center justify-between bg-slate-800/50 p-3 rounded-xl border border-slate-700">
-                        <span className="text-sm font-medium text-white">Show Brand Text in Sidebar</span>
+                    <div className="flex items-center justify-between bg-gray-100 dark:bg-slate-800/50 p-3 rounded-xl border border-gray-300 dark:border-slate-700">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">Show Brand Text in Sidebar</span>
                         <button
                             type="button"
                             onClick={() => setSidebarShowText(!sidebarShowText)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${sidebarShowText ? 'bg-indigo-600' : 'bg-slate-700'}`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${sidebarShowText ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-slate-700'}`}
                         >
                             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${sidebarShowText ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
                     </div>
                 </div>
 
-                <div className="flex justify-end pt-4 border-t border-slate-800">
+                <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-800">
                     <button
                         type="submit"
                         disabled={saving}

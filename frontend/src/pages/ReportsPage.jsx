@@ -107,8 +107,8 @@ export default function ReportsPage() {
             {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-white">Reports & Analytics</h2>
-                    <p className="text-slate-400 mt-1">Deep-dive into your lead performance</p>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Reports & Analytics</h2>
+                    <p className="text-gray-500 dark:text-slate-400 mt-1">Deep-dive into your lead performance</p>
                 </div>
                 <div className="flex gap-2">
                     {DATE_PRESETS.map((p, i) => (
@@ -117,7 +117,7 @@ export default function ReportsPage() {
                             onClick={() => setPreset(i)}
                             className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-all ${preset === i
                                     ? 'bg-indigo-600 text-white'
-                                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                    : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-200 dark:bg-slate-700'
                                 }`}
                         >
                             {p.label}
@@ -130,13 +130,13 @@ export default function ReportsPage() {
             <div className="flex gap-2">
                 <button
                     onClick={() => setActiveTab('overview')}
-                    className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${activeTab === 'overview' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700'}`}
+                    className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${activeTab === 'overview' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25' : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:bg-slate-700 border border-gray-300 dark:border-slate-700'}`}
                 >
                     Overview
                 </button>
                 <button
                     onClick={() => setActiveTab('employee')}
-                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all ${activeTab === 'employee' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700'}`}
+                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all ${activeTab === 'employee' ? 'bg-indigo-600 text-gray-900 dark:text-white shadow-lg shadow-indigo-600/25' : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:text-white hover:bg-gray-200 dark:bg-slate-700 border border-gray-300 dark:border-slate-700'}`}
                 >
                     <Users className="w-4 h-4" />
                     Employee Performance
@@ -147,11 +147,11 @@ export default function ReportsPage() {
                 /* Employee Performance Tab */
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-white">Employee Performance</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Employee Performance</h3>
                         <button
                             onClick={downloadEmployeeCsv}
                             disabled={!employeeData.length}
-                            className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-xl transition-all border border-slate-700 disabled:opacity-50"
+                            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-sm font-medium rounded-xl transition-all border border-gray-300 dark:border-slate-700 disabled:opacity-50"
                         >
                             <Download className="w-4 h-4" />
                             Download CSV
@@ -162,38 +162,38 @@ export default function ReportsPage() {
                             <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
                         </div>
                     ) : employeeData.length === 0 ? (
-                        <div className="text-center text-slate-500 py-12">No assigned leads found</div>
+                        <div className="text-center text-gray-400 dark:text-slate-500 py-12">No assigned leads found</div>
                     ) : (
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl overflow-hidden">
                             <div className="overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
-                                        <tr className="border-b border-slate-800">
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Employee</th>
-                                            <th className="px-4 py-4 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">Total</th>
+                                        <tr className="border-b border-gray-200 dark:border-slate-800">
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Employee</th>
+                                            <th className="px-4 py-4 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Total</th>
                                             <th className="px-4 py-4 text-center text-xs font-medium text-blue-400 uppercase tracking-wider">New</th>
                                             <th className="px-4 py-4 text-center text-xs font-medium text-cyan-400 uppercase tracking-wider">Contacted</th>
                                             <th className="px-4 py-4 text-center text-xs font-medium text-orange-400 uppercase tracking-wider">Follow Up</th>
                                             <th className="px-4 py-4 text-center text-xs font-medium text-emerald-400 uppercase tracking-wider">Converted</th>
                                             <th className="px-4 py-4 text-center text-xs font-medium text-red-400 uppercase tracking-wider">Lost</th>
-                                            <th className="px-4 py-4 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">Conversion %</th>
+                                            <th className="px-4 py-4 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Conversion %</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-800">
+                                    <tbody className="divide-y divide-gray-200 dark:divide-slate-800">
                                         {employeeData.map((emp) => (
-                                            <tr key={emp.userId} className="hover:bg-slate-800/40 transition-colors">
+                                            <tr key={emp.userId} className="hover:bg-gray-100 dark:bg-slate-800/40 transition-colors">
                                                 <td className="px-6 py-4">
-                                                    <p className="text-sm font-medium text-white">{emp.name}</p>
-                                                    <p className="text-xs text-slate-500">{emp.email}</p>
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-white">{emp.name}</p>
+                                                    <p className="text-xs text-gray-400 dark:text-slate-500">{emp.email}</p>
                                                 </td>
-                                                <td className="px-4 py-4 text-center text-sm font-bold text-white">{emp.total}</td>
+                                                <td className="px-4 py-4 text-center text-sm font-bold text-gray-900 dark:text-white">{emp.total}</td>
                                                 <td className="px-4 py-4 text-center text-sm text-blue-400">{emp.newCount}</td>
                                                 <td className="px-4 py-4 text-center text-sm text-cyan-400">{emp.contactedCount}</td>
                                                 <td className="px-4 py-4 text-center text-sm text-orange-400">{emp.followUpCount}</td>
                                                 <td className="px-4 py-4 text-center text-sm text-emerald-400 font-semibold">{emp.convertedCount}</td>
                                                 <td className="px-4 py-4 text-center text-sm text-red-400">{emp.lostCount}</td>
                                                 <td className="px-4 py-4 text-center">
-                                                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${emp.conversionRate >= 50 ? 'bg-emerald-500/20 text-emerald-400' : emp.conversionRate >= 20 ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-700 text-slate-300'}`}>
+                                                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${emp.conversionRate >= 50 ? 'bg-emerald-500/20 text-emerald-400' : emp.conversionRate >= 20 ? 'bg-amber-500/20 text-amber-400' : 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300'}`}>
                                                         {emp.conversionRate}%
                                                     </span>
                                                 </td>
@@ -218,8 +218,8 @@ export default function ReportsPage() {
             {/* Charts Row 1: Funnel + Source Pie */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Lead Funnel */}
-                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-                    <h3 className="text-white font-semibold mb-4">Lead Funnel</h3>
+                <div className="bg-white dark:bg-slate-900/60 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Lead Funnel</h3>
                     <ResponsiveContainer width="100%" height={260}>
                         <BarChart data={data.leadsByStatus} layout="vertical" margin={{ left: 20 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -236,8 +236,8 @@ export default function ReportsPage() {
                 </div>
 
                 {/* Source Pie */}
-                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-                    <h3 className="text-white font-semibold mb-4">Leads by Source</h3>
+                <div className="bg-white dark:bg-slate-900/60 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Leads by Source</h3>
                     <ResponsiveContainer width="100%" height={260}>
                         <PieChart>
                             <Pie
@@ -261,8 +261,8 @@ export default function ReportsPage() {
 
             {/* Charts Row 2: Leads over time + Revenue by month */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-                    <h3 className="text-white font-semibold mb-4">Leads Over Time</h3>
+                <div className="bg-white dark:bg-slate-900/60 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Leads Over Time</h3>
                     <ResponsiveContainer width="100%" height={260}>
                         <LineChart data={data.leadsOverTime}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -274,8 +274,8 @@ export default function ReportsPage() {
                     </ResponsiveContainer>
                 </div>
 
-                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
-                    <h3 className="text-white font-semibold mb-4">Revenue by Month</h3>
+                <div className="bg-white dark:bg-slate-900/60 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-4">Revenue by Month</h3>
                     <ResponsiveContainer width="100%" height={260}>
                         <BarChart data={data.revenueByMonth}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -295,13 +295,13 @@ export default function ReportsPage() {
 
 function KpiCard({ icon: Icon, label, value, color }) {
     return (
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex items-center gap-4">
-            <div className={`p-3 rounded-xl bg-slate-800 ${color}`}>
+        <div className="bg-white dark:bg-slate-900/60 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 flex items-center gap-4">
+            <div className={`p-3 rounded-xl bg-white dark:bg-slate-800 ${color}`}>
                 <Icon size={22} />
             </div>
             <div>
-                <p className="text-sm text-slate-400">{label}</p>
-                <p className="text-xl font-bold text-white">{value}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400">{label}</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">{value}</p>
             </div>
         </div>
     );

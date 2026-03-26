@@ -24,10 +24,10 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
 
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 w-full max-w-3xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-scale-in">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-3xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-scale-in">
                 {/* Header Actions */}
-                <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50">
-                    <h3 className="text-white font-semibold">Subscription Invoice</h3>
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
+                    <h3 className="text-gray-900 dark:text-white font-semibold">Subscription Invoice</h3>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={handlePrint}
@@ -37,7 +37,7 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                         </button>
                         <button
                             onClick={onClose}
-                            className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                            className="p-2 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white rounded-lg hover:bg-white dark:bg-slate-800 transition-colors"
                         >
                             <X size={20} />
                         </button>
@@ -61,7 +61,7 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                                     </>
                                 )}
                             </div>
-                            <div className="text-sm text-slate-500 space-y-1">
+                            <div className="text-sm text-gray-400 dark:text-slate-500 space-y-1">
                                 {settings?.address && (
                                     <div className="whitespace-pre-wrap">{settings.address}</div>
                                 )}
@@ -70,21 +70,21 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                         </div>
                         <div className="text-right">
                             <h1 className="text-4xl font-light text-indigo-900 mb-2">INVOICE</h1>
-                            <p className="text-slate-500 font-medium">
+                            <p className="text-gray-400 dark:text-slate-500 font-medium">
                                 #{invoice.invoiceNumber}
                             </p>
                             <div className="mt-4 space-y-1 text-sm">
-                                <p><span className="text-slate-400 w-24 inline-block">Date:</span> {new Date(invoice.date).toLocaleDateString('en-IN')}</p>
-                                <p><span className="text-slate-400 w-24 inline-block">Status:</span> <span className={`font-bold uppercase text-xs px-2 py-0.5 rounded ${invoice.status === 'paid' ? 'text-emerald-600 bg-emerald-100' : 'text-amber-600 bg-amber-100'}`}>{invoice.status === 'paid' ? 'Paid' : 'Pending'}</span></p>
+                                <p><span className="text-gray-500 dark:text-slate-400 w-24 inline-block">Date:</span> {new Date(invoice.date).toLocaleDateString('en-IN')}</p>
+                                <p><span className="text-gray-500 dark:text-slate-400 w-24 inline-block">Status:</span> <span className={`font-bold uppercase text-xs px-2 py-0.5 rounded ${invoice.status === 'paid' ? 'text-emerald-600 bg-emerald-100' : 'text-amber-600 bg-amber-100'}`}>{invoice.status === 'paid' ? 'Paid' : 'Pending'}</span></p>
                             </div>
                         </div>
                     </div>
 
                     {/* Bill To */}
                     <div className="mb-12">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Bill To</h3>
+                        <h3 className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-3">Bill To</h3>
                         <div className="text-slate-800 font-medium">{company.companyName}</div>
-                        <div className="text-sm text-slate-500 mt-1 max-w-xs space-y-1">
+                        <div className="text-sm text-gray-400 dark:text-slate-500 mt-1 max-w-xs space-y-1">
                             {company.address && <p>{company.address}</p>}
                             {company.gstNo && <p>GSTIN: {company.gstNo}</p>}
                             {company.email && <p>{company.email}</p>}
@@ -96,16 +96,16 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b-2 border-slate-100">
-                                    <th className="text-left py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Description</th>
-                                    <th className="text-right py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Period</th>
-                                    <th className="text-right py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Amount</th>
+                                    <th className="text-left py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Description</th>
+                                    <th className="text-right py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Period</th>
+                                    <th className="text-right py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
                                 <tr>
                                     <td className="py-4">
                                         <p className="font-semibold text-slate-800">{invoice.description}</p>
-                                        <p className="text-xs text-slate-500 mt-1">Subscription</p>
+                                        <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Subscription</p>
                                     </td>
                                     <td className="py-4 text-right text-sm text-slate-600">
                                         {invoice.period}
@@ -141,23 +141,23 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                     {/* Payment Details */}
                     {settings && (settings.bankName || settings.upiId || settings.upiQrUrl) && (
                         <div className="border-t border-slate-100 pt-6 mb-6">
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Payment Details</h3>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-3">Payment Details</h3>
                             <div className="flex justify-between items-start gap-8">
                                 <div className="space-y-1 text-sm">
                                     {settings.bankName && (
                                         <div>
-                                            <p className="text-slate-500">Bank: <span className="text-slate-800 font-medium">{settings.bankName}</span></p>
-                                            {settings.accountHolderName && <p className="text-slate-500">A/C Holder: <span className="text-slate-800 font-medium">{settings.accountHolderName}</span></p>}
-                                            {settings.accountNumber && <p className="text-slate-500">A/C No: <span className="text-slate-800 font-medium">{settings.accountNumber}</span></p>}
-                                            {settings.ifscCode && <p className="text-slate-500">IFSC: <span className="text-slate-800 font-medium">{settings.ifscCode}</span></p>}
+                                            <p className="text-gray-400 dark:text-slate-500">Bank: <span className="text-slate-800 font-medium">{settings.bankName}</span></p>
+                                            {settings.accountHolderName && <p className="text-gray-400 dark:text-slate-500">A/C Holder: <span className="text-slate-800 font-medium">{settings.accountHolderName}</span></p>}
+                                            {settings.accountNumber && <p className="text-gray-400 dark:text-slate-500">A/C No: <span className="text-slate-800 font-medium">{settings.accountNumber}</span></p>}
+                                            {settings.ifscCode && <p className="text-gray-400 dark:text-slate-500">IFSC: <span className="text-slate-800 font-medium">{settings.ifscCode}</span></p>}
                                         </div>
                                     )}
-                                    {settings.upiId && <p className="text-slate-500">UPI: <span className="text-slate-800 font-medium">{settings.upiId}</span></p>}
+                                    {settings.upiId && <p className="text-gray-400 dark:text-slate-500">UPI: <span className="text-slate-800 font-medium">{settings.upiId}</span></p>}
                                 </div>
                                 {settings.upiQrUrl && (
                                     <div className="flex-shrink-0">
                                         <img src={settings.upiQrUrl} alt="UPI QR Code" className="w-24 h-24 object-contain border border-slate-200 rounded-lg" />
-                                        <p className="text-xs text-slate-400 text-center mt-1">Scan to Pay</p>
+                                        <p className="text-xs text-gray-500 dark:text-slate-400 text-center mt-1">Scan to Pay</p>
                                     </div>
                                 )}
                             </div>
@@ -169,7 +169,7 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                         <div className="flex-1">
                             {settings?.terms && (
                                 <div>
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Terms & Conditions</h3>
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-2">Terms & Conditions</h3>
                                     <p className="text-sm text-slate-600 whitespace-pre-line leading-relaxed">{settings.terms}</p>
                                 </div>
                             )}
@@ -178,14 +178,14 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                             <div className="flex-shrink-0 text-center">
                                 <img src={settings.signatureUrl} alt="Authorized Signature" className="h-14 object-contain mb-1" />
                                 <div className="border-t border-slate-300 pt-1">
-                                    <p className="text-xs text-slate-500">Authorized Signatory</p>
+                                    <p className="text-xs text-gray-400 dark:text-slate-500">Authorized Signatory</p>
                                 </div>
                             </div>
                         )}
                     </div>
 
                     {/* Footer */}
-                    <div className="border-t border-slate-100 pt-6 text-center text-xs text-slate-400">
+                    <div className="border-t border-slate-100 pt-6 text-center text-xs text-gray-500 dark:text-slate-400">
                         <p className="mb-2">Thank you for your business!</p>
                         {settings?.accountHolderName && (
                             <p>{settings.accountHolderName}</p>

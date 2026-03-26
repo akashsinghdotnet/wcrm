@@ -9,7 +9,7 @@ const roleConfig = {
     super_admin: { label: 'Super Admin', color: 'bg-red-500/20 text-red-400', icon: ShieldAlert },
     admin: { label: 'Admin', color: 'bg-indigo-500/20 text-indigo-400', icon: ShieldCheck },
     manager: { label: 'Manager', color: 'bg-purple-500/20 text-purple-400', icon: Briefcase },
-    staff: { label: 'Employee', color: 'bg-slate-600/20 text-slate-400', icon: User },
+    staff: { label: 'Employee', color: 'bg-slate-600/20 text-gray-500 dark:text-slate-400', icon: User },
 };
 
 export default function TeamSettings() {
@@ -169,16 +169,16 @@ export default function TeamSettings() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-white">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                         {isSuperAdmin ? 'Administrators' : 'Users'}
                     </h2>
-                    <p className="text-slate-400 mt-1">
+                    <p className="text-gray-500 dark:text-slate-400 mt-1">
                         {isSuperAdmin
                             ? 'Manage system administrators with full access.'
                             : `${users.length} team members`
                         }
                         {!isSuperAdmin && plan && (
-                            <span className="text-xs ml-2 text-slate-500">
+                            <span className="text-xs ml-2 text-gray-400 dark:text-slate-500">
                                 ({adminCount}/{plan.adminLimit} admins · {staffCount}/{plan.employeeLimit} employees)
                             </span>
                         )}
@@ -204,9 +204,9 @@ export default function TeamSettings() {
             {/* User grid */}
             {
                 !loading && users.length === 0 ? (
-                    <div className="text-center py-12 border-2 border-dashed border-slate-800 rounded-2xl">
+                    <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-2xl">
                         <User className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                        <p className="text-slate-400">No users found.</p>
+                        <p className="text-gray-500 dark:text-slate-400">No users found.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -216,7 +216,7 @@ export default function TeamSettings() {
                             return (
                                 <div
                                     key={u.id}
-                                    className={`bg-slate-900 border border-slate-800 rounded-2xl p-6 transition-all hover:border-slate-700 ${!u.isActive ? 'opacity-60' : ''
+                                    className={`bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 transition-all hover:border-gray-300 dark:border-slate-700 ${!u.isActive ? 'opacity-60' : ''
                                         }`}
                                 >
                                     <div className="flex items-start justify-between mb-4">
@@ -232,8 +232,8 @@ export default function TeamSettings() {
                                             </span>
                                         </span>
                                     </div>
-                                    <p className="text-sm font-medium text-white truncate">{u.email}</p>
-                                    <p className="text-xs text-slate-500 mt-1">
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{u.email}</p>
+                                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                                         Joined {new Date(u.createdAt).toLocaleDateString('en-IN')}
                                     </p>
                                     <div className="mt-4 flex items-center justify-between">
@@ -245,7 +245,7 @@ export default function TeamSettings() {
                                                 <>
                                                     <button
                                                         onClick={() => handleEdit(u)}
-                                                        className="p-2 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-all"
+                                                        className="p-2 text-gray-500 dark:text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-all"
                                                         title="Edit User"
                                                     >
                                                         <Pencil className="w-4 h-4" />
@@ -254,7 +254,7 @@ export default function TeamSettings() {
                                                         onClick={() => toggleActive(u.id, u.isActive)}
                                                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${u.isActive
                                                             ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
-                                                            : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                                                            : 'bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400 hover:bg-slate-600'
                                                             }`}
                                                     >
                                                         <ShieldCheck className="w-3 h-3" />
@@ -263,7 +263,7 @@ export default function TeamSettings() {
                                                     {isSuperAdmin && (
                                                         <button
                                                             onClick={() => handleDelete(u.id)}
-                                                            className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                                            className="p-2 text-gray-500 dark:text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                                                             title="Delete User"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
@@ -284,14 +284,14 @@ export default function TeamSettings() {
             {
                 showModal && (
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                        <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md shadow-2xl">
-                            <div className="flex items-center justify-between p-6 border-b border-slate-800">
-                                <h3 className="text-lg font-semibold text-white">
+                        <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-2xl w-full max-w-md shadow-2xl">
+                            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-800">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                     {editingUser ? 'Edit User' : (isSuperAdmin ? 'New System Admin' : 'New Team Member')}
                                 </h3>
                                 <button
                                     onClick={() => setShowModal(false)}
-                                    className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg"
+                                    className="p-2 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:bg-white dark:bg-slate-800 rounded-lg"
                                 >
                                     <X className="w-5 h-5" />
                                 </button>
@@ -299,56 +299,56 @@ export default function TeamSettings() {
                             <form onSubmit={handleSubmit} className="p-6 space-y-4">
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Full Name</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Full Name</label>
                                     <input
                                         type="text"
                                         value={form.name || ''}
                                         onChange={(e) => setForm({ ...form, name: e.target.value })}
-                                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         placeholder="John Doe"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Phone (Optional)</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Phone (Optional)</label>
                                     <input
                                         type="tel"
                                         value={form.phone || ''}
                                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         placeholder="+91 98765 43210"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Email *</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Email *</label>
                                     <input
                                         type="email"
                                         required
                                         value={form.email}
                                         onChange={(e) => setForm({ ...form, email: e.target.value })}
-                                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         placeholder={isSuperAdmin && form.role === 'super_admin' ? "admin@magnethq.com" : "staff@magnethq.com"}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Password *</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Password *</label>
                                     <input
                                         type="password"
                                         required={!editingUser}
                                         minLength={6}
                                         value={form.password}
                                         onChange={(e) => setForm({ ...form, password: e.target.value })}
-                                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         placeholder={editingUser ? "Leave blank to keep current" : "Min 6 characters"}
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Role</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Role</label>
                                     <select
                                         value={form.role}
                                         onChange={(e) => setForm({ ...form, role: e.target.value })}
-                                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     >
                                         {isSuperAdmin && <option value="super_admin">Super Admin</option>}
                                         <option value="admin">Admin</option>
@@ -358,21 +358,21 @@ export default function TeamSettings() {
                                 </div>
 
                                 {form.role === 'staff' && !isSuperAdmin && (
-                                    <div className="flex items-start gap-3 p-3 bg-slate-800/50 border border-slate-700 rounded-xl">
+                                    <div className="flex items-start gap-3 p-3 bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-slate-700 rounded-xl">
                                         <div className="flex items-center h-5 mt-0.5">
                                             <input
                                                 id="canCreateInvoices"
                                                 type="checkbox"
                                                 checked={form.canCreateInvoices}
                                                 onChange={(e) => setForm({ ...form, canCreateInvoices: e.target.checked })}
-                                                className="w-4 h-4 text-indigo-600 bg-slate-900 border-slate-700 rounded focus:ring-indigo-500 focus:ring-offset-slate-900 cursor-pointer"
+                                                className="w-4 h-4 text-indigo-600 bg-white dark:bg-slate-900 border-gray-300 dark:border-slate-700 rounded focus:ring-indigo-500 focus:ring-offset-slate-900 cursor-pointer"
                                             />
                                         </div>
                                         <div>
-                                            <label htmlFor="canCreateInvoices" className="text-sm font-medium text-white cursor-pointer">
+                                            <label htmlFor="canCreateInvoices" className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer">
                                                 Invoice Management Access
                                             </label>
-                                            <p className="text-xs text-slate-400 mt-0.5">
+                                            <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
                                                 Allow this employee to create, edit, and manage company invoices.
                                             </p>
                                         </div>
@@ -403,7 +403,7 @@ export default function TeamSettings() {
                                     <button
                                         type="button"
                                         onClick={() => setShowModal(false)}
-                                        className="flex-1 py-2.5 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-all font-medium"
+                                        className="flex-1 py-2.5 border border-gray-300 dark:border-slate-700 text-gray-600 dark:text-slate-300 rounded-xl hover:bg-white dark:bg-slate-800 transition-all font-medium"
                                     >
                                         Cancel
                                     </button>

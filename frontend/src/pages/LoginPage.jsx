@@ -107,7 +107,7 @@ export default function LoginPage({ type = 'client' }) {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
             {/* Background gradient effects */}
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl" />
             <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl" />
@@ -117,9 +117,9 @@ export default function LoginPage({ type = 'client' }) {
                 <div className="text-center mb-8">
                     {config?.login_logo_link ? (
                         <a href={config.login_logo_link} target="_blank" rel="noopener noreferrer" className="inline-block mb-4">
-                            {(config?.login_logo_url || config?.app_logo) ? (
+                            {((document.documentElement.classList.contains('light') ? config?.login_logo_light_url : config?.login_logo_url) || config?.login_logo_url || config?.app_logo) ? (
                                 <img
-                                    src={config.login_logo_url || config.app_logo}
+                                    src={(document.documentElement.classList.contains('light') ? config?.login_logo_light_url : config?.login_logo_url) || config?.login_logo_url || config?.app_logo}
                                     alt="Logo"
                                     className="mx-auto object-contain hover:opacity-80 transition-opacity"
                                     style={{ width: config.login_logo_width ? `${config.login_logo_width}px` : '4rem', height: 'auto', maxHeight: '120px' }}
@@ -132,9 +132,9 @@ export default function LoginPage({ type = 'client' }) {
                         </a>
                     ) : (
                         <>
-                            {(config?.login_logo_url || config?.app_logo) ? (
+                            {((document.documentElement.classList.contains('light') ? config?.login_logo_light_url : config?.login_logo_url) || config?.login_logo_url || config?.app_logo) ? (
                                 <img
-                                    src={config.login_logo_url || config.app_logo}
+                                    src={(document.documentElement.classList.contains('light') ? config?.login_logo_light_url : config?.login_logo_url) || config?.login_logo_url || config?.app_logo}
                                     alt="Logo"
                                     className="mx-auto mb-4 object-contain"
                                     style={{ width: config.login_logo_width ? `${config.login_logo_width}px` : '4rem', height: 'auto', maxHeight: '120px' }}
@@ -147,13 +147,13 @@ export default function LoginPage({ type = 'client' }) {
                         </>
                     )}
                     {(config?.login_show_text === undefined || config?.login_show_text === 'true') && (
-                        <h1 className="text-3xl font-bold text-white">{config?.login_text_content || 'MagnetCRM'}</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{config?.login_text_content || 'MagnetCRM'}</h1>
                     )}
-                    <p className="text-slate-400 mt-2">{requires2FA ? 'Two-Factor Authentication' : pageTitle}</p>
+                    <p className="text-gray-500 dark:text-slate-400 mt-2">{requires2FA ? 'Two-Factor Authentication' : pageTitle}</p>
                 </div>
 
                 {/* Login Card */}
-                <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl">
+                <div className="bg-white dark:bg-slate-900/80 backdrop-blur-xl border border-gray-200 dark:border-slate-800 rounded-2xl p-8 shadow-2xl">
                     {requires2FA ? (
                         /* 2FA Verification Form */
                         <form onSubmit={handle2FASubmit} className="space-y-5">
@@ -163,10 +163,10 @@ export default function LoginPage({ type = 'client' }) {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                     </svg>
                                 </div>
-                                <p className="text-sm text-slate-400">Enter the 6-digit code from your authenticator app</p>
+                                <p className="text-sm text-gray-500 dark:text-slate-400">Enter the 6-digit code from your authenticator app</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">
                                     Authentication Code
                                 </label>
                                 <input
@@ -179,7 +179,7 @@ export default function LoginPage({ type = 'client' }) {
                                     autoFocus
                                     value={twoFAToken}
                                     onChange={(e) => setTwoFAToken(e.target.value.replace(/[^0-9]/g, ''))}
-                                    className="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-white text-center text-2xl tracking-[0.5em] font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                    className="w-full px-4 py-3 bg-gray-100 dark:bg-slate-800/80 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white text-center text-2xl tracking-[0.5em] font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                                     placeholder="000000"
                                 />
                             </div>
@@ -203,7 +203,7 @@ export default function LoginPage({ type = 'client' }) {
                             <button
                                 type="button"
                                 onClick={() => { setRequires2FA(false); setTwoFAToken(''); setTwoFAUserId(null); }}
-                                className="w-full py-2 text-slate-400 hover:text-white text-sm transition-colors"
+                                className="w-full py-2 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white text-sm transition-colors"
                             >
                                 ← Back to Login
                             </button>
@@ -212,7 +212,7 @@ export default function LoginPage({ type = 'client' }) {
                         /* Normal Login Form */
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">
                                     Email Address
                                 </label>
                                 <input
@@ -221,13 +221,13 @@ export default function LoginPage({ type = 'client' }) {
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                    className="w-full px-4 py-3 bg-gray-100 dark:bg-slate-800/80 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                                     placeholder={isClientLogin ? "user@example.com" : "admin@magnethq.com"}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">
                                     Password
                                 </label>
                                 <div className="relative">
@@ -237,13 +237,13 @@ export default function LoginPage({ type = 'client' }) {
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all pr-12"
+                                        className="w-full px-4 py-3 bg-gray-100 dark:bg-slate-800/80 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all pr-12"
                                         placeholder="••••••••"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-slate-400 hover:text-gray-600 dark:text-slate-300"
                                     >
                                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                     </button>

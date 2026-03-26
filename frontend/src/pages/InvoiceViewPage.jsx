@@ -58,11 +58,11 @@ export default function InvoiceViewPage() {
     };
 
     if (loading) {
-        return <div className="text-center py-20 text-slate-400">Loading invoice...</div>;
+        return <div className="text-center py-20 text-gray-500 dark:text-slate-400">Loading invoice...</div>;
     }
 
     if (!invoice) {
-        return <div className="text-center py-20 text-slate-400">Invoice not found.</div>;
+        return <div className="text-center py-20 text-gray-500 dark:text-slate-400">Invoice not found.</div>;
     }
 
     const getStatusBadge = (status) => {
@@ -74,7 +74,7 @@ export default function InvoiceViewPage() {
             case 'overdue':
                 return <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20"><AlertCircle className="w-4 h-4" /> Overdue</span>;
             default:
-                return <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20 capitalize">{status}</span>;
+                return <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-slate-500/10 text-gray-500 dark:text-slate-400 border border-slate-500/20 capitalize">{status}</span>;
         }
     };
 
@@ -84,15 +84,15 @@ export default function InvoiceViewPage() {
                 <div className="flex items-center gap-4">
                     <Link
                         to="/invoices"
-                        className="p-2 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl transition-colors"
+                        className="p-2 hover:bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white rounded-xl transition-colors"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                             Invoice {invoice.invoiceNumber || 'Draft'}
                             {getStatusBadge(invoice.status)}
-                            {invoice.isSystem && <span className="text-xs px-2 py-1 bg-slate-800 text-slate-300 rounded-lg">System</span>}
+                            {invoice.isSystem && <span className="text-xs px-2 py-1 bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded-lg">System</span>}
                         </h1>
                     </div>
                 </div>
@@ -129,25 +129,25 @@ export default function InvoiceViewPage() {
                                     {invoice.targetCompany ? invoice.targetCompany.companyName : 'INVOICE'}
                                 </div>
                             )}
-                            <div className="text-sm text-slate-500 whitespace-pre-line leading-relaxed max-w-xs">
+                            <div className="text-sm text-gray-400 dark:text-slate-500 whitespace-pre-line leading-relaxed max-w-xs">
                                 {settings?.address || 'No address provided'}
                                 {settings?.gstNo && <div className="mt-1 font-medium text-slate-700">GSTIN: {settings.gstNo}</div>}
                             </div>
                         </div>
                         <div className="text-right">
-                            <h2 className="text-4xl font-extrabold text-slate-200 tracking-wider mb-2 uppercase">Invoice</h2>
+                            <h2 className="text-4xl font-extrabold text-gray-700 dark:text-slate-200 tracking-wider mb-2 uppercase">Invoice</h2>
                             <p className="text-slate-600 font-medium">#{invoice.invoiceNumber || 'Draft'}</p>
 
                             <div className="mt-6 space-y-1 text-sm">
-                                <p className="text-slate-500">Date Issued: <span className="text-slate-900 font-medium ml-2">{dayjs(invoice.invoiceDate || invoice.createdAt).format('MMM D, YYYY')}</span></p>
-                                <p className="text-slate-500">Due Date: <span className="text-slate-900 font-medium ml-2">{dayjs(invoice.dueDate || invoice.createdAt).format('MMM D, YYYY')}</span></p>
+                                <p className="text-gray-400 dark:text-slate-500">Date Issued: <span className="text-slate-900 font-medium ml-2">{dayjs(invoice.invoiceDate || invoice.createdAt).format('MMM D, YYYY')}</span></p>
+                                <p className="text-gray-400 dark:text-slate-500">Due Date: <span className="text-slate-900 font-medium ml-2">{dayjs(invoice.dueDate || invoice.createdAt).format('MMM D, YYYY')}</span></p>
                             </div>
                         </div>
                     </div>
 
                     {/* Billed To */}
                     <div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Billed To</h3>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-3">Billed To</h3>
                         <div className="text-sm text-slate-800">
                             <p className="font-bold text-base text-slate-900 mb-1">
                                 {invoice.client?.name || invoice.guestClientName || 'Walk-in Customer'}
@@ -171,7 +171,7 @@ export default function InvoiceViewPage() {
                     <div className="mt-8">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b-2 border-slate-200 text-xs uppercase tracking-wider text-slate-500">
+                                <tr className="border-b-2 border-slate-200 text-xs uppercase tracking-wider text-gray-400 dark:text-slate-500">
                                     <th className="py-3 font-semibold w-full">Description</th>
                                     <th className="py-3 font-semibold text-center px-4">Qty</th>
                                     <th className="py-3 font-semibold text-right px-4">Rate</th>
@@ -190,7 +190,7 @@ export default function InvoiceViewPage() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="4" className="py-8 text-center text-slate-400 italic">No line items</td>
+                                        <td colSpan="4" className="py-8 text-center text-gray-500 dark:text-slate-400 italic">No line items</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -222,25 +222,25 @@ export default function InvoiceViewPage() {
                     {/* Payment Details */}
                     {settings && (settings.bankName || settings.upiId || settings.upiQrUrl) && (
                         <div className="pt-8 mt-8 border-t border-slate-100">
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Payment Details</h3>
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-4">Payment Details</h3>
                             <div className="flex justify-between items-start gap-8">
                                 <div className="space-y-2 text-sm">
                                     {settings.bankName && (
                                         <div>
-                                            <p className="text-slate-500">Bank: <span className="text-slate-800 font-medium">{settings.bankName}</span></p>
-                                            {settings.accountHolderName && <p className="text-slate-500">A/C Holder: <span className="text-slate-800 font-medium">{settings.accountHolderName}</span></p>}
-                                            {settings.accountNumber && <p className="text-slate-500">A/C No: <span className="text-slate-800 font-medium">{settings.accountNumber}</span></p>}
-                                            {settings.ifscCode && <p className="text-slate-500">IFSC: <span className="text-slate-800 font-medium">{settings.ifscCode}</span></p>}
+                                            <p className="text-gray-400 dark:text-slate-500">Bank: <span className="text-slate-800 font-medium">{settings.bankName}</span></p>
+                                            {settings.accountHolderName && <p className="text-gray-400 dark:text-slate-500">A/C Holder: <span className="text-slate-800 font-medium">{settings.accountHolderName}</span></p>}
+                                            {settings.accountNumber && <p className="text-gray-400 dark:text-slate-500">A/C No: <span className="text-slate-800 font-medium">{settings.accountNumber}</span></p>}
+                                            {settings.ifscCode && <p className="text-gray-400 dark:text-slate-500">IFSC: <span className="text-slate-800 font-medium">{settings.ifscCode}</span></p>}
                                         </div>
                                     )}
                                     {settings.upiId && (
-                                        <p className="text-slate-500">UPI: <span className="text-slate-800 font-medium">{settings.upiId}</span></p>
+                                        <p className="text-gray-400 dark:text-slate-500">UPI: <span className="text-slate-800 font-medium">{settings.upiId}</span></p>
                                     )}
                                 </div>
                                 {settings.upiQrUrl && (
                                     <div className="flex-shrink-0">
                                         <img src={settings.upiQrUrl} alt="UPI QR Code" className="w-28 h-28 object-contain border border-slate-200 rounded-lg" />
-                                        <p className="text-xs text-slate-400 text-center mt-1">Scan to Pay</p>
+                                        <p className="text-xs text-gray-500 dark:text-slate-400 text-center mt-1">Scan to Pay</p>
                                     </div>
                                 )}
                             </div>
@@ -252,7 +252,7 @@ export default function InvoiceViewPage() {
                         <div className="flex-1">
                             {(invoice.notes || settings?.terms) && (
                                 <div>
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Notes & Terms</h3>
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-2">Notes & Terms</h3>
                                     <p className="text-sm text-slate-600 whitespace-pre-line leading-relaxed">
                                         {invoice.notes || settings.terms}
                                     </p>
@@ -263,7 +263,7 @@ export default function InvoiceViewPage() {
                             <div className="flex-shrink-0 text-center">
                                 <img src={settings.signatureUrl} alt="Authorized Signature" className="h-16 object-contain mb-1" />
                                 <div className="border-t border-slate-300 pt-1">
-                                    <p className="text-xs text-slate-500">Authorized Signatory</p>
+                                    <p className="text-xs text-gray-400 dark:text-slate-500">Authorized Signatory</p>
                                 </div>
                             </div>
                         )}
