@@ -327,13 +327,41 @@ export class WhatsAppCRMService {
         return this.templateRepo.save(template);
     }
 
-    async getTemplates(companyId: string): Promise<WhatsAppTemplate[]> {
-        // Auto-sync from Meta API before returning
-        await this.syncTemplatesFromMeta(companyId);
-        return this.templateRepo.find({
-            where: { companyId },
-            order: { name: 'ASC' },
-        });
+    async getTemplates(companyId: string): Promise<any[]> {
+        // Primary: fetch from Meta API directly (same as auto-reply settings page)
+        try {
+            const config = await this.configRepo.findOne({ where: { companyId } });
+            if (config?.businessAccountId && config?.accessToken) {
+                const response = await fetch(
+                    `https://graph.facebook.com/v21.0/${config.businessAccountId}/message_templates?status=APPROVED&limit=100`,
+                    { headers: { 'Authorization': `Bearer ${config.accessToken}` } }
+                );
+                if (response.ok) {
+                    const data = await response.json();
+                    const metaTemplates = (data.data || []).map((t: any) => {
+                        const bodyComp = (t.components || []).find((c: any) => c.type === 'BODY');
+                        const bodyText = bodyComp?.text || t.name;
+                        return {
+                            id: t.id || t.name,
+                            name: t.name,
+                            content: bodyText,
+                            status: 'approved',
+                            category: t.category?.toLowerCase() || 'marketing',
+                            language: t.language,
+                            variables: (bodyText.match(/\{\{\d+\}\}/g) || []).map((_: any, i: number) => `var${i + 1}`),
+                            createdAt: new Date().toISOString(),
+                        };
+                    });
+                    // Save to DB as side-effect (non-blocking)
+                    this.syncTemplatesFromMeta(companyId).catch(() => {});
+                    return metaTemplates;
+                }
+            }
+        } catch (err: any) {
+            this.logger.warn(`Live template fetch failed, falling back to DB: ${err.message}`);
+        }
+        // Fallback: return from local DB
+        return this.templateRepo.find({ where: { companyId }, order: { name: 'ASC' } });
     }
 
     /**
