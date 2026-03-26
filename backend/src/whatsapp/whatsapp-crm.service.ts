@@ -155,7 +155,7 @@ export class WhatsAppCRMService {
                     email: lead.email,
                     isOptedIn: false,
                     isOptedOut: false,
-                    lists: [{ id: 'leads', name: 'Leads' }],
+                    lists: [{ id: 'leads', name: 'Leads', color: '#22c55e' }],
                     tags: [],
                     source: 'lead',
                     leadId: lead.id,
