@@ -84,7 +84,7 @@ export class IntegrationsService {
     private async fetchTradeIndiaRaw(userid: string, profile_id: string, key: string): Promise<any[]> {
         const toDate = new Date();
         const fromDate = new Date();
-        fromDate.setDate(toDate.getDate() - 7); // last 7 days
+        fromDate.setDate(toDate.getDate() - 1); // TradeIndia API only allows last 24 hours
 
         const formatDate = (d: Date) => d.toISOString().split('T')[0];
         const url = `https://www.tradeindia.com/utils/my_inquiry.html?userid=${userid}&profile_id=${profile_id}&key=${key}&from_date=${formatDate(fromDate)}&to_date=${formatDate(toDate)}&limit=100&page_no=1`;
