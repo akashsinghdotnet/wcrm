@@ -27,6 +27,9 @@ export class IntegrationConfig {
     @Column({ default: false })
     isActive: boolean;
 
+    @Column({ type: 'timestamp', nullable: true, default: null })
+    lastSyncAt: Date | null;
+
     @CreateDateColumn()
     createdAt: Date;
 

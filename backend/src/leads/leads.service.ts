@@ -322,6 +322,15 @@ export class LeadsService {
         return this.leadsRepository.findOne({ where: conditions });
     }
 
+    async findByNoteContent(companyId: string, noteSubstring: string): Promise<Lead | null> {
+        return this.leadsRepository
+            .createQueryBuilder('lead')
+            .where('lead.companyId = :companyId', { companyId })
+            .andWhere('lead.notes LIKE :note', { note: `%${noteSubstring}%` })
+            .getOne();
+    }
+
+
     // ------- Dashboard helper methods -------
 
     async countAll(companyId: string): Promise<number> {
