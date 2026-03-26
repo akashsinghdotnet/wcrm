@@ -117,9 +117,9 @@ export default function LoginPage({ type = 'client' }) {
                 <div className="text-center mb-8">
                     {config?.login_logo_link ? (
                         <a href={config.login_logo_link} target="_blank" rel="noopener noreferrer" className="inline-block mb-4">
-                            {((document.documentElement.classList.contains('light') ? config?.login_logo_light_url : config?.login_logo_url) || config?.login_logo_url || config?.app_logo) ? (
+                            {((config?.login_logo_url) || config?.app_logo) ? (
                                 <img
-                                    src={(document.documentElement.classList.contains('light') ? config?.login_logo_light_url : config?.login_logo_url) || config?.login_logo_url || config?.app_logo}
+                                    src={(config?.login_logo_url) || config?.app_logo}
                                     alt="Logo"
                                     className="mx-auto object-contain hover:opacity-80 transition-opacity"
                                     style={{ width: config.login_logo_width ? `${config.login_logo_width}px` : '4rem', height: 'auto', maxHeight: '120px' }}
@@ -132,9 +132,9 @@ export default function LoginPage({ type = 'client' }) {
                         </a>
                     ) : (
                         <>
-                            {((document.documentElement.classList.contains('light') ? config?.login_logo_light_url : config?.login_logo_url) || config?.login_logo_url || config?.app_logo) ? (
+                            {((config?.login_logo_url) || config?.app_logo) ? (
                                 <img
-                                    src={(document.documentElement.classList.contains('light') ? config?.login_logo_light_url : config?.login_logo_url) || config?.login_logo_url || config?.app_logo}
+                                    src={(config?.login_logo_url) || config?.app_logo}
                                     alt="Logo"
                                     className="mx-auto mb-4 object-contain"
                                     style={{ width: config.login_logo_width ? `${config.login_logo_width}px` : '4rem', height: 'auto', maxHeight: '120px' }}
