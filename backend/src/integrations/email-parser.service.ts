@@ -37,6 +37,33 @@ export class EmailParserService {
         }
     }
 
+    async testConnection(credentials: Record<string, any>) {
+        const { host, port, username, password, tls } = credentials || {};
+        if (!host || !username || !password) {
+            return { success: false, message: 'Missing required credentials (host, username, password)' };
+        }
+
+        const client = new ImapFlow({
+            host,
+            port: Number(port) || 993,
+            secure: tls !== 'false',
+            auth: {
+                user: username,
+                pass: password
+            },
+            logger: false
+        });
+
+        try {
+            await client.connect();
+            await client.logout();
+            return { success: true, message: 'Connection successful!' };
+        } catch (error: any) {
+            this.logger.error(`Test Connection failed for ${username}: ${error.message}`);
+            return { success: false, message: error.message || 'Connection failed' };
+        }
+    }
+
     private async processInbox(config: IntegrationConfig) {
         const { host, port, username, password, tls } = config.credentials || {};
         if (!host || !username || !password) return;

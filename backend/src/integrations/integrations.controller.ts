@@ -8,9 +8,14 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../users/user.entity';
 
+import { EmailParserService } from './email-parser.service';
+
 @Controller('integrations')
 export class IntegrationsController {
-    constructor(private readonly integrationsService: IntegrationsService) { }
+    constructor(
+        private readonly integrationsService: IntegrationsService,
+        private readonly emailParserService: EmailParserService
+    ) { }
 
     // ── Meta / Facebook Lead Ads Webhook (no JWT — Meta calls this directly) ─
 
@@ -111,5 +116,12 @@ export class IntegrationsController {
     @Roles(UserRole.ADMIN, UserRole.MANAGER)
     async fetchIndiaMartLeads(@Body() body: { companyId: string }) {
         return this.integrationsService.fetchIndiaMartLeads(body.companyId);
+    }
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Post('email-parser/test')
+    @Roles(UserRole.ADMIN)
+    async testEmailParserConnection(@Body() credentials: Record<string, any>) {
+        return this.emailParserService.testConnection(credentials);
     }
 }
