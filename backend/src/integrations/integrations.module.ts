@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { IntegrationConfig } from './integration-config.entity';
 import { IntegrationsService } from './integrations.service';
 import { IntegrationsController } from './integrations.controller';
+import { EmailParserService } from './email-parser.service';
 import { LeadsModule } from '../leads/leads.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
@@ -13,7 +14,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
         forwardRef(() => NotificationsModule),
     ],
     controllers: [IntegrationsController],
-    providers: [IntegrationsService],
-    exports: [IntegrationsService],
+    providers: [IntegrationsService, EmailParserService],
+    exports: [IntegrationsService, EmailParserService],
 })
 export class IntegrationsModule { }

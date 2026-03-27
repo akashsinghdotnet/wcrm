@@ -29,10 +29,37 @@ const PLATFORM_CREDENTIALS = {
         { key: 'profile_id', label: 'Profile ID', type: 'text', placeholder: 'Your Trade India profile ID' },
         { key: 'key', label: 'API Key', type: 'password', placeholder: 'Your Trade India API key' },
     ],
+    email_parser: [
+        { key: 'host', label: 'IMAP Host Server', type: 'text', placeholder: 'e.g. imap.gmail.com or imap.hostinger.com' },
+        { key: 'port', label: 'IMAP Port', type: 'text', placeholder: 'e.g. 993' },
+        { key: 'username', label: 'Email Address / Username', type: 'text', placeholder: 'e.g. leads@mycompany.com' },
+        { key: 'password', label: 'App Password', type: 'password', placeholder: 'Your Email App Password (Do not use normal password)' },
+        { key: 'tls', label: 'Enable TLS/SSL (true/false)', type: 'text', placeholder: 'true' },
+    ],
     website: [],
 };
 
 const INTEGRATIONS = [
+    {
+        id: 'email_parser',
+        name: 'Universal Email Lead Parser',
+        description: 'Auto-extracts TradeIndia Buy Leads and JustDial inquiries directly from your email inbox.',
+        color: 'from-pink-500 to-rose-500',
+        iconBg: 'bg-pink-500/10 border-pink-500/20',
+        iconColor: 'text-pink-400',
+        webhookPath: '',
+        fields: [],
+        setupSteps: [
+            'Enable this integration and click "Configure"',
+            "Enter your email provider's IMAP Host (e.g., imap.gmail.com or imap.hostinger.com)",
+            'Enter the IMAP Port (usually 993)',
+            'Enter your full Email Address (e.g., leads@yourcompany.com)',
+            'Enter your Email App Password (If using Gmail, go to Google Account Security -> 2-Step Verification -> App Passwords to generate one).',
+            'Leave TLS as "true".',
+            'Save configuration. The CRM will securely log in to your inbox every 5 minutes in the background.',
+            'It will automatically read UNREAD emails, smartly extract Name, Phone, and Requirements, and import them seamlessly into your Leads dashboard!'
+        ],
+    },
     {
         id: 'meta',
         name: 'Meta / Facebook Ads',
