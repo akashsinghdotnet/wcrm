@@ -64,7 +64,8 @@ export class EmailParserService {
 
                 for await (const message of messages) {
                     try {
-                        const parsed = await simpleParser(message.source);
+                        if (!message.source) continue;
+                        const parsed: any = await simpleParser(message.source as any);
                         const extractedList = this.extractLeads(parsed.text || parsed.html || '');
 
                         for (const extracted of extractedList) {
