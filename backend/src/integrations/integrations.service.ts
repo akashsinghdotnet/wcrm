@@ -87,37 +87,70 @@ export class IntegrationsService {
         fromDate.setDate(toDate.getDate() - 1); // TradeIndia API only allows last 24 hours
 
         const formatDate = (d: Date) => d.toISOString().split('T')[0];
-        const url = `https://www.tradeindia.com/utils/my_inquiry.html?userid=${userid}&profile_id=${profile_id}&key=${key}&from_date=${formatDate(fromDate)}&to_date=${formatDate(toDate)}&limit=100&page_no=1`;
+        let allLeads: any[] = [];
+        let pageNo = 1;
+        let hasMore = true;
 
-        this.logger.log(`TradeIndia API fetch: userid=${userid}`);
-        const response = await fetch(url, { signal: AbortSignal.timeout(20000) });
-        const text = await response.text();
-        this.logger.log(`TradeIndia response: status=${response.status}, length=${text.length}, preview=${text.substring(0, 80)}`);
+        this.logger.log(`TradeIndia API fetch started: userid=${userid}`);
 
-        if (!text || text.trim().length === 0) return [];
+        while (hasMore) {
+            const url = `https://www.tradeindia.com/utils/my_inquiry.html?userid=${userid}&profile_id=${profile_id}&key=${key}&from_date=${formatDate(fromDate)}&to_date=${formatDate(toDate)}&limit=100&page_no=${pageNo}`;
+            
+            try {
+                const response = await fetch(url, { signal: AbortSignal.timeout(20000) });
+                const text = await response.text();
+                
+                if (!text || text.trim().length === 0) {
+                    hasMore = false;
+                    break;
+                }
 
-        let data: any;
-        try {
-            data = JSON.parse(text);
-        } catch {
-            throw new Error(`TradeIndia returned non-JSON (likely invalid credentials). Response: ${text.substring(0, 200)}`);
-        }
+                let data: any;
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    this.logger.warn(`TradeIndia non-JSON response at page ${pageNo}: ${text.substring(0, 200)}`);
+                    break;
+                }
 
-        if (data?.error) throw new Error(`TradeIndia API error: ${JSON.stringify(data.error)}`);
+                if (data?.error) {
+                    this.logger.warn(`TradeIndia API error at page ${pageNo}: ${JSON.stringify(data.error)}`);
+                    break;
+                }
 
-        // Extract leads from various response structures
-        if (Array.isArray(data)) return data;
-        if (data?.DATA && Array.isArray(data.DATA)) return data.DATA;
-        if (data?.response && Array.isArray(data.response)) return data.response;
-        if (data && typeof data === 'object') {
-            const values = Object.values(data).filter(
-                item => typeof item === 'object' && item !== null && !Array.isArray(item)
-            );
-            if (values.length > 0 && values.every((v: any) => v.sender_name || v.sender_mobile || v.sender_email || v.rfi_id)) {
-                return values;
+                let currentPageLeads: any[] = [];
+                if (Array.isArray(data)) {
+                    currentPageLeads = data;
+                } else if (data?.DATA && Array.isArray(data.DATA)) {
+                    currentPageLeads = data.DATA;
+                } else if (data?.response && Array.isArray(data.response)) {
+                    currentPageLeads = data.response;
+                } else if (data && typeof data === 'object') {
+                    const values = Object.values(data).filter(
+                        item => typeof item === 'object' && item !== null && !Array.isArray(item)
+                    );
+                    if (values.length > 0 && values.every((v: any) => v.sender_name || v.sender_mobile || v.sender_email || v.rfi_id)) {
+                        currentPageLeads = values;
+                    }
+                }
+
+                if (currentPageLeads.length > 0) {
+                    allLeads = [...allLeads, ...currentPageLeads];
+                }
+
+                if (currentPageLeads.length < 100) {
+                    hasMore = false;
+                } else {
+                    pageNo++;
+                }
+            } catch (err: any) {
+                this.logger.error(`TradeIndia fetch error at page ${pageNo}: ${err.message}`);
+                hasMore = false; // exit loop on network error
             }
         }
-        return [];
+
+        this.logger.log(`TradeIndia API fetch finished: userid=${userid}, total_leads=${allLeads.length}`);
+        return allLeads;
     }
 
     /**
