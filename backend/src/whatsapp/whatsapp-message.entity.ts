@@ -41,6 +41,15 @@ export class WhatsAppMessage {
     @Column({ nullable: true })
     whatsappMessageId: string;
 
+    @Column({ type: 'varchar', default: 'text' })
+    messageType: string;
+
+    @Column({ nullable: true })
+    mediaId: string;
+
+    @Column({ nullable: true })
+    mimeType: string;
+
     @Column({ type: 'text', nullable: true })
     errorDetail: string;
 

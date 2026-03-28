@@ -11,6 +11,62 @@ const statusIcons = {
     failed: <AlertCircle size={12} className="text-red-400" />,
 };
 
+const ImageWithAuth = ({ mediaId, alt }) => {
+    const [blobUrl, setBlobUrl] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let url;
+        api.get(`/whatsapp/media/${mediaId}`, { responseType: 'blob' })
+            .then(res => {
+                url = URL.createObjectURL(res.data);
+                setBlobUrl(url);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+
+        return () => {
+            if (url) URL.revokeObjectURL(url);
+        };
+    }, [mediaId]);
+
+    if (loading) return <div className="w-48 h-48 flex items-center justify-center bg-black/5 dark:bg-white/5 rounded-lg animate-pulse"><ImageIcon size={24} className="opacity-50" /></div>;
+    if (!blobUrl) return <div className="p-3 bg-red-100/10 text-red-500 rounded-lg flex items-center gap-2"><AlertCircle size={16} /> Image unavailable</div>;
+
+    return <img src={blobUrl} alt={alt} className="max-w-[240px] md:max-w-xs rounded-lg object-contain cursor-pointer shadow-sm hover:opacity-95 transition-opacity" onClick={() => window.open(blobUrl, '_blank')} />;
+};
+
+const DocumentWithAuth = ({ mediaId, filename, isOut }) => {
+    const [downloading, setDownloading] = useState(false);
+
+    const handleDownload = async (e) => {
+        e.preventDefault();
+        setDownloading(true);
+        try {
+            const res = await api.get(`/whatsapp/media/${mediaId}`, { responseType: 'blob' });
+            const url = URL.createObjectURL(res.data);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename || 'document';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        } catch {
+            toast.error('Failed to download file');
+        } finally {
+            setDownloading(false);
+        }
+    };
+
+    return (
+        <button onClick={handleDownload} disabled={downloading} className="w-full text-left flex items-center gap-3 mb-1 bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 transition-colors p-3 rounded-xl border border-black/5 dark:border-white/10 group">
+            {downloading ? <div className="w-5 h-5 flex-shrink-0 border-2 border-green-500 border-t-transparent rounded-full animate-spin" /> : <FileText size={20} className={`flex-shrink-0 ${isOut ? "text-green-100 group-hover:text-white" : "text-blue-500 dark:text-blue-400 group-hover:dark:text-blue-300"}`} />}
+            <span className="text-sm truncate font-medium flex-1 overflow-hidden" title={filename || 'Download Document'}>{filename || 'Download Document'}</span>
+        </button>
+    );
+};
+
 export default function WhatsAppChatPage() {
     const { leadId } = useParams();
     const navigate = useNavigate();
@@ -199,16 +255,33 @@ export default function WhatsAppChatPage() {
                 ) : (
                     messages.map((msg) => {
                         const isOut = msg.direction === 'outbound';
-                        // Display media elegantly
-                        const isMedia = msg.content?.includes('(Media)') || msg.content?.includes('.pdf') || msg.content?.includes('.png') || msg.content?.includes('.jpg') || msg.content?.includes('.jpeg');
+                        // Determine media type
+                        const hasMediaId = !!msg.mediaId;
+                        const isImage = msg.messageType === 'image' || (hasMediaId && msg.mimeType?.startsWith('image/'));
+                        const isDocument = msg.messageType === 'document' || msg.messageType === 'audio' || msg.messageType === 'video' || (hasMediaId && !isImage);
+                        
+                        // Fallback for older messages
+                        const isLegacyMedia = !msg.messageType && (msg.content?.includes('(Media)') || msg.content?.includes('.pdf') || msg.content?.includes('.png') || msg.content?.includes('.jpg') || msg.content?.includes('.jpeg'));
+                        const isLegacyImage = isLegacyMedia && (msg.content?.toLowerCase().includes('.png') || msg.content?.toLowerCase().includes('.jpg') || msg.content?.toLowerCase().includes('.jpeg'));
 
                         return (
                             <div key={msg.id} className={`flex ${isOut ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-md ${isOut ? 'bg-green-600 text-white rounded-br-md' : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-300 dark:border-slate-700 rounded-bl-md'
                                     }`}>
-                                    {isMedia ? (
+                                    {hasMediaId ? (
+                                        <div className="flex flex-col gap-1.5 mb-1.5">
+                                            {isImage ? (
+                                                <ImageWithAuth mediaId={msg.mediaId} alt={msg.content} />
+                                            ) : (
+                                                <DocumentWithAuth mediaId={msg.mediaId} filename={msg.content} isOut={isOut} />
+                                            )}
+                                            {msg.content && msg.content !== '[image message]' && msg.content !== '[document message]' && msg.content !== '[audio message]' && msg.content !== '[video message]' && (
+                                                <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words mt-1">{msg.content}</p>
+                                            )}
+                                        </div>
+                                    ) : isLegacyMedia ? (
                                         <div className="flex items-center gap-2 mb-1 bg-black/10 p-2.5 rounded-lg border border-white/10">
-                                            {msg.content?.toLowerCase().includes('pdf') || msg.content?.toLowerCase().includes('doc') ? <FileText size={20} className={isOut ? "text-green-100" : "text-blue-400"} /> : <ImageIcon size={20} className={isOut ? "text-green-100" : "text-blue-400"} />}
+                                            {isLegacyImage ? <ImageIcon size={20} className={isOut ? "text-green-100" : "text-blue-400"} /> : <FileText size={20} className={isOut ? "text-green-100" : "text-blue-400"} />}
                                             <span className="text-sm truncate font-medium">{msg.content.replace(' (Media)', '')}</span>
                                         </div>
                                     ) : (

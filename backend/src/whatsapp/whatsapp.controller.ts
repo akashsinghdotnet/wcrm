@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException, Res } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { WhatsAppService } from './whatsapp.service';
 import { SaveWhatsAppConfigDto } from './dto/save-config.dto';
@@ -80,6 +80,16 @@ export class WhatsAppController {
     @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF)
     getMessages(@Param('leadId') leadId: string, @Request() req) {
         return this.whatsappService.getMessages(req.user.companyId, leadId);
+    }
+
+    @Get('media/:mediaId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF)
+    async getMedia(@Param('mediaId') mediaId: string, @Request() req, @Res() res: any) {
+        const { buffer, mimeType } = await this.whatsappService.downloadMedia(req.user.companyId, mediaId);
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Cache-Control', 'public, max-age=31536000');
+        res.send(buffer);
     }
 
     // Fetch approved templates from Meta

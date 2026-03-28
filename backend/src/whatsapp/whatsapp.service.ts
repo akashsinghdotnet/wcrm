@@ -132,6 +132,8 @@ export class WhatsAppService {
             whatsappMessageId: whatsappMessageId || undefined,
             errorDetail: errorDetail || undefined,
             sentBy: userId,
+            messageType: type,
+            mediaId: mediaId || undefined,
         });
         await this.messageRepo.save(msg);
 
@@ -285,8 +287,23 @@ export class WhatsAppService {
 
         for (const msg of value.messages) {
             const fromPhone = msg.from;
-            const text = msg.text?.body || '';
             const waMessageId = msg.id;
+
+            const messageType = msg.type || 'text';
+            let text = '';
+            let mediaId: string | undefined = undefined;
+            let mimeType: string | undefined = undefined;
+
+            if (messageType === 'text') {
+                text = msg.text?.body || '';
+            } else if (msg[messageType]) {
+                const mediaObj = msg[messageType];
+                mediaId = mediaObj.id || undefined;
+                mimeType = mediaObj.mime_type || undefined;
+                text = mediaObj.caption || mediaObj.filename || `[${messageType} message]`;
+            } else {
+                text = `[${messageType} message]`;
+            }
 
             this.logger.log(`[WhatsApp Webhook] Processing message from ${fromPhone}: "${text.substring(0, 50)}"`);
 
@@ -352,9 +369,12 @@ export class WhatsAppService {
                 companyId,
                 leadId: lead.id,
                 direction: MessageDirection.INBOUND,
-                content: text || '[Non-text message]',
+                content: text || `[${messageType} message]`,
                 status: MessageStatus.DELIVERED,
                 whatsappMessageId: waMessageId,
+                messageType,
+                mediaId,
+                mimeType,
             });
             await this.messageRepo.save(message);
             this.logger.log(`[WhatsApp Webhook] ✓ Saved incoming message (ID: ${message.id}) for lead ${lead.id} in company ${companyId}`);
@@ -741,5 +761,56 @@ export class WhatsAppService {
         debug.messageStats = messageStats;
 
         return debug;
+    }
+
+    /**
+     * Download media from WhatsApp by mediaId. Returns a streamable response object.
+     */
+    async downloadMedia(companyId: string, mediaId: string): Promise<{ buffer: Buffer, mimeType: string }> {
+        const config = await this.configRepo.findOne({ where: { companyId } });
+        if (!config || !config.accessToken) {
+            throw new BadRequestException('WhatsApp Business API is not configured or missing access token');
+        }
+
+        try {
+            // First, get the media URL from the Graph API
+            const getUrlRes = await fetch(`https://graph.facebook.com/v21.0/${mediaId}`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${config.accessToken}` }
+            });
+
+            if (!getUrlRes.ok) {
+                const errData = await getUrlRes.text();
+                this.logger.error(`Failed to fetch media metadata for ${mediaId}`, errData);
+                throw new Error('Failed to fetch media metadata');
+            }
+
+            const mediaMetadata = await getUrlRes.json();
+            const mediaUrl = mediaMetadata.url;
+            const mimeType = mediaMetadata.mime_type;
+
+            if (!mediaUrl) {
+                throw new Error('No media URL returned from WhatsApp');
+            }
+
+            // Second, download the actual media file
+            const downloadRes = await fetch(mediaUrl, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${config.accessToken}` }
+            });
+
+            if (!downloadRes.ok) {
+                throw new Error('Failed to download media file');
+            }
+
+            const arrayBuffer = await downloadRes.arrayBuffer();
+            return {
+                buffer: Buffer.from(arrayBuffer),
+                mimeType: mimeType || 'application/octet-stream',
+            };
+        } catch (error) {
+            this.logger.error(`Error downloading media ${mediaId}: ${error.message}`);
+            throw new BadRequestException('Failed to retrieve media file');
+        }
     }
 }
