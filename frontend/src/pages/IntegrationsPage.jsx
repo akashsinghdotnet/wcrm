@@ -217,6 +217,7 @@ export default function IntegrationsPage({ embedded = false }) {
     const [saving, setSaving] = useState(false);
     const [testing, setTesting] = useState(false);
     const [showPasswords, setShowPasswords] = useState({});
+    const [credentialForm, setCredentialForm] = useState({});
 
     // Webhook URLs must point to the backend API, not the frontend
     const apiBase = import.meta.env.VITE_API_URL || '/api';
