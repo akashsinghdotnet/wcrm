@@ -318,8 +318,18 @@ export default function IntegrationsPage({ embedded = false }) {
         return { label: 'Needs Setup', color: 'bg-amber-500/15 text-amber-400 border border-amber-500/20' };
     };
 
+    const needsCompanyIdInUrl = (id) => ['indiamart', 'justdial', 'website', 'tradeindia'].includes(id);
+
+    const getFullWebhookUrl = (integration) => {
+        const base = `${baseUrl}${integration.webhookPath}`;
+        if (needsCompanyIdInUrl(integration.id)) {
+            return `${base}?companyId=${user.companyId}`;
+        }
+        return base;
+    };
+
     const copyWebhook = (integration) => {
-        const url = `${baseUrl}${integration.webhookPath}`;
+        const url = getFullWebhookUrl(integration);
         navigator.clipboard.writeText(url);
         setCopiedId(integration.id);
         toast.success('Webhook URL copied');
@@ -532,9 +542,12 @@ function submitMagnetCRMForm(e) {
                                     {/* Webhook URL & Company ID (shown when active) */}
                                     {active && (
                                         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            <div className="bg-black/30 rounded-xl p-3">
+                                            {/* Combined Webhook URL (with companyId for platforms that need it) */}
+                                            <div className={`bg-black/30 rounded-xl p-3 ${needsCompanyIdInUrl(integration.id) || integration.id === 'email_parser' ? 'md:col-span-2' : ''}`}>
                                                 <div className="flex items-center justify-between mb-1.5">
-                                                    <span className="text-xs text-gray-400 dark:text-slate-500 font-medium uppercase tracking-wide">Webhook URL</span>
+                                                    <span className="text-xs text-gray-400 dark:text-slate-500 font-medium uppercase tracking-wide">
+                                                        {needsCompanyIdInUrl(integration.id) ? 'Ready-to-use Webhook URL (includes your Company ID)' : 'Webhook URL'}
+                                                    </span>
                                                     <button
                                                         onClick={() => copyWebhook(integration)}
                                                         className="text-indigo-400 hover:text-indigo-300 transition-colors"
@@ -544,28 +557,34 @@ function submitMagnetCRMForm(e) {
                                                     </button>
                                                 </div>
                                                 <p className="text-xs text-gray-600 dark:text-slate-300 font-mono break-all">
-                                                    {baseUrl}{integration.webhookPath}
+                                                    {getFullWebhookUrl(integration)}
                                                 </p>
+                                                {needsCompanyIdInUrl(integration.id) && (
+                                                    <p className="text-[10px] text-emerald-400 mt-1.5">✓ Company ID is already included — just copy and paste this URL directly</p>
+                                                )}
                                             </div>
 
-                                            <div className="bg-black/30 rounded-xl p-3">
-                                                <div className="flex items-center justify-between mb-1.5">
-                                                    <span className="text-xs text-gray-400 dark:text-slate-500 font-medium uppercase tracking-wide">Company ID</span>
-                                                    <button
-                                                        onClick={() => {
-                                                            navigator.clipboard.writeText(user.companyId);
-                                                            toast.success('Company ID copied');
-                                                        }}
-                                                        className="text-indigo-400 hover:text-indigo-300 transition-colors"
-                                                        title="Copy company ID"
-                                                    >
-                                                        <Copy className="w-3.5 h-3.5" />
-                                                    </button>
+                                            {/* Separate Company ID box only for platforms that don't embed it */}
+                                            {!needsCompanyIdInUrl(integration.id) && integration.id !== 'email_parser' && (
+                                                <div className="bg-black/30 rounded-xl p-3">
+                                                    <div className="flex items-center justify-between mb-1.5">
+                                                        <span className="text-xs text-gray-400 dark:text-slate-500 font-medium uppercase tracking-wide">Company ID</span>
+                                                        <button
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(user.companyId);
+                                                                toast.success('Company ID copied');
+                                                            }}
+                                                            className="text-indigo-400 hover:text-indigo-300 transition-colors"
+                                                            title="Copy company ID"
+                                                        >
+                                                            <Copy className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                    <p className="text-xs text-gray-600 dark:text-slate-300 font-mono break-all">
+                                                        {user.companyId}
+                                                    </p>
                                                 </div>
-                                                <p className="text-xs text-gray-600 dark:text-slate-300 font-mono break-all">
-                                                    {user.companyId}
-                                                </p>
-                                            </div>
+                                            )}
 
                                             {/* Show Verify Token for Meta integration */}
                                             {integration.id === 'meta' && (
