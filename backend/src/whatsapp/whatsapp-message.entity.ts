@@ -38,16 +38,16 @@ export class WhatsAppMessage {
     @Column({ type: 'enum', enum: MessageStatus, default: MessageStatus.SENT })
     status: MessageStatus;
 
-    @Column({ nullable: true })
+    @Column({ length: 100, nullable: true })
     whatsappMessageId: string;
 
-    @Column({ type: 'varchar', default: 'text' })
+    @Column({ type: 'varchar', length: 50, default: 'text' })
     messageType: string;
 
-    @Column({ nullable: true })
+    @Column({ length: 150, nullable: true })
     mediaId: string;
 
-    @Column({ nullable: true })
+    @Column({ length: 100, nullable: true })
     mimeType: string;
 
     @Column({ type: 'text', nullable: true })
@@ -62,4 +62,7 @@ export class WhatsAppMessage {
 
     @CreateDateColumn()
     createdAt: Date;
+
+    @Column({ type: 'json', nullable: true })
+    referral: any;
 }

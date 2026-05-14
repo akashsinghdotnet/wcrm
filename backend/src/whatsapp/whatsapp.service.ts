@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WhatsAppConfig } from './whatsapp-config.entity';
@@ -48,12 +48,13 @@ export class WhatsAppService {
 
     async sendMessage(
         companyId: string,
-        leadId: string,
+        leadId: string | null,
         to: string,
         message: string | undefined,
         type: string = 'text',
         mediaId?: string,
         userId?: string,
+        replyToMessageId?: string,
     ): Promise<WhatsAppMessage> {
         this.logger.log(`[WhatsApp] Attempting to send message to ${to} for lead ${leadId} (company: ${companyId})`);
 
@@ -63,7 +64,12 @@ export class WhatsAppService {
             throw new BadRequestException('WhatsApp Business API is not configured for this company');
         }
 
-        this.logger.log(`[WhatsApp] Found config - Phone Number ID: ${config.phoneNumberId.substring(0, 8)}...`);
+        if (config.provider === 'WEB_JS') {
+            this.logger.error(`[WhatsApp] WhatsApp Web provider is no longer supported`);
+            throw new BadRequestException('WhatsApp Web provider is retired. Please switch to official API.');
+        }
+
+        this.logger.log(`[WhatsApp] Found config - Phone Number ID: ${config.phoneNumberId?.substring(0, 8)}...`);
 
         // Format phone number - ensure it has country code
         const phone = this.formatPhone(to);
@@ -81,8 +87,12 @@ export class WhatsAppService {
                 type: type,
             };
 
+            if (replyToMessageId) {
+                payload.context = { message_id: replyToMessageId };
+            }
+
             if (type === 'text') {
-                payload.text = { body: message || '' };
+                payload.text = { body: message || '', preview_url: true };
             } else if (type === 'image') {
                 payload.image = { id: mediaId, caption: message || '' };
             } else if (type === 'document') {
@@ -125,7 +135,7 @@ export class WhatsAppService {
         // Save message to DB regardless of status
         const msg = this.messageRepo.create({
             companyId,
-            leadId,
+            leadId: leadId || undefined,
             direction: MessageDirection.OUTBOUND,
             content: message,
             status,
@@ -138,18 +148,20 @@ export class WhatsAppService {
         await this.messageRepo.save(msg);
 
         // Log activity on lead
-        try {
-            const activity = this.activityRepo.create({
-                leadId,
-                userId,
-                type: ActivityType.WHATSAPP,
-                content: status === MessageStatus.FAILED
-                    ? `WhatsApp message failed to send${message ? `: "${message}"` : ' (Media)'}`
-                    : `WhatsApp message sent${message ? `: "${message}"` : ' (Media)'}`,
-            });
-            await this.activityRepo.save(activity);
-        } catch (err) {
-            this.logger.warn(`Failed to log WhatsApp activity: ${err.message}`);
+        if (leadId) {
+            try {
+                const activity = this.activityRepo.create({
+                    leadId,
+                    userId,
+                    type: ActivityType.WHATSAPP,
+                    content: status === MessageStatus.FAILED
+                        ? `WhatsApp message failed to send${message ? `: "${message}"` : ' (Media)'}`
+                        : `WhatsApp message sent${message ? `: "${message}"` : ' (Media)'}`,
+                });
+                await this.activityRepo.save(activity);
+            } catch (err) {
+                this.logger.warn(`Failed to log WhatsApp activity: ${err.message}`);
+            }
         }
 
         return msg;
@@ -190,18 +202,28 @@ export class WhatsAppService {
         }
     }
 
-    async getGlobalUnreadCount(companyId: string): Promise<{ count: number }> {
-        const count = await this.messageRepo.count({
-            where: {
-                companyId,
-                direction: MessageDirection.INBOUND,
-                status: MessageStatus.DELIVERED,
-            },
-        });
+    async getGlobalUnreadCount(companyId: string, user?: any): Promise<{ count: number }> {
+        const qb = this.messageRepo.createQueryBuilder('msg')
+            .where('msg.companyId = :companyId', { companyId })
+            .andWhere('msg.direction = :direction', { direction: MessageDirection.INBOUND })
+            .andWhere('msg.status = :status', { status: MessageStatus.DELIVERED });
+
+        if (user && user.role === 'staff') {
+            qb.innerJoin(Lead, 'lead', 'msg.leadId = lead.id')
+              .andWhere('lead.assignedTo = :userId', { userId: user.userId });
+        }
+
+        const count = await qb.getCount();
         return { count };
     }
 
-    async getMessages(companyId: string, leadId: string): Promise<WhatsAppMessage[]> {
+    async getMessages(companyId: string, leadId: string, user?: any): Promise<WhatsAppMessage[]> {
+        if (user && user.role === 'staff') {
+            const lead = await this.leadRepo.findOne({ where: { id: leadId, companyId } });
+            if (!lead || lead.assignedTo !== user.userId) {
+                throw new ForbiddenException('You can only view chats for leads assigned to you');
+            }
+        }
         return this.messageRepo.find({
             where: { companyId, leadId },
             order: { createdAt: 'ASC' },
@@ -209,7 +231,13 @@ export class WhatsAppService {
         });
     }
 
-    async markMessagesAsRead(companyId: string, leadId: string): Promise<{ updated: number }> {
+    async markMessagesAsRead(companyId: string, leadId: string, user?: any): Promise<{ updated: number }> {
+        if (user && user.role === 'staff') {
+            const lead = await this.leadRepo.findOne({ where: { id: leadId, companyId } });
+            if (!lead || lead.assignedTo !== user.userId) {
+                throw new ForbiddenException('You can only modify chats for leads assigned to you');
+            }
+        }
         const result = await this.messageRepo.update(
             { companyId, leadId, direction: MessageDirection.INBOUND, status: MessageStatus.DELIVERED },
             { status: MessageStatus.READ },
@@ -217,14 +245,22 @@ export class WhatsAppService {
         return { updated: result.affected || 0 };
     }
 
-    async getConversations(companyId: string) {
+    async getConversations(companyId: string, user?: any) {
         // Get all leads that have WhatsApp messages, with last message info
-        const conversations = await this.messageRepo
+        const qb = this.messageRepo
             .createQueryBuilder('msg')
             .select('msg.leadId', 'leadId')
             .addSelect('MAX(msg.createdAt)', 'lastMessageAt')
             .addSelect('COUNT(msg.id)', 'messageCount')
             .where('msg.companyId = :companyId', { companyId })
+            .andWhere('msg.leadId IS NOT NULL');
+
+        if (user && user.role === 'staff') {
+            qb.innerJoin(Lead, 'lead', 'msg.leadId = lead.id')
+              .andWhere('lead.assignedTo = :userId', { userId: user.userId });
+        }
+
+        const conversations = await qb
             .groupBy('msg.leadId')
             .orderBy('"lastMessageAt"', 'DESC')
             .getRawMany();
@@ -252,7 +288,73 @@ export class WhatsAppService {
             });
         }
 
+        // Ensuring sorting is explicitly applied based on the fetched last message dates
+        result.sort((a, b) => {
+            const dateA = a.lastMessage ? new Date(a.lastMessage.createdAt).getTime() : 0;
+            const dateB = b.lastMessage ? new Date(b.lastMessage.createdAt).getTime() : 0;
+            return dateB - dateA; // Descending order
+        });
+
         return result;
+    }
+
+    async deleteChatHistory(companyId: string, leadId: string): Promise<{ deleted: number }> {
+        const result = await this.messageRepo.delete({ companyId, leadId });
+        return { deleted: result.affected || 0 };
+    }
+
+    async getLinkPreview(url: string) {
+        const decodeHtml = (text: string) => {
+            if (!text) return text;
+            return text
+                .replace(/&quot;/g, '"')
+                .replace(/&amp;/g, '&')
+                .replace(/&#x([0-9A-Fa-f]+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 16)))
+                .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&apos;/g, "'");
+        };
+
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 4000);
+            
+            const req = await fetch(url, { 
+                signal: controller.signal,
+                headers: { 
+                    'User-Agent': 'WhatsApp/2.21.19.21 A',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+                }
+            });
+            clearTimeout(timeoutId);
+            
+            if (!req.ok) throw new Error('Bad status');
+            const html = await req.text();
+            
+            // Regex parsing HTML tags safely
+            const titleMatch = html.match(/<meta\s+property="og:title"\s+content="([^"]+)"/i) || html.match(/<title[^>]*>([^<]+)<\/title>/i);
+            const descMatch = html.match(/<meta\s+property="og:description"\s+content="([^"]+)"/i) || html.match(/<meta\s+name="description"\s+content="([^"]+)"/i);
+            const imgMatch = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i);
+            const domainMatch = url.match(/:\/\/(?:www\.)?([^\/]+)/);
+
+            return {
+                title: titleMatch ? decodeHtml(titleMatch[1]).trim() : (domainMatch ? domainMatch[1] : 'External Link'),
+                description: descMatch ? decodeHtml(descMatch[1]).trim() : '',
+                image: imgMatch ? (decodeHtml(imgMatch[1]).startsWith('/') ? new URL(decodeHtml(imgMatch[1]), url).toString() : decodeHtml(imgMatch[1])) : null,
+                domain: domainMatch ? domainMatch[1] : url,
+                url
+            };
+        } catch(e) {
+            const domainMatch = url.match(/:\/\/(?:www\.)?([^\/]+)/);
+            return { 
+                title: domainMatch ? domainMatch[1] : 'External Link', 
+                description: '', 
+                image: null, 
+                domain: domainMatch ? domainMatch[1] : url,
+                url 
+            };
+        }
     }
 
     async handleIncomingWebhook(body: any): Promise<void> {
@@ -262,9 +364,30 @@ export class WhatsAppService {
         const changes = entry?.changes?.[0];
         const value = changes?.value;
 
+        // Process Status Updates (Read Receipts)
+        if (value?.statuses?.length) {
+            for (const statusObj of value.statuses) {
+                const messageId = statusObj.id;
+                const statusStr = statusObj.status; // 'sent', 'delivered', 'read', 'failed'
+                let newStatus;
+                
+                if (statusStr === 'delivered') newStatus = MessageStatus.DELIVERED;
+                else if (statusStr === 'read') newStatus = MessageStatus.READ;
+                else if (statusStr === 'failed') newStatus = MessageStatus.FAILED;
+                
+                if (messageId && newStatus) {
+                    await this.messageRepo.update(
+                        { whatsappMessageId: messageId },
+                        { status: newStatus }
+                    );
+                    this.logger.log(`[WhatsApp Webhook] Updated message ${messageId} to status: ${newStatus}`);
+                }
+            }
+        }
+
+        // Process Incoming Messages
         if (!value?.messages?.length) {
-            this.logger.log(`[WhatsApp Webhook] No messages in payload, skipping`);
-            return;
+            return; // Complete processing if payload was just status updates
         }
 
         const contacts = value.contacts || [];
@@ -375,6 +498,7 @@ export class WhatsAppService {
                 messageType,
                 mediaId,
                 mimeType,
+                referral: isFromAd ? referral : undefined,
             });
             await this.messageRepo.save(message);
             this.logger.log(`[WhatsApp Webhook] ✓ Saved incoming message (ID: ${message.id}) for lead ${lead.id} in company ${companyId}`);

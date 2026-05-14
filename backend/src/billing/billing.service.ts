@@ -155,98 +155,15 @@ export class BillingService {
     }
 
     async getSubscriptionHistory(companyId: string): Promise<any[]> {
-        const company = await this.companyRepo.findOne({
-            where: { id: companyId },
-            relations: ['plan'],
-        });
-
-        if (!company) return [];
-
-        // Fetch super admin invoice settings for branding and prefix
-        const superAdminSettings = await this.invoiceSettingsRepo.findOne({ where: { companyId: null as any } });
-        const brandName = superAdminSettings?.accountHolderName || 'CRM Subscription';
-        // Parse prefix: e.g. "INV-0000" → base="INV-", padLength=4
-        const rawPrefix = superAdminSettings?.prefix || 'INV-0000';
-        const trailingZeros = rawPrefix.match(/0+$/);
-        const padLength = trailingZeros ? trailingZeros[0].length + 1 : 4;
-        const basePrefix = trailingZeros ? rawPrefix.replace(/0+$/, '') : rawPrefix;
-
-        const invoices: any[] = [];
-
-        // 1. Generate subscription invoices ONLY if plan exists
-        if (company.plan) {
-            const startDate = new Date(company.createdAt);
-            const now = new Date();
-            const price = company.subscriptionPeriod === 'yearly' ? company.plan.priceYearly : company.plan.priceMonthly;
-            let currentDate = new Date(startDate);
-
-            let counter = 1;
-
-            // Determine actual status based on subscription
-            const isPending = company.subscriptionStatus === 'pending_payment';
-
-            while (currentDate <= now || counter === 1) {
-                // First invoice: reflect actual subscription status
-                // Future invoices (if any): would be paid since subscription was active
-                const invoiceStatus = (counter === 1 && isPending) ? 'pending' : 'paid';
-
-                invoices.push({
-                    id: `sub-${company.id}-${counter}`,
-                    date: new Date(currentDate),
-                    amount: price,
-                    description: `${brandName} ${company.plan.name} (${company.subscriptionPeriod})`,
-                    period: company.subscriptionPeriod === 'yearly'
-                        ? `${currentDate.getFullYear()} - ${currentDate.getFullYear() + 1}`
-                        : currentDate.toLocaleString('default', { month: 'long', year: 'numeric' }),
-                    status: invoiceStatus,
-                    invoiceNumber: `${basePrefix}${counter.toString().padStart(padLength, '0')}`,
-                });
-
-                // Increment date
-                if (company.subscriptionPeriod === 'yearly') {
-                    currentDate.setFullYear(currentDate.getFullYear() + 1);
-                } else {
-                    currentDate.setMonth(currentDate.getMonth() + 1);
-                }
-
-                // Break if we've gone past 'now' AND we've done the first one
-                if (currentDate > now && counter >= 1) break;
-
-                counter++;
-            }
-        }
-
-        // 2. Get manual system invoices for this company (ALWAYS fetch this)
-        const systemInvoices = await this.invoiceRepo.find({
-            where: {
-                isSystem: true,
-                targetCompanyId: companyId
-            },
-            order: { invoiceDate: 'DESC' }
-        });
-
-        const manualInvoices = systemInvoices.map(inv => ({
-            id: inv.id,
-            date: inv.invoiceDate || inv.createdAt,
-            amount: inv.amount,
-            description: Array.isArray(inv.items) && inv.items.length > 0 ? inv.items[0].description : 'System Invoice',
-            period: inv.month || 'N/A',
-            status: inv.status,
-            invoiceNumber: inv.invoiceNumber,
-            isManual: true,
-            items: inv.items,
-            subtotal: inv.subtotal,
-            tax: inv.tax
-        }));
-
-        const all = [...invoices, ...manualInvoices];
-        return all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const globalHistory = await this.getGlobalBillingHistory();
+        return globalHistory.filter(inv => inv.companyId === companyId);
     }
 
     async getGlobalBillingHistory(): Promise<any[]> {
         // 1. Get virtual subscription invoices
         const companies = await this.companyRepo.find({
             relations: ['plan'],
+            order: { createdAt: 'ASC' }
         });
 
         // Fetch super admin invoice settings for branding and prefix
@@ -276,11 +193,12 @@ export class BillingService {
 
                 allInvoices.push({
                     id: `sub-${company.id}-${counter}`,
+                    companyId: company.id,
                     companyName: company.companyName,
                     planName: company.plan.name,
                     date: new Date(currentDate),
                     amount: price,
-                    description: `${brandName} ${company.plan.name} (${company.subscriptionPeriod})`,
+                    description: `MagnetCRM ${company.plan.name} (${company.subscriptionPeriod})`,
                     period: company.subscriptionPeriod === 'yearly'
                         ? `${currentDate.getFullYear()} - ${currentDate.getFullYear() + 1}`
                         : currentDate.toLocaleString('default', { month: 'long', year: 'numeric' }),
@@ -308,6 +226,7 @@ export class BillingService {
 
         const realInvoices = systemInvoices.map(inv => ({
             id: inv.id,
+            companyId: inv.targetCompanyId,
             companyName: inv.targetCompany?.companyName || 'Unknown',
             planName: 'Manual Invoice',
             date: inv.invoiceDate || inv.createdAt,

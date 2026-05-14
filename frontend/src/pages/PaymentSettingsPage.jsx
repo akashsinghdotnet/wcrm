@@ -5,7 +5,7 @@ import { CreditCard, Save, Eye, EyeOff, IndianRupee, Globe, Building2, CheckCirc
 
 const defaultSettings = {
     razorpay: { enabled: false, keyId: '', keySecret: '' },
-    paypal: { enabled: false, clientId: '', secret: '' },
+    paypal: { enabled: false, clientId: '', secret: '', mode: 'live' },
     bankTransfer: {
         enabled: false,
         bankName: '',
@@ -207,6 +207,26 @@ export default function PaymentSettingsPage() {
 
                     {settings.paypal.enabled && (
                         <div className="space-y-3 mt-4 pt-4 border-t border-gray-200 dark:border-slate-800">
+                            <div className="flex items-center gap-4 mb-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        checked={settings.paypal.mode === 'sandbox'}
+                                        onChange={() => updateGateway('paypal', 'mode', 'sandbox')}
+                                        className="w-4 h-4 text-sky-600 focus:ring-sky-500 border-gray-300"
+                                    />
+                                    <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Sandbox (Testing)</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        checked={settings.paypal.mode === 'live'}
+                                        onChange={() => updateGateway('paypal', 'mode', 'live')}
+                                        className="w-4 h-4 text-sky-600 focus:ring-sky-500 border-gray-300"
+                                    />
+                                    <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Live (Production)</span>
+                                </label>
+                            </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Client ID</label>
                                 <input

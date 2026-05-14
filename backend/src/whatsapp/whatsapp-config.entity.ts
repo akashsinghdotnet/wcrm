@@ -8,10 +8,10 @@ export class WhatsAppConfig {
     @Column({ unique: true })
     companyId: string;
 
-    @Column()
+    @Column({ nullable: true })
     phoneNumberId: string;
 
-    @Column({ type: 'text' })
+    @Column({ type: 'text', nullable: true })
     accessToken: string;
 
     @Column({ nullable: true })
@@ -31,6 +31,15 @@ export class WhatsAppConfig {
 
     @Column({ default: 0 })
     autoReplyDelaySec: number;
+
+    @Column({ default: 'META' })
+    provider: 'META' | 'WEB_JS';
+
+    @Column({ nullable: true })
+    webJsStatus: string;
+
+    @Column({ nullable: true })
+    webJsPhoneNumber: string;
 
     @CreateDateColumn()
     createdAt: Date;

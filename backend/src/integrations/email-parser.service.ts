@@ -49,7 +49,7 @@ export class EmailParserService {
             secure: tls !== 'false',
             auth: {
                 user: username,
-                pass: password
+                pass: password?.replace(/\s+/g, ''),
             },
             logger: false
         });
@@ -74,7 +74,7 @@ export class EmailParserService {
             secure: tls !== 'false',
             auth: {
                 user: username,
-                pass: password
+                pass: password?.replace(/\s+/g, ''),
             },
             logger: false
         });
@@ -85,8 +85,15 @@ export class EmailParserService {
             // Lock INBOX
             const lock = await client.getMailboxLock('INBOX');
             try {
-                // Fetch all UNSEEN emails
-                const messages = client.fetch({ seen: false }, { source: true, uid: true });
+                // Search for unseen messages and batch them to prevent memory crashes
+                const unseenSeq = await client.search({ seen: false });
+                if (!unseenSeq || unseenSeq.length === 0) {
+                    return; // Nothing to process
+                }
+
+                // Process up to 50 emails max per 5-minute cron sweep to maintain server health
+                const batch = unseenSeq.slice(-50); // Get the 50 newest unseen
+                const messages = client.fetch(batch, { source: true, uid: true });
                 let importCount = 0;
 
                 for await (const message of messages) {
@@ -148,60 +155,87 @@ export class EmailParserService {
     }
 
     private extractLeads(content: string): Array<{name: string, phone: string, email: string, source: string, notes?: string}> {
-        const text = content.replace(/<[^>]*>?/gm, ' ').replace(/\\s+/g, ' ');
+        // Strip HTML tags and try to decode if it is URL-encoded (like IndiaMART templates)
+        let text = content;
+        try {
+            if (text.includes('%20') || text.includes('%0A')) {
+                text = decodeURIComponent(text);
+            }
+        } catch(e) {}
+        
+        text = text.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ');
         const leads: Array<{name: string, phone: string, email: string, source: string, notes?: string}> = [];
 
-        // TradeIndia Buy Lead parser heuristic
+        // ── TradeIndia Buy Lead parser ────────────────────────────────────────
         if (text.includes('TradeIndia') || text.toLowerCase().includes('buyer inquiry')) {
-            const nameMatch = text.match(/Buyer Name:?\\s*([A-Za-z\\s]+)(?:Company|Email|Mobile|City)/i);
-            const mobileMatch = text.match(/(?:Mobile(?:\\s*No)?|Phone):?\\s*([\\+\\d\\-\\s]{10,15})/i);
-            const emailMatch = text.match(/Email(?:\\s*Id)?:?\\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})/i);
-            const reqMatch = text.match(/Product Requirements?:?\\s*(.+?)(?:Quantity|Expected|View)/i);
+            const nameMatch  = text.match(/Buyer Name:?\s*([A-Za-z\s]+?)(?:Company|Email|Mobile|City)/i);
+            const mobileMatch = text.match(/(?:Mobile(?:\s*No)?|Phone):?\s*([\+\d\-\s]{10,15})/i);
+            const emailMatch  = text.match(/Email(?:\s*Id)?:?\s*([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/i);
+            const reqMatch    = text.match(/Product Requirements?:?\s*(.+?)(?:Quantity|Expected|View)/i);
 
             if (mobileMatch || emailMatch) {
                 leads.push({
-                    name: nameMatch ? nameMatch[1].trim() : 'TradeIndia Buyer',
-                    phone: mobileMatch ? mobileMatch[1].replace(/\\D/g, '') : '',
-                    email: emailMatch ? emailMatch[1].trim() : '',
+                    name:   nameMatch  ? nameMatch[1].trim()                      : 'TradeIndia Buyer',
+                    phone:  mobileMatch ? mobileMatch[1].replace(/\D/g, '')       : '',
+                    email:  emailMatch  ? emailMatch[1].trim()                     : '',
                     source: LeadSource.TRADEINDIA,
-                    notes: reqMatch ? `Buy Lead: ${reqMatch[1].trim()}` : 'Imported via Email Parser'
-                });
-            }
-        } 
-        
-        // JustDial lead parser heuristic
-        if (text.includes('Justdial') || text.includes('Just Dial')) {
-            const nameMatch = text.match(/Name:?\\s*([A-Za-z\\s]+)(?:Mobile|Phone|Email|City)/i);
-            const mobileMatch = text.match(/(?:Mobile(?:\\s*No)?|Phone):?\\s*([\\+\\d\\-\\s]{10,15})/i);
-            const emailMatch = text.match(/Email(?:\\s*Id)?:?\\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})/i);
-            const reqMatch = text.match(/Enquiry Details:?\\s*(.+?)(?:Regards|Thanks)/i);
-
-            if (mobileMatch || emailMatch) {
-                leads.push({
-                    name: nameMatch ? nameMatch[1].trim() : 'JustDial User',
-                    phone: mobileMatch ? mobileMatch[1].replace(/\\D/g, '') : '',
-                    email: emailMatch ? emailMatch[1].trim() : '',
-                    source: LeadSource.JUSTDIAL,
-                    notes: reqMatch ? `Requirement: ${reqMatch[1].trim()}` : 'Imported via Email Parser'
+                    notes:  reqMatch   ? `[Buy Now Lead] Buy Lead: ${reqMatch[1].trim()}`        : '[Buy Now Lead] Imported via Email Parser',
                 });
             }
         }
-        
-        // Generic fallback parser (if none matched but there's an obvious phone number and name in context)
+
+        // ── JustDial lead parser ──────────────────────────────────────────────
+        if (text.includes('Justdial') || text.includes('Just Dial') || text.includes('JustDial')) {
+            const nameMatch   = text.match(/Name:?\s*([A-Za-z\s]+?)(?:Mobile|Phone|Email|City)/i);
+            const mobileMatch = text.match(/(?:Mobile(?:\s*No)?|Phone):?\s*([\+\d\-\s]{10,15})/i);
+            const emailMatch  = text.match(/Email(?:\s*Id)?:?\s*([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/i);
+            const reqMatch    = text.match(/Enquiry Details:?\s*(.+?)(?:Regards|Thanks)/i);
+
+            if (mobileMatch || emailMatch) {
+                leads.push({
+                    name:   nameMatch   ? nameMatch[1].trim()                     : 'JustDial User',
+                    phone:  mobileMatch ? mobileMatch[1].replace(/\D/g, '')      : '',
+                    email:  emailMatch  ? emailMatch[1].trim()                    : '',
+                    source: LeadSource.JUSTDIAL,
+                    notes:  reqMatch    ? `[Buy Now Lead] Requirement: ${reqMatch[1].trim()}`   : '[Buy Now Lead] Imported via Email Parser',
+                });
+            }
+        }
+
+        // ── IndiaMART lead parser ─────────────────────────────────────────────
+        if (text.includes('IndiaMART') || text.includes('indiamart') || text.toLowerCase().includes('indiamart buyer')) {
+            const nameMatch   = text.match(/Name:?\s*([A-Za-z\s]+?)(?:Mobile|Phone|Email|Company|City)/i) || text.match(/Buyer(?: Name)?:?\s*([A-Za-z\s]+?)(?:Mobile|Phone|Email|Company|City)/i);
+            const mobileMatch = text.match(/(?:Mobile|Phone|Mob)(?:\s*No)?[:\-\s]+([\+\d\-\s]{10,15})/i);
+            const emailMatch  = text.match(/Email(?:\s*Id)?:?\s*([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/i);
+            const reqMatch    = text.match(/(?:Requirement|Message|Enquiry|Query|Product Name)[:\-\s]+(.+?)(?:Regards|Thanks|View|Reply)/i);
+
+            if (mobileMatch || emailMatch) {
+                leads.push({
+                    name:   nameMatch   ? nameMatch[1].trim()                     : 'IndiaMART Buyer',
+                    phone:  mobileMatch ? mobileMatch[1].replace(/\D/g, '')      : '',
+                    email:  emailMatch  ? emailMatch[1].trim()                    : '',
+                    source: LeadSource.INDIAMART,
+                    notes:  reqMatch    ? `[Buy Now Lead] Enquiry: ${reqMatch[1].trim()}` : '[Buy Now Lead] Imported via Email Parser',
+                });
+            }
+        }
+
+        // ── Generic fallback ──────────────────────────────────────────────────
         if (leads.length === 0) {
-            const genericMobile = text.match(/(?:Mobile(?:\\s*No)?|Phone|Contact):?\\s*([\\+\\d\\-\\s]{10,15})/i);
-            const genericEmail = text.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})/i);
-            
+            const genericMobile = text.match(/(?:Mobile(?:\s*No)?|Phone|Contact):?\s*([\+\d\-\s]{10,15})/i);
+            const genericEmail  = text.match(/([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/i);
+
             if (genericMobile || genericEmail) {
                 leads.push({
-                    name: 'Email Lead',
-                    phone: genericMobile ? genericMobile[1].replace(/\\D/g, '') : '',
-                    email: genericEmail ? genericEmail[1].trim() : '',
-                    source: LeadSource.WEBSITE, // or a new EMAIL source
-                    notes: 'Auto-parsed from unrecognised email format'
+                    name:   'Email Lead',
+                    phone:  genericMobile ? genericMobile[1].replace(/\D/g, '') : '',
+                    email:  genericEmail  ? genericEmail[1].trim()              : '',
+                    source: LeadSource.WEBSITE,
+                    notes:  'Auto-parsed from unrecognised email format',
                 });
             }
         }
+
         return leads;
     }
 }

@@ -1,19 +1,34 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { MessageCircle, Search, Phone, Clock, ArrowDownLeft, ArrowUpRight, Users, Send, FileType } from 'lucide-react';
+import { MessageCircle, Search, Phone, Clock, ArrowDownLeft, ArrowUpRight, Users, Send as SendIcon, FileType, X } from 'lucide-react';
 import WhatsAppContactsPage from './WhatsAppContactsPage';
 import WhatsAppBroadcastPage from './WhatsAppBroadcastPage';
 import WhatsAppTemplatesPage from './WhatsAppTemplatesPage';
 
 export default function WhatsAppChatsPage() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [activeTab, setActiveTab] = useState('chats');
     const [conversations, setConversations] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedLead, setSelectedLead] = useState(null);
     const [search, setSearch] = useState('');
+
+    // Direct Message State
+    const [dmModal, setDmModal] = useState(null);
+    const [dmMsg, setDmMsg] = useState('');
+    const [dmLoading, setDmLoading] = useState(false);
+
+    useEffect(() => {
+        if (location.state?.prefillPhone) {
+            setDmModal({
+                phone: location.state.prefillPhone,
+                name: location.state.prefillName || 'Guest'
+            });
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     useEffect(() => {
         if (activeTab === 'chats') {
@@ -74,12 +89,32 @@ export default function WhatsAppChatsPage() {
     const tabs = [
         { id: 'chats', label: 'Chats', icon: MessageCircle },
         { id: 'contacts', label: 'Contacts', icon: Users },
-        { id: 'broadcasts', label: 'Broadcasts', icon: Send },
+        { id: 'broadcasts', label: 'Broadcasts', icon: SendIcon },
         { id: 'templates', label: 'Templates', icon: FileType },
     ];
 
+    const handleSendDirectMessage = async (e) => {
+        e.preventDefault();
+        if (!dmMsg) return toast.error('Message required');
+        setDmLoading(true);
+        try {
+            await api.post('/whatsapp/send', {
+                to: dmModal.phone.replace(/[^0-9]/g, ''),
+                message: dmMsg,
+                type: 'text'
+            });
+            toast.success('WhatsApp message sent successfully');
+            setDmModal(null);
+            setDmMsg('');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to send WhatsApp message');
+        } finally {
+            setDmLoading(false);
+        }
+    };
+
     return (
-        <div className="space-y-6 max-w-7xl">
+        <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
@@ -224,6 +259,46 @@ export default function WhatsAppChatsPage() {
             {activeTab === 'contacts' && <WhatsAppContactsPage />}
             {activeTab === 'broadcasts' && <WhatsAppBroadcastPage />}
             {activeTab === 'templates' && <WhatsAppTemplatesPage />}
+
+            {/* Direct Message Modal */}
+            {dmModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-fade-in-up">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-slate-800">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <MessageCircle className="w-5 h-5 text-emerald-500" /> Send Direct WhatsApp
+                                </h3>
+                                <p className="text-sm text-gray-500 mt-1">To: {dmModal.name} ({dmModal.phone})</p>
+                            </div>
+                            <button onClick={() => setDmModal(null)} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSendDirectMessage} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Message</label>
+                                <textarea
+                                    required
+                                    rows={4}
+                                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none resize-none"
+                                    value={dmMsg}
+                                    onChange={(e) => setDmMsg(e.target.value)}
+                                    placeholder="Type your message here..."
+                                />
+                            </div>
+                            <div className="flex gap-3 justify-end mt-6">
+                                <button type="button" onClick={() => setDmModal(null)} className="px-5 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                    Cancel
+                                </button>
+                                <button type="submit" disabled={dmLoading} className="px-5 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg transition-colors">
+                                    {dmLoading ? 'Sending...' : 'Send Message'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

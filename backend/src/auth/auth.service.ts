@@ -72,6 +72,7 @@ export class AuthService {
 
         const isBankTransfer = dto.paymentMethod === 'bank_transfer';
         const isRazorpay = dto.paymentMethod === 'razorpay';
+        const isPayPal = dto.paymentMethod === 'paypal';
 
         // 3. Create Company — ALWAYS pending_payment until payment is verified
         const addressParts = [dto.streetAddress, dto.city, dto.state, dto.postcode, dto.country].filter(Boolean);
@@ -123,12 +124,63 @@ export class AuthService {
         const gstAmount = Math.round(baseAmount * 18) / 100;
         const totalAmount = Math.round((baseAmount + gstAmount) * 100) / 100; // in rupees
 
+        if (totalAmount === 0) {
+            // Activate immediately
+            const renewalDate = new Date();
+            if (dto.billingPeriod === 'yearly') {
+                renewalDate.setFullYear(renewalDate.getFullYear() + 1);
+            } else {
+                renewalDate.setMonth(renewalDate.getMonth() + 1);
+            }
+
+            await this.companiesService.update(company.id, {
+                subscriptionStatus: 'active',
+                renewalDate: renewalDate.toISOString(),
+            });
+
+            // Send purchase confirmation/welcome email
+            try {
+                await this.emailService.sendPurchaseConfirmation(
+                    user.email,
+                    dto.firstName,
+                    company.companyName,
+                    plan.name,
+                    totalAmount
+                );
+                await this.emailService.sendWelcomeEmail(
+                    user.email,
+                    dto.firstName,
+                    password,
+                    user.role,
+                    company.companyName
+                );
+            } catch (err) {
+                this.logger.error(`Failed to send welcome email: ${err.message}`);
+            }
+
+            return {
+                status: 'active',
+                message: 'Your free plan has been activated successfully! Please check your email for login details.',
+            };
+        }
+
         if (isBankTransfer) {
             // Send bank details email
             try {
-                await this.sendBankDetailsEmail(
+                const paymentSettingsRaw = await this.settingsService.getValue('payment_settings');
+                let bankDetails = { bankName: '', accountHolder: '', accountNumber: '', ifscCode: '', branch: '' };
+                if (paymentSettingsRaw) {
+                    try {
+                        const parsed = JSON.parse(paymentSettingsRaw);
+                        if (parsed.bankTransfer) {
+                            bankDetails = parsed.bankTransfer;
+                        }
+                    } catch { }
+                }
+
+                await this.emailService.sendBankDetailsEmail(
                     user.email, dto.firstName, company.companyName,
-                    plan.name, baseAmount, dto.billingPeriod,
+                    plan.name, baseAmount, dto.billingPeriod, bankDetails
                 );
             } catch (err) {
                 this.logger.error(`Failed to send bank details email: ${err.message}`);
@@ -184,7 +236,99 @@ export class AuthService {
             }
         }
 
-        // PayPal or other — for now, same as bank transfer
+        if (isPayPal) {
+            const paymentSettingsRaw = await this.settingsService.getValue('payment_settings');
+            let paypalSettings = { clientId: '', secret: '', mode: 'sandbox' };
+            if (paymentSettingsRaw) {
+                try {
+                    const parsed = JSON.parse(paymentSettingsRaw);
+                    if (parsed.paypal) paypalSettings = parsed.paypal;
+                } catch { }
+            }
+
+            if (!paypalSettings.clientId || !paypalSettings.secret) {
+                throw new BadRequestException('PayPal is not configured. Please contact support.');
+            }
+
+            try {
+                const isSandbox = paypalSettings.mode !== 'live';
+                const baseUrl = isSandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
+
+                const auth = Buffer.from(`${paypalSettings.clientId}:${paypalSettings.secret}`).toString('base64');
+                const tokenRes = await fetch(`${baseUrl}/v1/oauth2/token`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Basic ${auth}`,
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'grant_type=client_credentials'
+                });
+                
+                if (!tokenRes.ok) {
+                    const errText = await tokenRes.text();
+                    this.logger.error(`PayPal Token Error: ${errText}`);
+                    throw new Error('Invalid PayPal Credentials');
+                }
+                const tokenData = await tokenRes.json();
+
+                // Fetch Live Exchange Rate (INR to USD)
+                let usdAmount = (totalAmount / 84).toFixed(2); // Initial fallback
+                try {
+                    const rateRes = await fetch('https://open.er-api.com/v6/latest/INR');
+                    if (rateRes.ok) {
+                        const rateData = await rateRes.json();
+                        if (rateData?.rates?.USD) {
+                            usdAmount = (totalAmount * rateData.rates.USD).toFixed(2);
+                            this.logger.log(`Live conversion: ₹${totalAmount} INR -> $${usdAmount} USD (Rate: ${rateData.rates.USD})`);
+                        }
+                    }
+                } catch (err) {
+                    this.logger.warn(`Failed to fetch live exchange rate, using fallback. Error: ${err.message}`);
+                }
+
+                const orderRes = await fetch(`${baseUrl}/v2/checkout/orders`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${tokenData.access_token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        intent: 'CAPTURE',
+                        purchase_units: [{
+                            reference_id: `order_${company.id.substring(0, 8)}`,
+                            amount: {
+                                currency_code: 'USD',
+                                value: usdAmount
+                            },
+                            description: `${plan.name} Plan - ${dto.billingPeriod}`
+                        }]
+                    })
+                });
+
+                if (!orderRes.ok) {
+                    const errText = await orderRes.text();
+                    this.logger.error(`PayPal Order Error: ${errText}`);
+                    throw new Error('Failed to configure PayPal order payload');
+                }
+                const orderData = await orderRes.json();
+
+                return {
+                    status: 'paypal_order_created',
+                    orderId: orderData.id,
+                    clientId: paypalSettings.clientId,
+                    currency: 'USD',
+                    amount: usdAmount,
+                    companyId: company.id,
+                    userId: user.id,
+                    couponCode: appliedCouponCode || undefined,
+                };
+            } catch (err) {
+                this.logger.error(`PayPal order creation failed: ${err.message}`);
+                throw new BadRequestException(`PayPal Error: ${err.message}`);
+            }
+        }
+
+        // Fallback for unknown methods
         return {
             status: 'pending_payment',
             message: 'Order placed. Your CRM will be activated once payment is verified.',
@@ -248,91 +392,129 @@ export class AuthService {
         // 4. Send purchase confirmation email (non-blocking)
         const plan = company.plan || (company.planId ? await this.plansService.findOne(company.planId) : null);
         const amount = company.subscriptionPeriod === 'yearly' ? plan?.priceYearly : plan?.priceMonthly;
-
-        this.emailService.sendPurchaseConfirmation(
-            user.email,
-            user.firstName || user.email,
-            company.companyName,
-            plan?.name || 'Subscription',
-            Number(amount || 0),
-        ).catch(err => this.logger.error(`Failed to send purchase confirmation: ${err.message}`));
-
-        // Increment coupon usage after successful payment
-        if (data.couponCode) {
-            this.couponsService.incrementUsage(data.couponCode)
-                .catch(err => this.logger.error(`Failed to increment coupon usage: ${err.message}`));
+        try {
+            await this.emailService.sendPurchaseConfirmation(
+                user.email,
+                user.firstName || user.email,
+                company.companyName,
+                plan ? plan.name : 'Subscription',
+                Number(amount || 0)
+            );
+        } catch (err) {
+            this.logger.error(`Failed to send purchase confirmation email: ${err.message}`);
         }
 
         return {
+            message: 'Payment verified and account activated',
             access_token: this.jwtService.sign(payload),
-            user: { ...user, password: undefined },
+            user: { ...user, companyId: user.companyId },
         };
     }
 
-    private async sendBankDetailsEmail(
-        to: string,
-        userName: string,
-        companyName: string,
-        planName: string,
-        amount: number,
-        billingPeriod: string,
-    ) {
-        // Fetch bank details from settings
+    async verifyPayPalPayment(data: {
+        paypal_order_id: string;
+        companyId: string;
+        userId: string;
+        couponCode?: string;
+    }) {
         const paymentSettingsRaw = await this.settingsService.getValue('payment_settings');
-        let bankDetails = { bankName: '', accountHolder: '', accountNumber: '', ifscCode: '', branch: '' };
-        if (paymentSettingsRaw) {
-            try {
-                const parsed = JSON.parse(paymentSettingsRaw);
-                if (parsed.bankTransfer) {
-                    bankDetails = parsed.bankTransfer;
-                }
-            } catch { }
+        if (!paymentSettingsRaw) throw new BadRequestException('Payment settings not configured');
+
+        let paypalSettings = { clientId: '', secret: '', mode: 'sandbox' };
+        try {
+            const parsed = JSON.parse(paymentSettingsRaw);
+            if (parsed.paypal) paypalSettings = parsed.paypal;
+        } catch {
+            throw new BadRequestException('Invalid payment settings');
         }
 
-        const gstAmount = (amount * 18 / 100).toFixed(2);
-        const totalAmount = (amount * 1.18).toFixed(2);
+        if (!paypalSettings.clientId || !paypalSettings.secret) {
+            throw new BadRequestException('PayPal is not properly configured');
+        }
 
-        const subject = 'Order Placed - Bank Transfer Details - Magnet CRM';
-        const html = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <h1 style="color: #4F46E5;">Magnet CRM</h1>
-                </div>
-                <div style="color: #333333;">
-                    <p>Hi <strong>${userName}</strong>,</p>
-                    <p>Thank you for choosing Magnet CRM! Your order has been placed successfully.</p>
-                    <p>Please complete the payment via bank transfer to activate your CRM account for <strong>${companyName}</strong>.</p>
+        const isSandbox = paypalSettings.mode !== 'live';
+        const baseUrl = isSandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
 
-                    <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                        <h3 style="margin-top: 0; color: #111827;">Order Details</h3>
-                        <p style="margin: 5px 0;"><strong>Plan:</strong> ${planName}</p>
-                        <p style="margin: 5px 0;"><strong>Billing:</strong> ${billingPeriod === 'yearly' ? 'Yearly' : 'Monthly'}</p>
-                        <p style="margin: 5px 0;"><strong>Subtotal:</strong> ₹${Number(amount).toLocaleString('en-IN')}</p>
-                        <p style="margin: 5px 0;"><strong>GST (18%):</strong> ₹${Number(gstAmount).toLocaleString('en-IN')}</p>
-                        <p style="margin: 5px 0; font-size: 16px;"><strong>Total Amount:</strong> <span style="color: #059669; font-weight: bold;">₹${Number(totalAmount).toLocaleString('en-IN')}</span></p>
-                    </div>
+        // 1. Capture the payment
+        try {
+            const auth = Buffer.from(`${paypalSettings.clientId}:${paypalSettings.secret}`).toString('base64');
+            const tokenRes = await fetch(`${baseUrl}/v1/oauth2/token`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Basic ${auth}`,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'grant_type=client_credentials'
+            });
+            const tokenData = await tokenRes.json();
 
-                    <div style="background-color: #ecfdf5; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #d1fae5;">
-                        <h3 style="margin-top: 0; color: #065f46;">Bank Account Details</h3>
-                        ${bankDetails.bankName ? `<p style="margin: 5px 0;"><strong>Bank:</strong> ${bankDetails.bankName}</p>` : ''}
-                        ${bankDetails.accountHolder ? `<p style="margin: 5px 0;"><strong>Account Holder:</strong> ${bankDetails.accountHolder}</p>` : ''}
-                        ${bankDetails.accountNumber ? `<p style="margin: 5px 0;"><strong>Account Number:</strong> ${bankDetails.accountNumber}</p>` : ''}
-                        ${bankDetails.ifscCode ? `<p style="margin: 5px 0;"><strong>IFSC Code:</strong> ${bankDetails.ifscCode}</p>` : ''}
-                        ${bankDetails.branch ? `<p style="margin: 5px 0;"><strong>Branch:</strong> ${bankDetails.branch}</p>` : ''}
-                    </div>
+            const captureRes = await fetch(`${baseUrl}/v2/checkout/orders/${data.paypal_order_id}/capture`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${tokenData.access_token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
 
-                    <p style="color: #dc2626; font-size: 14px;"><strong>Important:</strong> Please transfer the exact amount of <strong>₹${Number(totalAmount).toLocaleString('en-IN')}</strong> and share the payment receipt/screenshot for faster verification.</p>
+            if (!captureRes.ok) {
+                const errorData = await captureRes.json();
+                throw new Error(errorData.message || 'Capture failed');
+            }
+            
+            const captureData = await captureRes.json();
+            if (captureData.status !== 'COMPLETED') {
+                throw new Error('Payment not completed');
+            }
+        } catch (err) {
+            this.logger.error(`PayPal capture failed: ${err.message}`);
+            throw new BadRequestException('Payment verification failed. Payment was not completed.');
+        }
 
-                    <p>Once we verify your payment, your CRM account will be activated and you'll receive a confirmation email with login details.</p>
-                </div>
-                <div style="margin-top: 40px; border-top: 1px solid #e0e0e0; padding-top: 20px; text-align: center; color: #6b7280; font-size: 12px;">
-                    <p>&copy; ${new Date().getFullYear()} Magnet CRM. All rights reserved.</p>
-                </div>
-            </div>
-        `;
+        // 2. Activate company subscription
+        const company = await this.companiesService.findOne(data.companyId);
+        if (!company) throw new BadRequestException('Company not found');
 
-        return this.emailService.sendEmail(to, subject, html, 'system');
+        const renewalDate = new Date();
+        if (company.subscriptionPeriod === 'yearly') {
+            renewalDate.setFullYear(renewalDate.getFullYear() + 1);
+        } else {
+            renewalDate.setMonth(renewalDate.getMonth() + 1);
+        }
+
+        await this.companiesService.update(data.companyId, {
+            subscriptionStatus: 'active',
+            renewalDate: renewalDate,
+        } as any);
+
+        // 3. Get user and generate JWT
+        const user = await this.usersService.findById(data.userId);
+        if (!user) throw new BadRequestException('User not found');
+
+        const payload = { email: user.email, sub: user.id, role: user.role, companyId: user.companyId };
+
+        // 4. Send purchase confirmation email
+        const plan = company.plan || (company.planId ? await this.plansService.findOne(company.planId) : null);
+        const amount = company.subscriptionPeriod === 'yearly' ? plan?.priceYearly : plan?.priceMonthly;
+        try {
+            await this.emailService.sendPurchaseConfirmation(
+                user.email,
+                user.firstName || user.email,
+                company.companyName,
+                plan ? plan.name : 'Subscription',
+                Number(amount || 0)
+            );
+        } catch (err) {
+            this.logger.error(`Failed to send purchase confirmation email: ${err.message}`);
+        }
+
+        return {
+            message: 'PayPal Payment verified and account activated',
+            access_token: this.jwtService.sign(payload),
+            user: { ...user, companyId: user.companyId },
+        };
     }
+
+
 
     async validateUser(email: string, pass: string): Promise<any> {
         // Get all users with this email (might be multiple: superadmin + company)
@@ -501,20 +683,7 @@ export class AuthService {
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
         const resetLink = `${frontendUrl}/reset-password?token=${token}`;
 
-        const subject = 'Password Reset Request - Magnet CRM';
-        const html = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #4F46E5;">Password Reset</h2>
-                <p>You requested a password reset for your Magnet CRM account.</p>
-                <p>Click the button below to reset your password. This link is valid for 1 hour.</p>
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="${resetLink}" style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Reset Password</a>
-                </div>
-                <p style="color: #666; font-size: 14px;">If you didn't request this, please ignore this email.</p>
-            </div>
-        `;
-
-        await this.emailService.sendEmail(user.email, subject, html, 'system-auth');
+        await this.emailService.sendForgotPasswordEmail(user.email, user.firstName, resetLink);
 
         return { message: 'If an account exists with this email, a password reset link has been sent.' };
     }

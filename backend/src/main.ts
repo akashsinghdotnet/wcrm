@@ -6,8 +6,10 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Global API prefix — all routes become /api/...
-  app.setGlobalPrefix('api');
+  // Global API prefix — all routes become /api/... except widget
+  app.setGlobalPrefix('api', {
+    exclude: ['widget/booking.js'],
+  });
 
   // Validate all incoming request bodies using DTO decorators
   app.useGlobalPipes(

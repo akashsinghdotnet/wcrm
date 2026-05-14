@@ -218,6 +218,9 @@ export default function IntegrationsPage({ embedded = false }) {
     const [testing, setTesting] = useState(false);
     const [showPasswords, setShowPasswords] = useState({});
     const [credentialForm, setCredentialForm] = useState({});
+    const [allowedIntegrations, setAllowedIntegrations] = useState(null);
+
+    const isSuperAdmin = user?.role === 'super_admin' || user?.role === 'superadmin_admin';
 
     // Webhook URLs must point to the backend API, not the frontend
     const apiBase = import.meta.env.VITE_API_URL || '/api';
@@ -227,7 +230,25 @@ export default function IntegrationsPage({ embedded = false }) {
     useEffect(() => {
         loadEmployees();
         loadIntegrationConfigs();
+        loadCompanyPlan();
     }, []);
+
+    const loadCompanyPlan = async () => {
+        if (!user.companyId || isSuperAdmin) {
+            setAllowedIntegrations(INTEGRATIONS.map(i => i.id));
+            return;
+        }
+        try {
+            const res = await api.get(`/companies/${user.companyId}`);
+            if (res.data && res.data.plan) {
+                setAllowedIntegrations(res.data.plan.integrations || []);
+            } else {
+                setAllowedIntegrations([]);
+            }
+        } catch {
+            setAllowedIntegrations([]);
+        }
+    };
 
     const loadEmployees = async () => {
         try {
@@ -460,6 +481,14 @@ function submitMagnetCRMForm(e) {
                 </h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {INTEGRATIONS.map((integration) => {
+                        const isAllowed = isSuperAdmin || (allowedIntegrations && allowedIntegrations.includes(integration.id));
+                        
+                        // If not allowed, we can either hide it or show it as locked. Let's hide it if not super admin to keep the UI clean
+                        // If we want to upsell, we could show it grayed out. But hiding is simpler and matches the feature/module behavior.
+                        if (!isAllowed) {
+                            return null;
+                        }
+
                         const active = isActive(integration.id);
                         const isExpanded = expandedId === integration.id;
                         const status = getStatusInfo(integration.id);

@@ -129,8 +129,11 @@ const BroadcastConfirmModal = ({ isOpen, onClose, onConfirm, summary }) => {
     );
 };
 
+import { useLocation } from 'react-router-dom';
+
 export default function MarketingPage() {
     const { user } = useAuth();
+    const location = useLocation();
     const [activeTab, setActiveTab] = useState('compose'); // compose | history | settings
     const [loading, setLoading] = useState(false);
 
@@ -169,11 +172,22 @@ export default function MarketingPage() {
         if (activeTab === 'settings') fetchSettings();
         if (activeTab === 'history') fetchLogs();
         if (activeTab === 'compose') {
-            // Set default audience
-            const defaultAudience = user?.role === 'super_admin' ? 'ALL_CLIENTS' : 'LEADS';
-            setEmailData(prev => ({ ...prev, audience: defaultAudience }));
+            // Check for prefilled email from navigation state
+            if (location.state?.prefillEmail) {
+                setEmailData(prev => ({
+                    ...prev,
+                    audience: 'MANUAL',
+                    manualRecipients: location.state.prefillEmail
+                }));
+                // Clear the state so it doesn't persist on refresh
+                window.history.replaceState({}, document.title);
+            } else {
+                // Set default audience
+                const defaultAudience = user?.role === 'super_admin' ? 'ALL_CLIENTS' : 'LEADS';
+                setEmailData(prev => ({ ...prev, audience: defaultAudience }));
+            }
         }
-    }, [activeTab]);
+    }, [activeTab, location.state, user?.role]);
 
     const fetchSettings = async () => {
         try {

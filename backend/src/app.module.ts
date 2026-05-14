@@ -21,6 +21,11 @@ import { TicketsModule } from './tickets/tickets.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { CallingModule } from './calling/calling.module';
 import { CouponsModule } from './coupons/coupons.module';
+import { ModulesModule } from './modules/modules.module';
+import { AppointmentsModule } from './appointments/appointments.module';
+// import { HotelsModule } from './hotels/hotels.module'; // Disabled — replaced by Events module
+import { EventsModule } from './events/events.module';
+import { CompanySettingsModule } from './company-settings/company-settings.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -40,6 +45,7 @@ import { ScheduleModule } from '@nestjs/schedule';
         database: configService.get<string>('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true, // Auto-create tables (disable in production)
+        logging: true,
         extra: {
           max: 40, // max connection pool size
           connectionTimeoutMillis: 5000,
@@ -66,6 +72,11 @@ import { ScheduleModule } from '@nestjs/schedule';
     AnnouncementsModule,
     CallingModule,
     CouponsModule,
+    ModulesModule,
+    AppointmentsModule,
+    EventsModule,
+    // HotelsModule, // Disabled — replaced by Events module
+    CompanySettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

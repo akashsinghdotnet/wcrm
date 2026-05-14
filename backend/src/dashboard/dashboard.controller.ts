@@ -24,7 +24,7 @@ export class DashboardController {
 
     @Get('staff')
     getStaffStats(@Request() req) {
-        return this.dashboardService.getStaffStats(req.user.userId);
+        return this.dashboardService.getStaffStats(req.user.companyId, req.user.userId);
     }
 
     @Get('reports')

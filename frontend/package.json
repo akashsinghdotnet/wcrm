@@ -13,6 +13,7 @@
     "@twilio/voice-sdk": "^2.18.0",
     "axios": "^1.13.5",
     "dayjs": "^1.11.19",
+    "jodit-react": "^5.3.21",
     "lucide-react": "^0.564.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

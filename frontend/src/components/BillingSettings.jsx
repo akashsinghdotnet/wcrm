@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useConfig } from '../context/ConfigContext';
 import api from '../services/api';
 import SubscriptionInvoiceModal from '../components/SubscriptionInvoiceModal';
 
 export default function BillingSettings() {
     const { user } = useAuth();
+    const { config } = useConfig();
+    const upgradePlanUrl = config?.upgrade_plan_url || '';
     const [loading, setLoading] = useState(true);
     const [company, setCompany] = useState(null);
     const [currentPlan, setCurrentPlan] = useState(null);
@@ -75,12 +78,16 @@ export default function BillingSettings() {
                                 <span>{currentPlan.employeeLimit} Employees</span>
                             </div>
                         </div>
-                        <a
-                            href="/plans"
-                            className="w-full sm:w-auto text-center px-6 py-3 bg-white text-indigo-900 font-bold rounded-xl hover:bg-slate-200 transition-colors shadow-lg"
-                        >
-                            Upgrade Plan
-                        </a>
+                        {upgradePlanUrl && (
+                            <a
+                                href={upgradePlanUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full sm:w-auto text-center px-6 py-3 bg-white text-indigo-900 font-bold rounded-xl hover:bg-slate-200 transition-colors shadow-lg"
+                            >
+                                Upgrade Plan
+                            </a>
+                        )}
                     </div>
                 </div>
             )}

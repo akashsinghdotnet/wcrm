@@ -6,10 +6,14 @@ import { ForgotPasswordDto, ResetPasswordDto } from './dto/password-reset.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
 import { Public } from './public.decorator';
+import { ModulesService } from '../modules/modules.service';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService) { }
+    constructor(
+        private authService: AuthService,
+        private modulesService: ModulesService,
+    ) { }
 
     @Post('login')
     async login(@Body() loginDto: LoginDto) {
@@ -19,14 +23,25 @@ export class AuthController {
     @UseGuards(JwtAuthGuard)
     @Get('me')
     async getProfile(@Request() req) {
-        // Fetch full user details (including firstName, lastName, etc.)
-        const user = await this.authService.getUserById(req.user.userId);
-        if (!user) {
-            throw new UnauthorizedException('User not found');
+        try {
+            // Fetch full user details (including firstName, lastName, etc.)
+            const user = await this.authService.getUserById(req.user.userId);
+            if (!user) {
+                throw new UnauthorizedException('User not found');
+            }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { password, twoFactorSecret, ...result } = user;
+
+            // Attach active modules for company users
+            let activeModules: string[] = [];
+            if (result.companyId) {
+                activeModules = await this.modulesService.getActiveModules(result.companyId);
+            }
+
+            return { ...result, activeModules };
+        } catch (error) {
+            return { error: 'INTERNAL_ERROR', message: error.message, stack: error.stack };
         }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password, twoFactorSecret, ...result } = user;
-        return result;
     }
 
     @Public()
@@ -45,6 +60,16 @@ export class AuthController {
         userId: string;
     }) {
         return this.authService.verifyRazorpayPayment(body);
+    }
+
+    @Public()
+    @Post('verify-paypal-payment')
+    verifyPayPalPayment(@Body() body: {
+        paypal_order_id: string;
+        companyId: string;
+        userId: string;
+    }) {
+        return this.authService.verifyPayPalPayment(body);
     }
 
     @Public()

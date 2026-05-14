@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
+import { useModules } from '../context/ModuleContext';
 
 import {
     LayoutDashboard,
@@ -30,17 +31,24 @@ import {
     Bell,
     Sun,
     Moon,
+    Blocks,
+    Calendar,
+    CalendarDays,
 } from 'lucide-react';
 
 const navItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/leads', label: 'Leads', icon: FileText, roles: ['admin', 'staff'] },
-    { to: '/pipeline', label: 'Pipeline', icon: Kanban, roles: ['admin', 'staff'] },
-    { to: '/whatsapp-chats', label: 'WhatsApp', icon: MessageCircle, roles: ['admin', 'manager', 'staff'] },
+    { to: '/leads', label: 'Leads', icon: FileText, roles: ['admin', 'staff'], module: 'SALES' },
+    { to: '/pipeline', label: 'Pipeline', icon: Kanban, roles: ['admin', 'staff'], module: 'SALES' },
+    { to: '/appointments', label: 'Appointments', icon: Calendar, roles: ['admin', 'staff'], module: 'APPOINTMENTS' },
+    { to: '/events', label: 'Events', icon: CalendarDays, roles: ['admin', 'staff', 'manager'], module: 'EVENTS' },
+    { to: '/event-bookings', label: 'Bookings', icon: Ticket, roles: ['admin', 'staff', 'manager'], module: 'EVENTS' },
+    { to: '/whatsapp-chats', label: 'WhatsApp', icon: MessageCircle, roles: ['admin', 'manager', 'staff'], module: 'WHATSAPP' },
     {
         to: '/invoices',
         label: 'Invoices',
         icon: Receipt,
+        module: 'FINANCE',
         show: (user) => ['admin', 'manager'].includes(user?.role) || (user?.role === 'staff' && user?.canCreateInvoices)
     },
     // Integrations moved under Settings tab for company admin
@@ -49,13 +57,13 @@ const navItems = [
     { to: '/billing', label: 'Billing', icon: IndianRupee, roles: ['super_admin', 'superadmin_admin'] },
     { to: '/payment-settings', label: 'Payment Settings', icon: CreditCard, roles: ['super_admin'] },
     { to: '/coupons', label: 'Coupons', icon: Gift, roles: ['super_admin', 'superadmin_admin'] },
-    { to: '/reports', label: 'Reports', icon: BarChart3, roles: ['admin'] },
-    { to: '/tickets', label: 'Support', icon: Ticket, roles: ['super_admin', 'superadmin_admin', 'admin', 'manager'] },
+    { to: '/reports', label: 'Reports', icon: BarChart3, roles: ['admin'], module: 'REPORTS' },
+    { to: '/tickets', label: 'Support', icon: Ticket, roles: ['super_admin', 'superadmin_admin', 'admin', 'manager'], module: 'SUPPORT' },
     { to: '/announcements', label: 'Announcements', icon: Megaphone, roles: ['super_admin', 'superadmin_admin', 'superadmin_staff'] },
     { to: '/settings', label: 'Settings', icon: Settings },
     // Notifications removed as per user request
     // { to: '/notifications', label: 'Notifications', icon: Mail, roles: ['admin'] },
-    { to: '/marketing', label: 'Marketing', icon: Mail, roles: ['super_admin', 'superadmin_admin', 'admin'] },
+    { to: '/marketing', label: 'Marketing', icon: Mail, roles: ['super_admin', 'superadmin_admin', 'admin'], module: 'MARKETING' },
     { to: '/users', label: 'Users', icon: Users, roles: ['super_admin', 'superadmin_admin'] },
 ];
 
@@ -73,7 +81,9 @@ const getRoleLabel = (role) => roleLabels[role] || role?.replace('_', ' ');
 export default function Layout() {
     const { user, logout } = useAuth();
     const { config } = useConfig();
+    const { hasModule } = useModules();
     const navigate = useNavigate();
+    const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [unreadWhatsApp, setUnreadWhatsApp] = useState(0);
     const prevUnreadRef = useRef(0);
@@ -227,8 +237,10 @@ export default function Layout() {
     const displayName = user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email;
 
     const filteredNav = navItems.filter((item) => {
-        if (item.show) return item.show(user);
-        return !item.roles || item.roles.includes(user?.role);
+        if (item.show) return item.show(user) && (!item.module || hasModule(item.module));
+        const roleOk = !item.roles || item.roles.includes(user?.role);
+        const moduleOk = !item.module || hasModule(item.module);
+        return roleOk && moduleOk;
     });
 
     return (
@@ -445,7 +457,7 @@ export default function Layout() {
                 </header>
 
                 {/* Page content */}
-                <main className={`flex-1 p-4 lg:p-6 overflow-auto ${isDark ? '' : 'bg-gray-50'}`}>
+                <main className={`flex-1 overflow-auto p-4 lg:p-6 ${isDark ? '' : 'bg-gray-50'}`}>
                     <Outlet />
                 </main>
             </div>

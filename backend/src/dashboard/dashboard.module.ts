@@ -6,9 +6,11 @@ import { ClientsModule } from '../clients/clients.module';
 import { BillingModule } from '../billing/billing.module';
 
 import { CompaniesModule } from '../companies/companies.module';
+import { AppointmentsModule } from '../appointments/appointments.module';
+import { EventsModule } from '../events/events.module';
 
 @Module({
-    imports: [LeadsModule, ClientsModule, BillingModule, CompaniesModule],
+    imports: [LeadsModule, ClientsModule, BillingModule, CompaniesModule, AppointmentsModule, EventsModule],
     controllers: [DashboardController],
     providers: [DashboardService],
 })

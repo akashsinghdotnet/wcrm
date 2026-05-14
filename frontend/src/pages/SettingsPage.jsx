@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { User, Lock, Building2, Shield, Eye, EyeOff, Mail, Users, IndianRupee, FileText, MessageCircle, Plug, Phone, GitBranch } from 'lucide-react';
+import { User, Lock, Building2, Shield, Eye, EyeOff, Mail, Users, IndianRupee, FileText, MessageCircle, Plug, Phone, GitBranch, Calendar, CreditCard } from 'lucide-react';
+import { useModules } from '../context/ModuleContext';
 import EmailSettings from '../components/EmailSettings';
 import TeamSettings from '../components/TeamSettings';
 import BillingSettings from '../components/BillingSettings';
@@ -11,10 +13,16 @@ import InvoiceSettings from '../components/InvoiceSettings';
 import WhatsAppSettings from '../components/WhatsAppSettings';
 import CallingSettings from '../components/CallingSettings';
 import LeadAssignmentSettings from '../components/LeadAssignmentSettings';
+import EmailTemplates from '../components/EmailTemplates';
 import IntegrationsPage from './IntegrationsPage';
+import AppointmentSettings from '../components/AppointmentSettings';
+import CompanyPaymentSettings from '../components/CompanyPaymentSettings';
 
 export default function SettingsPage() {
     const { user, loading } = useAuth();
+    const { hasModule } = useModules();
+    const location = useLocation();
+    const navigate = useNavigate();
 
     if (loading) {
         return <div className="p-8 text-center text-gray-500 dark:text-slate-400">Loading settings...</div>;
@@ -122,6 +130,17 @@ export default function SettingsPage() {
 
     const [activeTab, setActiveTab] = useState('general');
 
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const tab = params.get('tab');
+        if (tab) setActiveTab(tab);
+    }, [location.search]);
+
+    const handleTabChange = (tabId) => {
+        setActiveTab(tabId);
+        navigate(`/settings?tab=${tabId}`, { replace: true });
+    };
+
     const roleLabel = {
         super_admin: 'Super Admin',
         admin: 'Admin',
@@ -141,17 +160,23 @@ export default function SettingsPage() {
                     { id: 'general', label: 'General', icon: User },
                     { id: 'security', label: 'Security', icon: Lock },
                     ...(user.role === 'admin' ? [{ id: 'billing', label: 'Subscription & Invoices', icon: IndianRupee }] : []),
-                    ...(['admin', 'super_admin', 'superadmin_admin'].includes(user.role) ? [{ id: 'invoice-settings', label: 'Invoice Settings', icon: FileText }] : []),
+                    ...(['admin', 'super_admin', 'superadmin_admin'].includes(user.role) && hasModule('FINANCE') ? [{ id: 'invoice-settings', label: 'Invoice Settings', icon: FileText }] : []),
                     ...(['admin', 'manager'].includes(user.role) ? [{ id: 'team', label: 'Team', icon: Users }] : []),
-                    ...(user.role === 'admin' ? [{ id: 'integrations', label: 'Integrations', icon: Plug }] : []),
-                    ...(user.role === 'admin' ? [{ id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle }] : []),
-                    ...(user.role === 'admin' ? [{ id: 'lead-assignment', label: 'Lead Assignment', icon: GitBranch }] : []),
-                    ...(user.role === 'admin' ? [{ id: 'calling', label: 'Calling', icon: Phone }] : []),
-                    ...(user.role === 'super_admin' ? [{ id: 'email', label: 'Email Settings', icon: Mail }] : [])
+                    ...(user.role === 'admin' ? [{ id: 'company-email', label: 'Email SMTP', icon: Mail }] : []),
+                    ...(user.role === 'admin' && (hasModule('SALES') || hasModule('MARKETING') || hasModule('WHATSAPP')) ? [{ id: 'integrations', label: 'Integrations', icon: Plug }] : []),
+                    ...(user.role === 'admin' && hasModule('WHATSAPP') ? [{ id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle }] : []),
+                    ...(user.role === 'admin' && hasModule('SALES') ? [{ id: 'lead-assignment', label: 'Lead Assignment', icon: GitBranch }] : []),
+                    ...(user.role === 'admin' && hasModule('CALLING') ? [{ id: 'calling', label: 'Calling', icon: Phone }] : []),
+                    ...(user.role === 'admin' && hasModule('APPOINTMENTS') ? [{ id: 'appointments', label: 'Appointments', icon: Calendar }] : []),
+                    ...(user.role === 'admin' && hasModule('EVENTS') ? [{ id: 'payments', label: 'Payment Settings', icon: CreditCard }] : []),
+                    ...(user.role === 'super_admin' ? [
+                        { id: 'email', label: 'Email Settings', icon: Mail },
+                        { id: 'email-templates', label: 'Email Templates', icon: FileText }
+                    ] : [])
                 ].map(tab => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => handleTabChange(tab.id)}
                         className={`flex items-center gap-2 pb-2 text-sm font-medium transition-colors relative ${activeTab === tab.id ? 'text-indigo-400' : 'text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white'
                             }`}
                     >
@@ -396,7 +421,19 @@ export default function SettingsPage() {
                 )}
 
                 {activeTab === 'email' && user.role === 'super_admin' && (
-                    <EmailSettings />
+                    <div className="max-w-4xl">
+                        <EmailSettings />
+                    </div>
+                )}
+
+                {activeTab === 'company-email' && user.role === 'admin' && (
+                    <div className="max-w-4xl">
+                        <CompanyEmailSettings />
+                    </div>
+                )}
+
+                {activeTab === 'email-templates' && user.role === 'super_admin' && (
+                    <EmailTemplates />
                 )}
 
                 {activeTab === 'billing' && user.role === 'admin' && (
@@ -422,7 +459,168 @@ export default function SettingsPage() {
                 {activeTab === 'calling' && user.role === 'admin' && (
                     <CallingSettings />
                 )}
+
+                {activeTab === 'appointments' && user.role === 'admin' && (
+                    <AppointmentSettings />
+                )}
+
+                {activeTab === 'payments' && user.role === 'admin' && (
+                    <CompanyPaymentSettings />
+                )}
             </div>
+        </div>
+    );
+}
+
+function CompanyEmailSettings() {
+    const [settings, setSettings] = useState({
+        smtpHost: '',
+        smtpPort: 587,
+        smtpUser: '',
+        smtpPassword: '',
+        smtpSecure: false,
+        fromEmail: '',
+        fromName: ''
+    });
+    const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(true);
+    const [showPass, setShowPass] = useState(false);
+
+    useEffect(() => {
+        api.get('/marketing/settings').then(res => {
+            if (res.data) setSettings(res.data);
+            setFetching(false);
+        }).catch(() => setFetching(false));
+    }, []);
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            await api.post('/marketing/settings', settings);
+            toast.success('SMTP Settings saved');
+        } catch (err) {
+            toast.error('Failed to save SMTP settings');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (fetching) return <div className="text-gray-400 dark:text-slate-500 text-sm">Loading settings...</div>;
+
+    return (
+        <div className="space-y-6 max-w-2xl">
+            <div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Mail className="w-5 h-5 text-indigo-400" />
+                    Custom Email / SMTP Configuration
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Send event booking confirmations and receipts from your own company email.</p>
+            </div>
+
+            <form onSubmit={handleSave} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">SMTP Host</label>
+                        <input
+                            required
+                            value={settings.smtpHost}
+                            onChange={(e) => setSettings({ ...settings, smtpHost: e.target.value })}
+                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            placeholder="smtp.gmail.com"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Port</label>
+                        <input
+                            type="number"
+                            required
+                            value={settings.smtpPort}
+                            onChange={(e) => setSettings({ ...settings, smtpPort: parseInt(e.target.value) })}
+                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            placeholder="587"
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Username / Email</label>
+                        <input
+                            required
+                            value={settings.smtpUser}
+                            onChange={(e) => setSettings({ ...settings, smtpUser: e.target.value })}
+                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            placeholder="hello@company.com"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">App Password</label>
+                        <div className="relative">
+                            <input
+                                required
+                                type={showPass ? 'text' : 'password'}
+                                value={settings.smtpPassword}
+                                onChange={(e) => setSettings({ ...settings, smtpPassword: e.target.value })}
+                                className="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder="••••••••"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPass(!showPass)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:text-white"
+                            >
+                                {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="pt-4 border-t border-gray-200 dark:border-slate-800">
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-4">Sender Details</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">From Name</label>
+                            <input
+                                required
+                                value={settings.fromName}
+                                onChange={(e) => setSettings({ ...settings, fromName: e.target.value })}
+                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder="Events Team"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">From Email</label>
+                            <input
+                                required
+                                value={settings.fromEmail}
+                                onChange={(e) => setSettings({ ...settings, fromEmail: e.target.value })}
+                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder="hello@company.com"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                    <input
+                        type="checkbox"
+                        id="secure-smtp"
+                        checked={settings.smtpSecure}
+                        onChange={(e) => setSettings({ ...settings, smtpSecure: e.target.checked })}
+                        className="w-4 h-4 rounded bg-white dark:bg-slate-800 border-gray-400 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900"
+                    />
+                    <label htmlFor="secure-smtp" className="text-sm text-gray-600 dark:text-slate-300">Use Secure Connection (SSL/TLS - Port 465)</label>
+                </div>
+
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-all disabled:opacity-50 shadow-lg shadow-indigo-600/25 cursor-pointer"
+                >
+                    {loading ? 'Saving...' : 'Save Configuration'}
+                </button>
+            </form>
         </div>
     );
 }
@@ -538,6 +736,9 @@ function GeneralSystemSettings() {
     // Favicon Settings
     const [faviconUrl, setFaviconUrl] = useState('');
 
+    // Billing Settings
+    const [upgradePlanUrl, setUpgradePlanUrl] = useState('');
+
     useEffect(() => {
         // Initialize with existing values or defaults
         if (config.login_logo_url !== undefined) setLoginLogoUrl(config.login_logo_url);
@@ -562,6 +763,7 @@ function GeneralSystemSettings() {
         if (config.sidebar_logo_link) setSidebarLogoLink(config.sidebar_logo_link);
 
         if (config.favicon_url !== undefined) setFaviconUrl(config.favicon_url);
+        if (config.upgrade_plan_url !== undefined) setUpgradePlanUrl(config.upgrade_plan_url);
 
     }, [config]);
 
@@ -613,6 +815,7 @@ function GeneralSystemSettings() {
                 sidebar_padding_vertical: sidebarPaddingY,
                 sidebar_logo_link: sidebarLogoLink,
                 favicon_url: faviconUrl,
+                upgrade_plan_url: upgradePlanUrl,
                 // Keep app_logo synced with login logo for backward compatibility if needed, or just leave it
                 app_logo: loginLogoUrl
             };
@@ -929,6 +1132,24 @@ function GeneralSystemSettings() {
                         >
                             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${sidebarShowText ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
+                    </div>
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-slate-800 my-4"></div>
+
+                {/* Billing / Upgrade Link Section */}
+                <div className="space-y-4">
+                    <h4 className="text-md font-medium text-indigo-400 uppercase tracking-wider text-xs">Billing &amp; Upgrade</h4>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Upgrade Plan URL</label>
+                        <input
+                            type="url"
+                            value={upgradePlanUrl}
+                            onChange={(e) => setUpgradePlanUrl(e.target.value)}
+                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            placeholder="https://yourwebsite.com/pricing"
+                        />
+                        <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Company admins will see an &quot;Upgrade Plan&quot; button on their Subscription &amp; Invoices page that links to this URL. Leave blank to hide the button.</p>
                     </div>
                 </div>
 

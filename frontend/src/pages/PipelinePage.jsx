@@ -35,7 +35,7 @@ export default function PipelinePage() {
     const fetchLeads = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/leads', { params: { companyId: user.companyId } });
+            const res = await api.get('/leads', { params: { companyId: user.companyId, limit: 1000 } });
             setLeads(res.data.data || []);
         } catch {
             toast.error('Failed to load leads');

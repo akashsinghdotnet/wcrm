@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException, Res } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException, Res } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { WhatsAppService } from './whatsapp.service';
 import { SaveWhatsAppConfigDto } from './dto/save-config.dto';
@@ -32,12 +32,13 @@ export class WhatsAppController {
     sendMessage(@Body() dto: SendMessageDto, @Request() req) {
         return this.whatsappService.sendMessage(
             req.user.companyId,
-            dto.leadId,
+            dto.leadId || null,
             dto.to,
             dto.message,
             dto.type,
             dto.mediaId,
             req.user.userId,
+            dto.replyToMessageId,
         );
     }
 
@@ -52,18 +53,25 @@ export class WhatsAppController {
         return this.whatsappService.uploadMedia(req.user.companyId, file);
     }
 
+    @Get('link-preview')
+    @UseGuards(JwtAuthGuard)
+    async getLinkPreview(@Query('url') url: string) {
+        if (!url) throw new BadRequestException('URL is required');
+        return this.whatsappService.getLinkPreview(url);
+    }
+
     @Get('unread-count')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF)
     getGlobalUnreadCount(@Request() req) {
-        return this.whatsappService.getGlobalUnreadCount(req.user.companyId);
+        return this.whatsappService.getGlobalUnreadCount(req.user.companyId, req.user);
     }
 
     @Get('conversations')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF)
     getConversations(@Request() req) {
-        return this.whatsappService.getConversations(req.user.companyId);
+        return this.whatsappService.getConversations(req.user.companyId, req.user);
     }
 
     // Mark all messages for a lead as read
@@ -71,7 +79,14 @@ export class WhatsAppController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF)
     markAsRead(@Param('leadId') leadId: string, @Request() req) {
-        return this.whatsappService.markMessagesAsRead(req.user.companyId, leadId);
+        return this.whatsappService.markMessagesAsRead(req.user.companyId, leadId, req.user);
+    }
+
+    @Delete('messages/:leadId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER)
+    deleteChatHistory(@Param('leadId') leadId: string, @Request() req) {
+        return this.whatsappService.deleteChatHistory(req.user.companyId, leadId);
     }
 
     // This must come AFTER all specific GET routes to avoid catching them
@@ -79,7 +94,7 @@ export class WhatsAppController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.STAFF)
     getMessages(@Param('leadId') leadId: string, @Request() req) {
-        return this.whatsappService.getMessages(req.user.companyId, leadId);
+        return this.whatsappService.getMessages(req.user.companyId, leadId, req.user);
     }
 
     @Get('media/:mediaId')

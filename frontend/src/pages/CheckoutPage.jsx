@@ -246,20 +246,86 @@ export default function CheckoutPage() {
         rzp.open();
     };
 
+    const loadPayPalScript = (clientId, currency) => {
+        return new Promise((resolve) => {
+            if (document.getElementById('paypal-script')) { resolve(true); return; }
+            const script = document.createElement('script');
+            script.id = 'paypal-script';
+            script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=${currency}`;
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
+    const [paypalModalData, setPaypalModalData] = useState(null);
+
+    const openPayPalCheckout = async (orderData) => {
+        const loaded = await loadPayPalScript(orderData.clientId, orderData.currency);
+        if (!loaded) { toast.error('Failed to load PayPal. Please try again.'); return; }
+        setPaypalModalData(orderData);
+    };
+
+    useEffect(() => {
+        if (paypalModalData && window.paypal) {
+            document.getElementById('paypal-button-container').innerHTML = '';
+            window.paypal.Buttons({
+                createOrder: () => {
+                    return paypalModalData.orderId;
+                },
+                onApprove: async (data, actions) => {
+                    try {
+                        toast.loading('Verifying payment...', { id: 'verify-paypal' });
+                        const verifyRes = await api.post('/auth/verify-paypal-payment', {
+                            paypal_order_id: data.orderID,
+                            companyId: paypalModalData.companyId,
+                            userId: paypalModalData.userId,
+                            couponCode: paypalModalData.couponCode,
+                        });
+                        toast.dismiss('verify-paypal');
+                        
+                        setPaypalModalData(null);
+                        
+                        if (verifyRes.data.access_token) {
+                            login(verifyRes.data.user, verifyRes.data.access_token);
+                            toast.success('Payment successful! Welcome to Magnet CRM.');
+                            setTimeout(() => navigate('/'), 1000);
+                        }
+                    } catch (err) {
+                        toast.dismiss('verify-paypal');
+                        toast.error(err.response?.data?.message || 'Payment verification failed.');
+                    }
+                },
+                onCancel: () => {
+                    toast.error('Payment was cancelled.');
+                    setPaypalModalData(null);
+                    setProcessing(false);
+                },
+                onError: (err) => {
+                    toast.error('PayPal encountered an error. Please try again.');
+                    console.error(err);
+                    setPaypalModalData(null);
+                    setProcessing(false);
+                }
+            }).render('#paypal-button-container');
+        }
+    }, [paypalModalData, login, navigate]);
+
     const handlePay = async () => {
-        if (!form.firstName || !form.email || !form.companyName) { toast.error('Please fill in all required fields'); return; }
+        if (!form.firstName || !form.email) { toast.error('Please fill in all required fields'); return; }
         if (!form.password || form.password.length < 6) { toast.error('Password must be at least 6 characters'); return; }
         if (form.password !== form.confirmPassword) { toast.error('Passwords do not match'); return; }
         if (!selectedMethod) { toast.error('Please select a payment method'); return; }
 
         setProcessing(true);
         try {
+            const payloadCompanyName = form.companyName?.trim() || `${form.firstName}'s Company`;
             const res = await api.post('/auth/register-subscription', {
                 email: form.email,
                 password: form.password,
                 firstName: form.firstName,
                 lastName: form.lastName,
-                companyName: form.companyName,
+                companyName: payloadCompanyName,
                 phone: form.phone || undefined,
                 streetAddress: form.streetAddress || undefined,
                 city: form.city || undefined,
@@ -280,6 +346,12 @@ export default function CheckoutPage() {
             } else if (res.data.status === 'razorpay_order_created') {
                 // Open Razorpay checkout modal
                 await openRazorpayCheckout(res.data);
+            } else if (res.data.status === 'paypal_order_created') {
+                // Open PayPal checkout modal
+                await openPayPalCheckout(res.data);
+            } else if (res.data.status === 'active') {
+                setOrderSuccess(true);
+                toast.success('Account created and activated successfully!');
             } else if (res.data.access_token) {
                 // Direct login (fallback)
                 login(res.data.user, res.data.access_token);
@@ -309,30 +381,44 @@ export default function CheckoutPage() {
                         <Check className="w-10 h-10 text-emerald-400" />
                     </div>
                     <h2 className="text-2xl font-bold text-white mb-3">Order Placed Successfully!</h2>
-                    <p className="text-slate-400 mb-6">
-                        We've sent the bank transfer details to <span className="text-white font-medium">{form.email}</span>.
-                        Please complete the payment and your CRM account will be activated once the payment is verified.
-                    </p>
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-6 text-left">
-                        <h3 className="text-sm font-semibold text-emerald-400 uppercase tracking-wide mb-3">What happens next?</h3>
-                        <div className="space-y-3">
-                            <div className="flex items-start gap-3">
-                                <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold text-white">1</div>
-                                <p className="text-sm text-slate-300">Transfer the amount to the bank account mentioned in the email</p>
+                    
+                    {plan?.priceMonthly == 0 ? (
+                        <>
+                            <p className="text-slate-400 mb-6">
+                                Your free plan has been activated successfully! Your login credentials have been sent to <span className="text-white font-medium">{form.email}</span>.
+                            </p>
+                            <button onClick={() => navigate('/login')} className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold transition-all w-full">
+                                Go to Login
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-slate-400 mb-6">
+                                We've sent the bank transfer details to <span className="text-white font-medium">{form.email}</span>.
+                                Please complete the payment and your CRM account will be activated once the payment is verified.
+                            </p>
+                            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-6 text-left">
+                                <h3 className="text-sm font-semibold text-emerald-400 uppercase tracking-wide mb-3">What happens next?</h3>
+                                <div className="space-y-3">
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold text-white">1</div>
+                                        <p className="text-sm text-slate-300">Transfer the amount to the bank account mentioned in the email</p>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold text-white">2</div>
+                                        <p className="text-sm text-slate-300">Our team will verify your payment</p>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold text-white">3</div>
+                                        <p className="text-sm text-slate-300">Your CRM account will be activated and you'll receive a confirmation email</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex items-start gap-3">
-                                <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold text-white">2</div>
-                                <p className="text-sm text-slate-300">Our team will verify your payment</p>
-                            </div>
-                            <div className="flex items-start gap-3">
-                                <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold text-white">3</div>
-                                <p className="text-sm text-slate-300">Your CRM account will be activated and you'll receive a confirmation email</p>
-                            </div>
-                        </div>
-                    </div>
-                    <button onClick={() => navigate('/')} className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold transition-all">
-                        Go to Homepage
-                    </button>
+                            <button onClick={() => navigate('/')} className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold transition-all">
+                                Go to Homepage
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
         );
@@ -696,6 +782,36 @@ export default function CheckoutPage() {
                     </div>
                 </div>
             </div>
+
+            {/* PayPal Modal */}
+            {paypalModalData && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6 relative shadow-2xl">
+                        <button 
+                            onClick={() => {
+                                setPaypalModalData(null);
+                                setProcessing(false);
+                                toast.error('Payment was cancelled.');
+                            }} 
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+                        <div className="text-center mb-6">
+                            <div className="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <Globe className="w-6 h-6 text-sky-500" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900">Complete Payment</h3>
+                            <p className="text-sm text-gray-500 mt-1">Pay Securely via PayPal</p>
+                            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg">
+                                <span className="text-sm text-slate-500">Amount:</span>
+                                <span className="text-lg font-bold text-slate-900">${paypalModalData.amount} USD</span>
+                            </div>
+                        </div>
+                        <div id="paypal-button-container" className="min-h-[150px]"></div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

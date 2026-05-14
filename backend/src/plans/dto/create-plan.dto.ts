@@ -24,4 +24,8 @@ export class CreatePlanDto {
     @IsOptional()
     @IsArray()
     features?: string[];
+
+    @IsOptional()
+    @IsArray()
+    integrations?: string[];
 }

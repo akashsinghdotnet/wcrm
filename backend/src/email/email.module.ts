@@ -3,12 +3,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { EmailConfig } from './email-config.entity';
 import { EmailLog } from './email-log.entity';
 import { MarketingSettings } from '../marketing/marketing-settings.entity';
+import { EmailTemplate } from './email-template.entity';
 
 import { EmailService } from './email.service';
 import { EmailController } from './email.controller';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([EmailConfig, EmailLog, MarketingSettings])],
+    imports: [TypeOrmModule.forFeature([EmailConfig, EmailLog, MarketingSettings, EmailTemplate])],
     providers: [EmailService],
     controllers: [EmailController],
     exports: [EmailService],

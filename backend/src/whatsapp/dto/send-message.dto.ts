@@ -1,9 +1,9 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class SendMessageDto {
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
-    leadId: string;
+    leadId?: string;
 
     @IsNotEmpty()
     @IsString()
@@ -20,4 +20,8 @@ export class SendMessageDto {
     @IsOptional()
     @IsString()
     mediaId?: string;
+
+    @IsOptional()
+    @IsString()
+    replyToMessageId?: string;
 }

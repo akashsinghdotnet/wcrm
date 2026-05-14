@@ -28,6 +28,9 @@ export class Plan {
     @Column('simple-array', { nullable: true })
     features: string[];
 
+    @Column('simple-array', { nullable: true })
+    integrations: string[];
+
     @Column({ default: true })
     isActive: boolean;
 

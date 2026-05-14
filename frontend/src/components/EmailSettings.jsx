@@ -130,12 +130,13 @@ export default function EmailSettings() {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">From Email (Optional)</label>
+                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">From Email</label>
                             <input
+                                required
                                 value={config.fromEmail || ''}
                                 onChange={(e) => setConfig({ ...config, fromEmail: e.target.value })}
                                 className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                placeholder="Leave blank to use Username"
+                                placeholder="hello@company.com"
                             />
                         </div>
                     </div>

@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Body, UseGuards, Post, Query, Request } from '@nestjs/common';
+import { Controller, Get, Put, Body, UseGuards, Post, Query, Request, Param } from '@nestjs/common';
 import { EmailService } from './email.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -33,5 +33,17 @@ export class EmailController {
     @Post('send')
     async sendManualEmail(@Body() body: { to: string; subject: string; html: string }) {
         return this.emailService.sendEmail(body.to, body.subject, body.html, 'super_admin');
+    }
+
+    @Get('templates')
+    @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN)
+    async getTemplates() {
+        return this.emailService.getTemplates();
+    }
+
+    @Put('templates/:id')
+    @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN)
+    async updateTemplate(@Param('id') id: string, @Body() data: { subject: string; body: string }) {
+        return this.emailService.updateTemplate(id, data);
     }
 }

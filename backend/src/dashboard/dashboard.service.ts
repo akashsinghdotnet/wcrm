@@ -3,6 +3,8 @@ import { LeadsService } from '../leads/leads.service';
 import { ClientsService } from '../clients/clients.service';
 import { BillingService } from '../billing/billing.service';
 import { CompaniesService } from '../companies/companies.service';
+import { AppointmentsService } from '../appointments/appointments.service';
+import { EventsService } from '../events/events.service';
 
 @Injectable()
 export class DashboardService {
@@ -11,19 +13,26 @@ export class DashboardService {
         private clientsService: ClientsService,
         private billingService: BillingService,
         private companiesService: CompaniesService,
+        private appointmentsService: AppointmentsService,
+        private eventsService: EventsService,
     ) { }
 
     /**
      * Admin dashboard — company-wide stats
      */
     async getAdminStats(companyId: string) {
-        const [totalLeads, leadsToday, conversionRate, totalRevenue, convertedLeads, billing] = await Promise.all([
+        const [totalLeads, leadsToday, conversionRate, totalRevenue, convertedLeads, billing, totalAppointments, appointmentsToday, upcomingAppointments, todayAppointmentsList, eventStats] = await Promise.all([
             this.leadsService.countAll(companyId),
             this.leadsService.countToday(companyId),
             this.leadsService.conversionRate(companyId),
             this.clientsService.totalRevenue(companyId),
             this.leadsService.countConverted(companyId),
             this.billingService.billingStats(companyId).catch(() => ({ totalPending: 0, totalPaid: 0 })),
+            this.appointmentsService.countAll(companyId).catch(() => 0),
+            this.appointmentsService.countToday(companyId).catch(() => 0),
+            this.appointmentsService.countUpcoming(companyId).catch(() => 0),
+            this.appointmentsService.getTodayAppointmentsList(companyId).catch(() => []),
+            this.eventsService.getCompanyStats(companyId).catch(() => null),
         ]);
 
         // Get revenue by month from billing
@@ -41,22 +50,35 @@ export class DashboardService {
             paidRevenue: billing.totalPaid,
             pendingAmount: billing.totalPending,
             revenueByMonth,
+            totalAppointments,
+            appointmentsToday,
+            upcomingAppointments,
+            todayAppointmentsList,
+            eventStats,
         };
     }
 
     /**
      * Staff dashboard — personal stats for the logged-in user
      */
-    async getStaffStats(userId: string) {
-        const [assignedLeads, followUpsDueToday] = await Promise.all([
-            this.leadsService.countAssigned(userId),
-            this.leadsService.followUpsDueToday(userId),
+    async getStaffStats(companyId: string, userId: string) {
+        const [assignedLeads, followUpsDueToday, totalAppointments, appointmentsToday, upcomingAppointments, todayAppointmentsList] = await Promise.all([
+            this.leadsService.countAssigned(userId).catch(() => 0),
+            this.leadsService.followUpsDueToday(userId).catch(() => []),
+            this.appointmentsService.countAll(companyId).catch(() => 0),
+            this.appointmentsService.countToday(companyId).catch(() => 0),
+            this.appointmentsService.countUpcoming(companyId).catch(() => 0),
+            this.appointmentsService.getTodayAppointmentsList(companyId).catch(() => []),
         ]);
 
         return {
             assignedLeads,
             followUpsDueToday: followUpsDueToday.length,
             followUps: followUpsDueToday,
+            totalAppointments,
+            appointmentsToday,
+            upcomingAppointments,
+            todayAppointmentsList,
         };
     }
 

@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { Plus, Check, X, Edit, Trash2 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
+import { MODULE_DEFINITIONS } from '../context/ModuleContext';
 
 export default function PlansPage() {
     const { user } = useAuth();
@@ -21,7 +22,8 @@ export default function PlansPage() {
         priceYearly: '',
         adminLimit: 1,
         employeeLimit: 5,
-        features: '' // comma-separated string for input
+        features: [], // array of module keys
+        integrations: [] // array of integration keys
     });
 
     const isSuperAdmin = user?.role === 'super_admin' || user?.role === 'superadmin_admin';
@@ -61,7 +63,8 @@ export default function PlansPage() {
             priceYearly: parseFloat(form.priceYearly),
             adminLimit: parseInt(form.adminLimit),
             employeeLimit: parseInt(form.employeeLimit),
-            features: form.features.split(',').map(f => f.trim()).filter(f => f)
+            features: form.features,
+            integrations: form.integrations
         };
 
         try {
@@ -74,7 +77,7 @@ export default function PlansPage() {
             }
             setShowModal(false);
             setEditingPlan(null);
-            setForm({ name: '', priceMonthly: '', priceYearly: '', adminLimit: 1, employeeLimit: 5, features: '' });
+            setForm({ name: '', priceMonthly: '', priceYearly: '', adminLimit: 1, employeeLimit: 5, features: [], integrations: [] });
             loadPlans();
         } catch (err) {
             toast.error('Failed to save plan');
@@ -89,7 +92,8 @@ export default function PlansPage() {
             priceYearly: plan.priceYearly,
             adminLimit: plan.adminLimit,
             employeeLimit: plan.employeeLimit,
-            features: plan.features ? plan.features.join(', ') : ''
+            features: plan.features || [],
+            integrations: plan.integrations || []
         });
         setShowModal(true);
     };
@@ -127,7 +131,7 @@ export default function PlansPage() {
                     <button
                         onClick={() => {
                             setEditingPlan(null);
-                            setForm({ name: '', priceMonthly: '', priceYearly: '', adminLimit: 1, employeeLimit: 5, features: '' });
+                            setForm({ name: '', priceMonthly: '', priceYearly: '', adminLimit: 1, employeeLimit: 5, features: [], integrations: [] });
                             setShowModal(true);
                         }}
                         className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all font-medium"
@@ -181,12 +185,31 @@ export default function PlansPage() {
 
                         {plan.features && plan.features.length > 0 && (
                             <div className="space-y-2 border-t border-gray-200 dark:border-slate-800 pt-4">
-                                {plan.features.map((feature, i) => (
-                                    <div key={i} className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
-                                        <Check className="w-4 h-4 text-indigo-500" />
-                                        {feature}
-                                    </div>
-                                ))}
+                                <p className="text-xs text-gray-400 dark:text-slate-500 font-medium">Modules included</p>
+                                {plan.features.map((featureKey, i) => {
+                                    const moduleDef = MODULE_DEFINITIONS.find(m => m.key === featureKey);
+                                    const displayLabel = moduleDef ? moduleDef.label : featureKey;
+                                    return (
+                                        <div key={i} className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
+                                            <Check className="w-4 h-4 text-indigo-500" />
+                                            {displayLabel}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {plan.integrations && plan.integrations.length > 0 && (
+                            <div className="space-y-2 border-t border-gray-200 dark:border-slate-800 pt-4">
+                                <p className="text-xs text-gray-400 dark:text-slate-500 font-medium">Integrations included</p>
+                                {plan.integrations.map((intKey, i) => {
+                                    return (
+                                        <div key={i} className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
+                                            <Check className="w-4 h-4 text-emerald-500" />
+                                            <span className="capitalize">{intKey.replace('_', ' ')}</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
 
@@ -307,14 +330,67 @@ export default function PlansPage() {
                                     />
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1">Features (comma separated)</label>
-                                <textarea
-                                    value={form.features}
-                                    onChange={e => setForm({ ...form, features: e.target.value })}
-                                    className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 h-24"
-                                    placeholder="Unlimited Leads, API Access, Priority Support..."
-                                />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Features / Modules</label>
+                                    <div className="space-y-2 max-h-48 overflow-y-auto p-2 bg-gray-50 dark:bg-slate-800/50 rounded-xl border border-gray-200 dark:border-slate-700">
+                                        {MODULE_DEFINITIONS.map(mod => (
+                                            <label key={mod.key} className="flex items-center gap-3 p-2 hover:bg-white dark:hover:bg-slate-800 rounded-lg cursor-pointer transition-colors">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={form.features.includes(mod.key)}
+                                                    onChange={(e) => {
+                                                        const checked = e.target.checked;
+                                                        setForm(prev => ({
+                                                            ...prev,
+                                                            features: checked 
+                                                                ? [...prev.features, mod.key]
+                                                                : prev.features.filter(k => k !== mod.key)
+                                                        }));
+                                                    }}
+                                                    className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
+                                                />
+                                                <div>
+                                                    <div className="text-sm font-medium text-gray-900 dark:text-white">{mod.label}</div>
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-2">Integrations</label>
+                                    <div className="space-y-2 max-h-48 overflow-y-auto p-2 bg-gray-50 dark:bg-slate-800/50 rounded-xl border border-gray-200 dark:border-slate-700">
+                                        {[
+                                            { key: 'meta', label: 'Meta / Facebook Ads' },
+                                            { key: 'google', label: 'Google Ads' },
+                                            { key: 'indiamart', label: 'IndiaMart' },
+                                            { key: 'tradeindia', label: 'Trade India' },
+                                            { key: 'justdial', label: 'JustDial' },
+                                            { key: 'website', label: 'Website Form' },
+                                            { key: 'email_parser', label: 'Universal Email Parser' }
+                                        ].map(int => (
+                                            <label key={int.key} className="flex items-center gap-3 p-2 hover:bg-white dark:hover:bg-slate-800 rounded-lg cursor-pointer transition-colors">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={form.integrations?.includes(int.key) || false}
+                                                    onChange={(e) => {
+                                                        const checked = e.target.checked;
+                                                        setForm(prev => ({
+                                                            ...prev,
+                                                            integrations: checked 
+                                                                ? [...(prev.integrations || []), int.key]
+                                                                : (prev.integrations || []).filter(k => k !== int.key)
+                                                        }));
+                                                    }}
+                                                    className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700"
+                                                />
+                                                <div>
+                                                    <div className="text-sm font-medium text-gray-900 dark:text-white">{int.label}</div>
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                             <div className="flex gap-3 pt-4">
                                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2 border border-gray-300 dark:border-slate-700 text-gray-600 dark:text-slate-300 rounded-xl hover:bg-white dark:bg-slate-800">Cancel</button>
