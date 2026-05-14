@@ -178,7 +178,6 @@ export class EmailService {
                         this.logger.warn('No SMTP credentials configured — email delivery will likely fail');
                     }
                 }
-            }
 
             this.logger.log(`Sending email to=${to} subject="${subject}" from=${from}`);
 
