@@ -393,7 +393,7 @@ export class IntegrationsService {
             }
 
             // 2. Fetch Page Permissions to verify scope check
-            const permUrl = `https://graph.facebook.com/v21.0/${pageId}/permissions?access_token=${accessToken}` +
+            const permUrl = `https://graph.facebook.com/v21.0/me/permissions?access_token=${accessToken}` +
                 (appsecretProof ? `&appsecret_proof=${appsecretProof}` : '');
             const permResponse = await fetch(permUrl, { signal: AbortSignal.timeout(10000) });
             const permData = await permResponse.json();
