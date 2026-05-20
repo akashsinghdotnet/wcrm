@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Company } from './company.entity';
 import { Plan } from '../plans/plan.entity';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
+import { UsersService } from '../users/users.service';
+import { UserRole } from '../users/user.entity';
 
 @Injectable()
 export class CompaniesService {
@@ -16,11 +18,33 @@ export class CompaniesService {
         @InjectRepository(Plan)
         private plansRepository: Repository<Plan>,
         private dataSource: DataSource,
+        @Inject(forwardRef(() => UsersService))
+        private usersService: UsersService,
     ) { }
 
-    create(createCompanyDto: CreateCompanyDto) {
-        const company = this.companiesRepository.create(createCompanyDto);
-        return this.companiesRepository.save(company);
+    async create(createCompanyDto: CreateCompanyDto) {
+        const { password, ...companyData } = createCompanyDto;
+        const company = this.companiesRepository.create(companyData as unknown as import('typeorm').DeepPartial<Company>);
+        const savedCompany = await this.companiesRepository.save(company);
+
+        // If email and password are provided, automatically create the admin user
+        if (companyData.email && password) {
+            try {
+                await this.usersService.create({
+                    email: companyData.email,
+                    password: password,
+                    name: companyData.companyName + ' Admin',
+                    companyId: savedCompany.id,
+                    role: UserRole.ADMIN,
+                });
+                this.logger.log(`Auto-created admin user for company ${savedCompany.id}`);
+            } catch (error) {
+                this.logger.error(`Failed to auto-create admin user for company ${savedCompany.id}: ${error.message}`);
+                // Don't fail the company creation if user creation fails
+            }
+        }
+
+        return savedCompany;
     }
 
     findAll() {
@@ -44,7 +68,7 @@ export class CompaniesService {
 
     async update(id: string, updateCompanyDto: UpdateCompanyDto) {
         const company = await this.findOne(id);
-        const { planId, ...rest } = updateCompanyDto;
+        const { planId, password, ...rest } = updateCompanyDto;
 
         if (planId) {
             const plan = await this.plansRepository.findOneBy({ id: planId });
@@ -52,6 +76,20 @@ export class CompaniesService {
             company.plan = plan;
             company.planId = planId;
             // Also update limits? No, just the reference. Limits are pulled from plan entity.
+        }
+
+        // If password is provided, find the primary admin and update their password
+        if (password) {
+            try {
+                const adminUsers = await this.usersService.findAll(id, UserRole.ADMIN);
+                if (adminUsers && adminUsers.length > 0) {
+                    // Update the first admin user
+                    await this.usersService.update(adminUsers[0].id, { password });
+                    this.logger.log(`Updated admin password for company ${id}`);
+                }
+            } catch (error) {
+                this.logger.error(`Failed to update admin password for company ${id}: ${error.message}`);
+            }
         }
 
         Object.assign(company, rest);

@@ -88,6 +88,25 @@ export class EmailService {
         return this.configRepo.findOne({ where: {} });
     }
 
+    async testConfig(config: Partial<EmailConfig>) {
+        try {
+            const transporter = nodemailer.createTransport({
+                host: config.host,
+                port: config.port,
+                secure: config.isSecure,
+                auth: {
+                    user: config.user,
+                    pass: config.pass,
+                },
+            });
+            await transporter.verify();
+            return { success: true, message: 'SMTP connection successful' };
+        } catch (error) {
+            this.logger.error(`SMTP test failed: ${error.message}`);
+            return { success: false, message: error.message };
+        }
+    }
+
     async getLogs(companyId?: string) {
         const where: any = {};
         if (companyId) {
@@ -639,7 +658,7 @@ export class EmailService {
         return this.sendEmail(to, subject, body, 'system');
     }
 
-    async sendForgotPasswordEmail(to: string, userName: string, resetLink: string) {
+    async sendForgotPasswordEmail(to: string, userName: string, resetLink: string, companyId?: string) {
         const defaultSubject = 'Password Reset Request - {{platform}}';
         const defaultHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -661,7 +680,7 @@ export class EmailService {
             userName, resetLink, platform: 'Magnet CRM'
         }, defaultSubject, defaultHtml);
 
-        return this.sendEmail(to, subject, body, 'system-auth');
+        return this.sendEmail(to, subject, body, 'system-auth', companyId);
     }
 
     async sendEventBookingClientEmail(to: string, data: any, companyId: string) {

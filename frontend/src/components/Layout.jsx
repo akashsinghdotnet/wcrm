@@ -237,6 +237,10 @@ export default function Layout() {
     const displayName = user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email;
 
     const filteredNav = navItems.filter((item) => {
+        if (user?.subscriptionStatus === 'past_due' && !['super_admin', 'superadmin_admin', 'superadmin_staff'].includes(user?.role)) {
+            // Only show Billing if past_due
+            return item.to === '/billing';
+        }
         if (item.show) return item.show(user) && (!item.module || hasModule(item.module));
         const roleOk = !item.roles || item.roles.includes(user?.role);
         const moduleOk = !item.module || hasModule(item.module);

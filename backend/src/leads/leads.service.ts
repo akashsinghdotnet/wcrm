@@ -457,7 +457,13 @@ export class LeadsService {
 
         // Parse header
         const headerLine = lines[0].toLowerCase();
-        const headers = this.parseCsvLine(headerLine);
+        const delimiter = this.detectDelimiter(headerLine);
+        const headers = this.parseCsvLine(headerLine, delimiter).map(h => 
+            h.trim()
+             .replace(/^\ufeff/, '')
+             .replace(/^["']|["']$/g, '')
+             .trim()
+        );
 
         const nameIdx = headers.indexOf('name');
         const phoneIdx = headers.indexOf('phone');
@@ -473,18 +479,22 @@ export class LeadsService {
 
         for (let i = 1; i < lines.length; i++) {
             try {
-                const fields = this.parseCsvLine(lines[i]);
-                const name = fields[nameIdx]?.trim();
+                const fields = this.parseCsvLine(lines[i], delimiter).map(f =>
+                    f.trim()
+                     .replace(/^["']|["']$/g, '')
+                     .trim()
+                );
+                const name = fields[nameIdx];
                 if (!name) { errors.push(`Row ${i + 1}: missing name`); continue; }
 
                 leadsToCreate.push({
                     companyId,
                     name,
-                    phone: phoneIdx >= 0 ? fields[phoneIdx]?.trim() : undefined,
-                    email: emailIdx >= 0 ? fields[emailIdx]?.trim() : undefined,
-                    source: sourceIdx >= 0 ? (fields[sourceIdx]?.trim() as any) || 'manual' : 'manual',
-                    status: statusIdx >= 0 ? (fields[statusIdx]?.trim() as any) || 'new' : 'new',
-                    notes: notesIdx >= 0 ? fields[notesIdx]?.trim() : undefined,
+                    phone: phoneIdx >= 0 ? fields[phoneIdx] || undefined : undefined,
+                    email: emailIdx >= 0 ? fields[emailIdx] || undefined : undefined,
+                    source: sourceIdx >= 0 ? (fields[sourceIdx] as any) || 'manual' : 'manual',
+                    status: statusIdx >= 0 ? (fields[statusIdx] as any) || 'new' : 'new',
+                    notes: notesIdx >= 0 ? fields[notesIdx] || undefined : undefined,
                 });
             } catch {
                 errors.push(`Row ${i + 1}: parse error`);
@@ -497,7 +507,32 @@ export class LeadsService {
         return { imported: leadsToCreate.length, errors };
     }
 
-    private parseCsvLine(line: string): string[] {
+    private detectDelimiter(line: string): string {
+        const delimiters = [',', ';', '\t'];
+        let bestDelimiter = ',';
+        let maxCount = -1;
+
+        for (const d of delimiters) {
+            let count = 0;
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') {
+                    if (inQuotes && line[i + 1] === '"') { i++; }
+                    else { inQuotes = !inQuotes; }
+                } else if (ch === d && !inQuotes) {
+                    count++;
+                }
+            }
+            if (count > maxCount) {
+                maxCount = count;
+                bestDelimiter = d;
+            }
+        }
+        return bestDelimiter;
+    }
+
+    private parseCsvLine(line: string, delimiter: string = ','): string[] {
         const fields: string[] = [];
         let current = '';
         let inQuotes = false;
@@ -506,7 +541,7 @@ export class LeadsService {
             if (ch === '"') {
                 if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
                 else { inQuotes = !inQuotes; }
-            } else if (ch === ',' && !inQuotes) {
+            } else if (ch === delimiter && !inQuotes) {
                 fields.push(current);
                 current = '';
             } else {

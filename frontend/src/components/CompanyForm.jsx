@@ -37,6 +37,17 @@ export default function CompanyForm({ form, setForm, plans, onSubmit, isEdit, on
                 </div>
             </div>
             <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">
+                    {isEdit ? 'New Password (leave blank to keep current)' : 'Admin Password'}
+                </label>
+                <input
+                    type="password" value={form.password || ''}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="••••••••"
+                />
+            </div>
+            <div>
                 <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Address</label>
                 <textarea
                     value={form.address || ''} rows="2"

@@ -23,6 +23,12 @@ export class EmailController {
         return this.emailService.saveConfig(config);
     }
 
+    @Post('config/test')
+    @Roles(UserRole.SUPER_ADMIN)
+    async testConfig(@Body() config: any) {
+        return this.emailService.testConfig(config);
+    }
+
     @Get('logs')
     async getLogs(@Request() req) {
         // user.companyId is null for Super Admin -> returns all (or filter by null if we wanted system only)

@@ -26,6 +26,10 @@ export class CreateCompanyDto {
     logoUrl?: string;
 
     @IsOptional()
+    @IsString()
+    password?: string;
+
+    @IsOptional()
     ownerUserId?: string;
 
     @IsOptional()
@@ -41,5 +45,5 @@ export class CreateCompanyDto {
 
     @IsOptional()
     @IsDateString()
-    renewalDate?: string;
+    renewalDate?: string | null;
 }

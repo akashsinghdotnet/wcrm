@@ -53,6 +53,8 @@ export default function BillingSettings() {
 
     if (loading) return <div className="text-gray-900 dark:text-white">Loading billing...</div>;
 
+    const isPastDue = user?.subscriptionStatus === 'past_due';
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -64,11 +66,13 @@ export default function BillingSettings() {
 
             {/* Current Plan Card */}
             {currentPlan && (
-                <div className="bg-gradient-to-r from-indigo-900/50 to-slate-900 border border-indigo-500/30 rounded-2xl p-6 relative overflow-hidden mb-8">
+                <div className={`bg-gradient-to-r ${isPastDue ? 'from-red-900/50 to-slate-900 border-red-500/30' : 'from-indigo-900/50 to-slate-900 border-indigo-500/30'} border rounded-2xl p-6 relative overflow-hidden mb-8`}>
                     <div className="absolute top-0 right-0 p-32 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
                     <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                         <div>
-                            <p className="text-sm text-indigo-400 font-medium mb-1">Current Subscription</p>
+                            <p className={`text-sm ${isPastDue ? 'text-red-400' : 'text-indigo-400'} font-medium mb-1`}>
+                                {isPastDue ? '⚠ Subscription Expired' : 'Current Subscription'}
+                            </p>
                             <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{currentPlan.name}</h3>
                             <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-gray-600 dark:text-slate-300 text-sm">
                                 <span>₹{currentPlan.priceMonthly}/mo</span>
@@ -78,7 +82,14 @@ export default function BillingSettings() {
                                 <span>{currentPlan.employeeLimit} Employees</span>
                             </div>
                         </div>
-                        {upgradePlanUrl && (
+                        {isPastDue ? (
+                            <a
+                                href={`/checkout/${currentPlan.slug || currentPlan.name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\\s+/g, '-')}`}
+                                className="w-full sm:w-auto text-center px-8 py-3 bg-amber-500 hover:bg-amber-400 text-white font-bold rounded-xl transition-colors shadow-lg shadow-amber-500/25 animate-pulse"
+                            >
+                                🔄 Renew Now
+                            </a>
+                        ) : upgradePlanUrl && (
                             <a
                                 href={upgradePlanUrl}
                                 target="_blank"

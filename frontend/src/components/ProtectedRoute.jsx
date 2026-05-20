@@ -34,6 +34,23 @@ export default function ProtectedRoute({ children, roles, module: requiredModule
         return <Navigate to="/" replace />;
     }
 
+    // If user's subscription is past due and they are trying to access restricted routes, redirect to subscription page
+    if (user.subscriptionStatus === 'past_due') {
+        const currentPath = window.location.pathname;
+        const currentSearch = window.location.search;
+        const allowedPaths = ['/billing', '/plans', '/settings'];
+        const isCheckoutPath = currentPath.startsWith('/checkout');
+        const isSettingsBilling = currentPath === '/settings' && currentSearch.includes('tab=billing');
+        
+        if (!allowedPaths.includes(currentPath) && !isCheckoutPath && !isSettingsBilling) {
+            // Allow super admin team to bypass this
+            const isSuperadminTeam = ['super_admin', 'superadmin_admin', 'superadmin_staff'].includes(user.role);
+            if (!isSuperadminTeam) {
+                return <Navigate to="/settings?tab=billing" replace />;
+            }
+        }
+    }
+
     return children;
 }
 

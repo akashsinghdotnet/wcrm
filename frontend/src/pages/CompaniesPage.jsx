@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Building2, Plus, Building, Trash2, ExternalLink, Edit, Calendar, CreditCard, Users, CheckCircle } from 'lucide-react';
+import { Building2, Plus, Building, Trash2, ExternalLink, Edit, Calendar, CreditCard, Users, CheckCircle, LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import CompanyForm from '../components/CompanyForm';
@@ -15,7 +15,7 @@ export default function CompaniesPage() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [companyToDelete, setCompanyToDelete] = useState(null);
     const [form, setForm] = useState({
-        companyName: '', email: '', phone: '', address: '',
+        companyName: '', email: '', phone: '', address: '', password: '',
         planId: '', subscriptionStatus: 'active', subscriptionPeriod: 'monthly', renewalDate: ''
     });
     const navigate = useNavigate();
@@ -40,9 +40,23 @@ export default function CompaniesPage() {
     };
 
     const resetForm = () => setForm({
-        companyName: '', email: '', phone: '', address: '',
+        companyName: '', email: '', phone: '', address: '', password: '',
         planId: '', subscriptionStatus: 'active', subscriptionPeriod: 'monthly', renewalDate: ''
     });
+
+    const handleLoginAsCompany = async (companyId) => {
+        try {
+            const res = await api.post(`/auth/impersonate/${companyId}`);
+            if (res.data && res.data.access_token) {
+                localStorage.setItem('magnetcrm_token', res.data.access_token);
+                localStorage.setItem('magnetcrm_user', JSON.stringify(res.data.user));
+                // Open dashboard in a new tab
+                window.open('/dashboard', '_blank');
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to login as company');
+        }
+    };
 
     const handleCreate = async (e) => {
         e.preventDefault();
@@ -79,6 +93,7 @@ export default function CompaniesPage() {
             // Use admin phone as fallback if company phone is missing
             phone: company.phone || (adminUser?.phone || ''),
             address: company.address || '',
+            password: '',
             planId: company.planId || '',
             subscriptionStatus: company.subscriptionStatus || 'active',
             subscriptionPeriod: company.subscriptionPeriod || 'monthly',
@@ -181,6 +196,13 @@ export default function CompaniesPage() {
                                     title="Edit Company"
                                 >
                                     <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleLoginAsCompany(company.id); }}
+                                    className="p-2 text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg"
+                                    title="Login as Company"
+                                >
+                                    <LogIn className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); navigate(`/companies/${company.id}`); }}

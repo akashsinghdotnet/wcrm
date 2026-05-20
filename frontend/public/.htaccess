@@ -1,13 +1,14 @@
 <IfModule mod_headers.c>
-  # Allow iframe embedding for booking pages
-  Header unset X-Frame-Options
-  Header set Content-Security-Policy "frame-ancestors *"
+  # Allow iframe embedding for booking widget pages
+  Header always unset X-Frame-Options
+  Header always set Content-Security-Policy "frame-ancestors *"
+  Header always set X-Frame-Options "ALLOWALL"
 </IfModule>
 
 # For OpenLiteSpeed / LiteSpeed
 <IfModule LiteSpeed>
-  Header unset X-Frame-Options
-  Header set Content-Security-Policy "frame-ancestors *"
+  Header always unset X-Frame-Options
+  Header always set Content-Security-Policy "frame-ancestors *"
 </IfModule>
 
 # React SPA - send all requests to index.html

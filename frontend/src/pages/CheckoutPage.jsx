@@ -30,7 +30,7 @@ export default function CheckoutPage() {
     const [paymentSettings, setPaymentSettings] = useState(null);
     const [processing, setProcessing] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(false);
-    const { login } = useAuth();
+    const { login, user } = useAuth();
     const { config } = useConfig();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
@@ -56,7 +56,17 @@ export default function CheckoutPage() {
     useEffect(() => {
         loadPlan();
         loadPaymentSettings();
-    }, [planSlug]);
+        if (user) {
+            setForm(prev => ({
+                ...prev,
+                firstName: user.firstName || '',
+                lastName: user.lastName || '',
+                email: user.email || '',
+                phone: user.phone || '',
+                companyName: user.companyName || '',
+            }));
+        }
+    }, [planSlug, user]);
 
     const loadPlan = async () => {
         try {
@@ -312,15 +322,24 @@ export default function CheckoutPage() {
     }, [paypalModalData, login, navigate]);
 
     const handlePay = async () => {
-        if (!form.firstName || !form.email) { toast.error('Please fill in all required fields'); return; }
-        if (!form.password || form.password.length < 6) { toast.error('Password must be at least 6 characters'); return; }
-        if (form.password !== form.confirmPassword) { toast.error('Passwords do not match'); return; }
+        if (!user) {
+            if (!form.firstName || !form.email) { toast.error('Please fill in all required fields'); return; }
+            if (!form.password || form.password.length < 6) { toast.error('Password must be at least 6 characters'); return; }
+            if (form.password !== form.confirmPassword) { toast.error('Passwords do not match'); return; }
+        }
         if (!selectedMethod) { toast.error('Please select a payment method'); return; }
 
         setProcessing(true);
         try {
+            const endpoint = user ? '/auth/renew-subscription' : '/auth/register-subscription';
             const payloadCompanyName = form.companyName?.trim() || `${form.firstName}'s Company`;
-            const res = await api.post('/auth/register-subscription', {
+            
+            const payload = user ? {
+                planId: plan.id,
+                billingPeriod,
+                paymentMethod: selectedMethod,
+                couponCode: appliedCoupon?.code || undefined,
+            } : {
                 email: form.email,
                 password: form.password,
                 firstName: form.firstName,
@@ -337,7 +356,9 @@ export default function CheckoutPage() {
                 billingPeriod,
                 paymentMethod: selectedMethod,
                 couponCode: appliedCoupon?.code || undefined,
-            });
+            };
+
+            const res = await api.post(endpoint, payload);
 
             if (res.data.status === 'pending_payment') {
                 // Bank transfer - show success screen (no auto-login)
@@ -351,10 +372,15 @@ export default function CheckoutPage() {
                 await openPayPalCheckout(res.data);
             } else if (res.data.status === 'active') {
                 setOrderSuccess(true);
-                toast.success('Account created and activated successfully!');
+                toast.success(user ? 'Subscription renewed successfully!' : 'Account created and activated successfully!');
+                if (user) {
+                    setTimeout(() => navigate('/billing'), 1500);
+                }
             } else if (res.data.access_token) {
                 // Direct login (fallback)
-                login(res.data.user, res.data.access_token);
+                if (!user) {
+                    login(res.data.user, res.data.access_token);
+                }
                 toast.success('Account created successfully!');
                 setTimeout(() => navigate('/'), 1500);
             }
@@ -474,136 +500,156 @@ export default function CheckoutPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                     {/* Left – Form (3 cols) */}
                     <div className="lg:col-span-3 space-y-6">
-                        {/* ─── Personal Information ─── */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                            <h3 className="text-base font-semibold text-indigo-400 mb-4 flex items-center gap-2">
-                                <User className="w-4 h-4" /> Personal Information
-                            </h3>
-                            <div className="space-y-3">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">First Name *</label>
-                                        <input required value={form.firstName} onChange={e => updateForm('firstName', e.target.value)} className={inputClass} placeholder="First Name" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Last Name</label>
-                                        <input value={form.lastName} onChange={e => updateForm('lastName', e.target.value)} className={inputClass} placeholder="Last Name" />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Email Address *</label>
-                                        <div className="relative">
-                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                                            <input type="email" required value={form.email} onChange={e => updateForm('email', e.target.value)} className={`${inputClass} pl-10`} placeholder="you@company.com" />
+                        {/* ─── Personal Information & Billing Address (Guest Only) ─── */}
+                        {!user ? (
+                            <>
+                                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                                    <h3 className="text-base font-semibold text-indigo-400 mb-4 flex items-center gap-2">
+                                        <User className="w-4 h-4" /> Personal Information
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-1.5">First Name *</label>
+                                                <input required value={form.firstName} onChange={e => updateForm('firstName', e.target.value)} className={inputClass} placeholder="First Name" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Last Name</label>
+                                                <input value={form.lastName} onChange={e => updateForm('lastName', e.target.value)} className={inputClass} placeholder="Last Name" />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Email Address *</label>
+                                                <div className="relative">
+                                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                                    <input type="email" required value={form.email} onChange={e => updateForm('email', e.target.value)} className={`${inputClass} pl-10`} placeholder="you@company.com" />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Phone Number</label>
+                                                <div className="relative">
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🇮🇳 +91</span>
+                                                    <input type="tel" value={form.phone} onChange={e => updateForm('phone', e.target.value)} className={`${inputClass} pl-[4.5rem]`} placeholder="9876543210" />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Phone Number</label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🇮🇳 +91</span>
-                                            <input type="tel" value={form.phone} onChange={e => updateForm('phone', e.target.value)} className={`${inputClass} pl-[4.5rem]`} placeholder="9876543210" />
-                                        </div>
-                                    </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        {/* ─── Billing Address ─── */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                            <h3 className="text-base font-semibold text-indigo-400 mb-4 flex items-center gap-2">
-                                <MapPin className="w-4 h-4" /> Billing Address
-                            </h3>
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Company Name (Optional)</label>
-                                    <input value={form.companyName} onChange={e => updateForm('companyName', e.target.value)} className={inputClass} placeholder="Company Name" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Street Address</label>
-                                    <input value={form.streetAddress} onChange={e => updateForm('streetAddress', e.target.value)} className={inputClass} placeholder="Street Address" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Street Address 2</label>
-                                    <input value={form.streetAddress2} onChange={e => updateForm('streetAddress2', e.target.value)} className={inputClass} placeholder="Apartment, suite, etc. (optional)" />
-                                </div>
-                                <div className="grid grid-cols-3 gap-3">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">City</label>
-                                        <input value={form.city} onChange={e => updateForm('city', e.target.value)} className={inputClass} placeholder="City" />
+                                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                                    <h3 className="text-base font-semibold text-indigo-400 mb-4 flex items-center gap-2">
+                                        <MapPin className="w-4 h-4" /> Billing Address
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Company Name (Optional)</label>
+                                            <input value={form.companyName} onChange={e => updateForm('companyName', e.target.value)} className={inputClass} placeholder="Company Name" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Street Address</label>
+                                            <input value={form.streetAddress} onChange={e => updateForm('streetAddress', e.target.value)} className={inputClass} placeholder="Street Address" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Street Address 2</label>
+                                            <input value={form.streetAddress2} onChange={e => updateForm('streetAddress2', e.target.value)} className={inputClass} placeholder="Apartment, suite, etc. (optional)" />
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-1.5">City</label>
+                                                <input value={form.city} onChange={e => updateForm('city', e.target.value)} className={inputClass} placeholder="City" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-1.5">State</label>
+                                                <select value={form.state} onChange={e => updateForm('state', e.target.value)} className={inputClass}>
+                                                    {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Postcode</label>
+                                                <input value={form.postcode} onChange={e => updateForm('postcode', e.target.value)} className={inputClass} placeholder="110001" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Country</label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm">🌍</span>
+                                                <input value={form.country} onChange={e => updateForm('country', e.target.value)} className={`${inputClass} pl-9`} placeholder="India" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Tax ID / GST (Optional)</label>
+                                            <input value={form.taxId} onChange={e => updateForm('taxId', e.target.value)} className={inputClass} placeholder="22AAAAA0000A1Z5" />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">State</label>
-                                        <select value={form.state} onChange={e => updateForm('state', e.target.value)} className={inputClass}>
-                                            {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Postcode</label>
-                                        <input value={form.postcode} onChange={e => updateForm('postcode', e.target.value)} className={inputClass} placeholder="110001" />
-                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Country</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm">🌍</span>
-                                        <input value={form.country} onChange={e => updateForm('country', e.target.value)} className={`${inputClass} pl-9`} placeholder="India" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Tax ID / GST (Optional)</label>
-                                    <input value={form.taxId} onChange={e => updateForm('taxId', e.target.value)} className={inputClass} placeholder="22AAAAA0000A1Z5" />
-                                </div>
-                            </div>
-                        </div>
 
-                        {/* ─── Account Security ─── */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                            <h3 className="text-base font-semibold text-indigo-400 mb-4 flex items-center gap-2">
-                                <Lock className="w-4 h-4" /> Account Security
-                            </h3>
-                            <div className="space-y-3">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Password *</label>
-                                        <div className="relative">
-                                            <input
-                                                type={showPassword ? 'text' : 'password'}
-                                                value={form.password}
-                                                onChange={e => updateForm('password', e.target.value)}
-                                                className={`${inputClass} pr-10`}
-                                                placeholder="Password"
-                                            />
-                                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
-                                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                            </button>
+                                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                                    <h3 className="text-base font-semibold text-indigo-400 mb-4 flex items-center gap-2">
+                                        <Lock className="w-4 h-4" /> Account Security
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Password *</label>
+                                                <div className="relative">
+                                                    <input
+                                                        type={showPassword ? 'text' : 'password'}
+                                                        value={form.password}
+                                                        onChange={e => updateForm('password', e.target.value)}
+                                                        className={`${inputClass} pr-10`}
+                                                        placeholder="Password"
+                                                    />
+                                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Confirm Password *</label>
+                                                <div className="relative">
+                                                    <input
+                                                        type={showConfirm ? 'text' : 'password'}
+                                                        value={form.confirmPassword}
+                                                        onChange={e => updateForm('confirmPassword', e.target.value)}
+                                                        className={`${inputClass} pr-10`}
+                                                        placeholder="Confirm Password"
+                                                    />
+                                                    <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                                                        {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Confirm Password *</label>
-                                        <div className="relative">
-                                            <input
-                                                type={showConfirm ? 'text' : 'password'}
-                                                value={form.confirmPassword}
-                                                onChange={e => updateForm('confirmPassword', e.target.value)}
-                                                className={`${inputClass} pr-10`}
-                                                placeholder="Confirm Password"
-                                            />
-                                            <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
-                                                {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                            </button>
+                                        <div>
+                                            <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                                <div className={`h-full rounded-full transition-all duration-300 ${strength.color}`} style={{ width: strength.width }} />
+                                            </div>
+                                            <p className="text-xs text-slate-500 mt-1.5">Password Strength: <span className="text-slate-400">{strength.label}</span></p>
                                         </div>
                                     </div>
                                 </div>
-                                {/* Password Strength */}
-                                <div>
-                                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                                        <div className={`h-full rounded-full transition-all duration-300 ${strength.color}`} style={{ width: strength.width }} />
-                                    </div>
-                                    <p className="text-xs text-slate-500 mt-1.5">Password Strength: <span className="text-slate-400">{strength.label}</span></p>
+                            </>
+                        ) : (
+                            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                                <h3 className="text-base font-semibold text-indigo-400 mb-4 flex items-center gap-2">
+                                    <User className="w-4 h-4" /> Account Details
+                                </h3>
+                                <div className="space-y-2">
+                                    <p className="text-slate-300">Logged in as <span className="font-medium text-white">{user.email}</span></p>
+                                    {user.companyName && (
+                                        <p className="text-sm text-slate-400 flex items-center gap-2">
+                                            <Building2 className="w-4 h-4" /> {user.companyName}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="mt-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                                    <p className="text-sm text-slate-400">
+                                        You are renewing or upgrading your subscription. This purchase will be applied to your existing account. Please proceed to select a payment method below.
+                                    </p>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* ─── Payment Method ─── */}
                         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">

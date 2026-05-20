@@ -248,6 +248,13 @@ export default function PlansPage() {
                                     >
                                         Upgrade
                                     </a>
+                                ) : user?.subscriptionStatus === 'past_due' ? (
+                                    <a
+                                        href={`/checkout/${plan.slug || plan.name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-')}`}
+                                        className="block w-full py-2 text-center bg-amber-500 hover:bg-amber-400 text-white rounded-xl transition-all font-medium text-sm"
+                                    >
+                                        Renew Now
+                                    </a>
                                 ) : (
                                     <button disabled className="block w-full py-2 text-center bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400 rounded-xl font-medium text-sm cursor-not-allowed">
                                         Active

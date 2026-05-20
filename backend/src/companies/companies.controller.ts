@@ -8,6 +8,7 @@ import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../users/user.entity';
 import { EmailService } from '../email/email.service';
 import { UsersService } from '../users/users.service';
+import { BillingService } from '../billing/billing.service';
 
 @Controller('companies')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -18,12 +19,58 @@ export class CompaniesController {
         private readonly companiesService: CompaniesService,
         private readonly emailService: EmailService,
         private readonly usersService: UsersService,
+        private readonly billingService: BillingService,
     ) { }
 
     @Post()
     @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN)
-    create(@Body() createCompanyDto: CreateCompanyDto) {
-        return this.companiesService.create(createCompanyDto);
+    async create(@Body() createCompanyDto: CreateCompanyDto) {
+        const savedCompany = await this.companiesService.create(createCompanyDto);
+
+        // Auto-generate a system invoice if a plan is assigned
+        if (savedCompany.planId) {
+            try {
+                const company = await this.companiesService.findOne(savedCompany.id);
+                if (company.plan) {
+                    const price = company.subscriptionPeriod === 'yearly'
+                        ? Number(company.plan.priceYearly)
+                        : Number(company.plan.priceMonthly);
+
+                    const isFreePlan = Number(company.plan.priceMonthly) === 0 && Number(company.plan.priceYearly) === 0;
+
+                    if (!isFreePlan && price > 0) {
+                        const gstAmount = Math.round(price * 18) / 100;
+                        const totalAmount = Math.round((price + gstAmount) * 100) / 100;
+                        const now = new Date();
+
+                        await this.billingService.createSystemInvoice({
+                            targetCompanyId: company.id,
+                            amount: totalAmount,
+                            subtotal: price,
+                            tax: gstAmount,
+                            invoiceDate: now,
+                            dueDate: now,
+                            month: now.toLocaleString('default', { month: 'short', year: 'numeric' }),
+                            status: company.subscriptionStatus === 'active' ? 'paid' : 'pending',
+                            items: [{
+                                description: `MagnetCRM ${company.plan.name} Plan (${company.subscriptionPeriod})`,
+                                quantity: 1,
+                                rate: price,
+                                amount: price,
+                            }],
+                            notes: 'Auto-generated invoice for plan subscription (created by superadmin)',
+                        });
+
+                        this.logger.log(`Auto-generated system invoice for company ${company.companyName} (${company.id})`);
+                    }
+                }
+            } catch (err) {
+                this.logger.error(`Failed to auto-generate invoice for company ${savedCompany.id}: ${err.message}`);
+                // Don't fail the company creation if invoice generation fails
+            }
+        }
+
+        return savedCompany;
     }
 
     @Get()
@@ -61,6 +108,45 @@ export class CompaniesController {
             subscriptionStatus: 'active',
             renewalDate: renewalDate.toISOString(),
         });
+
+        // Auto-generate invoice on activation
+        try {
+            if (company.plan) {
+                const price = company.subscriptionPeriod === 'yearly'
+                    ? Number(company.plan.priceYearly)
+                    : Number(company.plan.priceMonthly);
+
+                const isFreePlan = Number(company.plan.priceMonthly) === 0 && Number(company.plan.priceYearly) === 0;
+
+                if (!isFreePlan && price > 0) {
+                    const gstAmount = Math.round(price * 18) / 100;
+                    const totalAmount = Math.round((price + gstAmount) * 100) / 100;
+                    const now = new Date();
+
+                    await this.billingService.createSystemInvoice({
+                        targetCompanyId: company.id,
+                        amount: totalAmount,
+                        subtotal: price,
+                        tax: gstAmount,
+                        invoiceDate: now,
+                        dueDate: now,
+                        month: now.toLocaleString('default', { month: 'short', year: 'numeric' }),
+                        status: 'paid',
+                        items: [{
+                            description: `MagnetCRM ${company.plan.name} Plan (${company.subscriptionPeriod}) — Activation`,
+                            quantity: 1,
+                            rate: price,
+                            amount: price,
+                        }],
+                        notes: 'Auto-generated invoice on account activation (by superadmin)',
+                    });
+
+                    this.logger.log(`Auto-generated activation invoice for company ${company.companyName}`);
+                }
+            }
+        } catch (err) {
+            this.logger.error(`Failed to auto-generate activation invoice for company ${id}: ${err.message}`);
+        }
 
         // Send activation confirmation email to the company admin
         try {

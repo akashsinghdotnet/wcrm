@@ -8,7 +8,7 @@ async function bootstrap() {
 
   // Global API prefix — all routes become /api/... except widget
   app.setGlobalPrefix('api', {
-    exclude: ['widget/booking.js'],
+    exclude: ['widget/booking.js', 'widget/event-booking.js', 'widget/hotel-booking.js'],
   });
 
   // Validate all incoming request bodies using DTO decorators

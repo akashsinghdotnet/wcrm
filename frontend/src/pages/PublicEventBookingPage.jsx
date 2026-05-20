@@ -111,6 +111,7 @@ export default function PublicEventBookingPage() {
     }, [slug]);
 
     const verifyRazorpayReturn = async (paymentId, linkId, refId, status, signature) => {
+        setLoading(false);
         setProcessing(true);
         try {
             toast.loading('Verifying your payment...', { id: 'verify-rzp' });
@@ -131,6 +132,8 @@ export default function PublicEventBookingPage() {
         } catch (err) {
             toast.dismiss('verify-rzp');
             toast.error('Payment verification failed. Please contact support.');
+            // Load event details so the user can try again
+            fetchEventDetails();
         } finally {
             setProcessing(false);
         }
@@ -353,14 +356,6 @@ export default function PublicEventBookingPage() {
 
     if (loading) return <div className="min-h-screen bg-black flex items-center justify-center"><div className="w-12 h-12 border-4 border-violet-500 border-t-transparent rounded-full animate-spin"></div></div>;
 
-    if (!event) return (
-        <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
-            <CalendarDays className="w-16 h-16 text-slate-800 mb-4" />
-            <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Event Unavailable</h1>
-            <p className="text-slate-500">This event may have been cancelled or does not exist.</p>
-        </div>
-    );
-
     if (confirmedBooking) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
@@ -409,6 +404,14 @@ export default function PublicEventBookingPage() {
         );
     }
 
+    if (!event) return (
+        <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
+            <CalendarDays className="w-16 h-16 text-slate-800 mb-4" />
+            <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Event Unavailable</h1>
+            <p className="text-slate-500">This event may have been cancelled or does not exist.</p>
+        </div>
+    );
+
     return (
         <div className="min-h-screen bg-black font-sans selection:bg-violet-500/30 selection:text-violet-200 text-slate-300">
             {/* Payment Modals */}
@@ -424,98 +427,83 @@ export default function PublicEventBookingPage() {
                 </div>
             )}
 
-            <div className={`max-w-[1600px] mx-auto grid grid-cols-1 ${isEmbed ? '' : 'lg:grid-cols-12'} min-h-screen`}>
+            <div className={`max-w-[1100px] mx-auto grid grid-cols-1 ${isEmbed ? '' : 'lg:grid-cols-5'} min-h-screen`}>
                 
                 {/* Left Side: Event Details */}
                 {!isEmbed && (
-                <div className="lg:col-span-5 xl:col-span-5 p-6 lg:p-12 xl:p-16 flex flex-col relative border-b lg:border-b-0 lg:border-r border-white/5 bg-slate-950/50 overflow-hidden">
-                    <div className="absolute top-[-10%] left-[-10%] w-[120%] h-[120%] bg-gradient-to-br from-violet-600/10 via-indigo-600/5 to-black/80 blur-[120px] pointer-events-none" />
+                <div className="lg:col-span-2 p-5 lg:p-8 flex flex-col relative border-b lg:border-b-0 lg:border-r border-white/5 bg-slate-950/50 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-violet-600/8 via-transparent to-transparent pointer-events-none" />
                     
                     <div className="relative z-10 flex-1 flex flex-col justify-center">
                         {config?.app_logo && (
-                            <img src={config.app_logo} alt="Logo" className="h-8 mb-12 object-contain" />
+                            <img src={config.app_logo} alt="Logo" className="h-6 mb-6 object-contain" style={{maxWidth:'120px'}} />
                         )}
                         
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 text-violet-300 rounded-full text-xs font-bold uppercase tracking-widest mb-8 border border-violet-500/20 backdrop-blur-sm w-fit">
-                            <Sparkles className="w-3.5 h-3.5" /> Premium Event Checkout
-                        </div>
-                        
-                        <h1 className="text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-slate-500 mb-8 leading-[1.1] tracking-tighter">
+                        <h1 className="text-2xl lg:text-3xl font-bold text-white mb-5 leading-tight">
                             {event.title}
                         </h1>
                         
-                        <div className="space-y-6 mb-10">
+                        <div className="space-y-3 mb-6">
                             {event.startDate && (
-                                <div className="flex gap-5 items-start group">
-                                    <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shrink-0 group-hover:scale-110 group-hover:bg-violet-500/20 transition-all duration-300">
-                                        <CalendarDays className="w-5 h-5 text-violet-400" />
+                                <div className="flex gap-3 items-start">
+                                    <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10 shrink-0 mt-0.5">
+                                        <CalendarDays className="w-4 h-4 text-violet-400" />
                                     </div>
                                     <div>
-                                        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-1">Date & Time</p>
-                                        <p className="text-white text-lg font-medium">{new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                                        <p className="text-white text-sm font-medium">{new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</p>
                                         {(event.startTime || event.endTime) && (
-                                            <p className="text-violet-300 text-sm mt-1">{event.startTime} {event.endTime ? `to ${event.endTime}` : ''}</p>
+                                            <p className="text-slate-400 text-xs mt-0.5">{event.startTime} {event.endTime ? `– ${event.endTime}` : ''}</p>
                                         )}
                                     </div>
                                 </div>
                             )}
                             
                             {event.location && (
-                                <div className="flex gap-5 items-start group">
-                                    <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shrink-0 group-hover:scale-110 group-hover:bg-violet-500/20 transition-all duration-300">
-                                        <MapPin className="w-5 h-5 text-violet-400" />
+                                <div className="flex gap-3 items-start">
+                                    <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10 shrink-0 mt-0.5">
+                                        <MapPin className="w-4 h-4 text-violet-400" />
                                     </div>
                                     <div>
-                                        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-1">Location</p>
-                                        <p className="text-white text-lg font-medium">{event.location}</p>
-                                        {event.address && <p className="text-violet-300 text-sm mt-1">{event.address}</p>}
+                                        <p className="text-white text-sm font-medium">{event.location}</p>
+                                        {event.address && <p className="text-slate-400 text-xs mt-0.5">{event.address}</p>}
                                     </div>
                                 </div>
                             )}
                         </div>
 
                         {event.description && (
-                            <div className="pt-8 border-t border-white/10 relative">
-                                <div className="absolute top-0 left-0 w-1/3 h-[1px] bg-gradient-to-r from-violet-500/50 to-transparent"></div>
-                                <p className="text-slate-400 text-base leading-relaxed line-clamp-4">
-                                    {event.description}
-                                </p>
-                            </div>
+                            <p className="text-slate-400 text-sm leading-relaxed line-clamp-3 border-t border-white/5 pt-4">
+                                {event.description}
+                            </p>
                         )}
                     </div>
                         
-                    <div className="mt-12 flex items-center gap-3 text-sm text-slate-500 bg-white/5 p-4 rounded-2xl border border-white/5 backdrop-blur-md">
-                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                        </div>
-                        <span className="font-medium">100% Secured & Encrypted Checkout</span>
+                    <div className="mt-6 flex items-center gap-2 text-xs text-slate-500">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>Secured & Encrypted</span>
                     </div>
                 </div>
                 )}
 
                 {/* Right Side: Booking Form */}
-                <div className={`${isEmbed ? 'col-span-1 p-4' : 'lg:col-span-7 xl:col-span-7 p-6 lg:p-12 xl:p-20'} relative z-20`}>
-                    <div className="max-w-2xl mx-auto">
+                <div className={`${isEmbed ? 'col-span-1 p-3' : 'lg:col-span-3 p-5 lg:p-8'} relative z-20`}>
+                    <div className="max-w-lg mx-auto">
                         
                         {ticketTypes.length === 0 ? (
-                            <div className="text-center py-24 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2rem]">
-                                <Ticket className="w-16 h-16 text-slate-600 mx-auto mb-6" />
-                                <h3 className="text-3xl font-black text-white mb-3 tracking-tight">Sold Out</h3>
-                                <p className="text-slate-400 text-lg">Tickets for this event are currently unavailable.</p>
+                            <div className="text-center py-12 bg-white/5 border border-white/10 rounded-2xl">
+                                <Ticket className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                                <h3 className="text-xl font-bold text-white mb-1">Sold Out</h3>
+                                <p className="text-slate-400 text-sm">Tickets are currently unavailable.</p>
                             </div>
                         ) : (
-                            <form onSubmit={handleBooking} className="space-y-12 pb-32 lg:pb-0">
+                            <form onSubmit={handleBooking} className="space-y-6 pb-24 lg:pb-0">
                                 
                                 {/* Section 1: Select Ticket */}
-                                <div className="space-y-6">
-                                    <div className="flex items-end justify-between mb-8">
-                                        <div>
-                                            <p className="text-violet-400 font-bold tracking-widest text-xs uppercase mb-2">Step 1 of 3</p>
-                                            <h2 className="text-3xl font-black text-white tracking-tight">Choose Tickets</h2>
-                                        </div>
-                                    </div>
+                                <div>
+                                    <p className="text-violet-400 font-semibold text-xs uppercase tracking-wider mb-1">Step 1 of 3</p>
+                                    <h2 className="text-lg font-bold text-white mb-4">Choose Tickets</h2>
                                     
-                                    <div className="space-y-4">
+                                    <div className="space-y-2.5">
                                         {ticketTypes.map(ticket => {
                                             const isSelected = selectedTicketId === ticket.id;
                                             const tQty = Number(ticket.quantity);
@@ -527,42 +515,31 @@ export default function PublicEventBookingPage() {
                                                 <div 
                                                     key={ticket.id}
                                                     onClick={() => !isSoldOut && setSelectedTicketId(ticket.id)}
-                                                    className={`relative p-6 rounded-[2rem] border transition-all duration-300 cursor-pointer overflow-hidden group ${
+                                                    className={`p-4 rounded-xl border transition-all cursor-pointer ${
                                                         isSoldOut 
                                                             ? 'bg-white/5 border-white/5 opacity-50 cursor-not-allowed'
                                                             : isSelected 
-                                                                ? 'bg-violet-600/10 border-violet-500 shadow-[0_0_30px_rgba(139,92,246,0.15)] scale-[1.02]' 
-                                                                : 'bg-slate-900/40 border-white/10 hover:border-white/20 hover:bg-slate-800/60 hover:scale-[1.01]'
+                                                                ? 'bg-violet-600/10 border-violet-500' 
+                                                                : 'bg-slate-900/40 border-white/10 hover:border-white/20'
                                                     }`}
                                                 >
-                                                    {/* Background Glow for Selected */}
-                                                    {isSelected && <div className="absolute inset-0 bg-gradient-to-r from-violet-600/20 to-transparent pointer-events-none" />}
-
-                                                    <div className="relative z-10 flex justify-between items-center mb-2">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-violet-400 bg-violet-500' : 'border-slate-600 bg-transparent'}`}>
-                                                                {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                                                    <div className="flex justify-between items-center">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-violet-400 bg-violet-500' : 'border-slate-600'}`}>
+                                                                {isSelected && <Check className="w-3 h-3 text-white" />}
                                                             </div>
-                                                            <h3 className={`font-black text-xl tracking-tight transition-colors ${isSelected ? 'text-white' : 'text-slate-200'}`}>
-                                                                {ticket.name}
-                                                            </h3>
+                                                            <div>
+                                                                <h3 className={`font-semibold text-sm ${isSelected ? 'text-white' : 'text-slate-200'}`}>{ticket.name}</h3>
+                                                                <p className="text-xs text-slate-500">{ticket.description || 'General Admission'}</p>
+                                                            </div>
                                                         </div>
-                                                        <div className="text-right">
-                                                            <span className={`font-black text-2xl tracking-tight transition-colors ${isSelected ? 'text-violet-300' : 'text-white'}`}>
+                                                        <div className="flex items-center gap-2">
+                                                            {isSoldOut && <span className="text-[10px] font-bold text-rose-400 bg-rose-400/10 px-2 py-0.5 rounded-full uppercase">Sold Out</span>}
+                                                            {!isSoldOut && tQty > 0 && availableQty <= 10 && <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full uppercase">{availableQty} left</span>}
+                                                            <span className={`font-bold text-base ${isSelected ? 'text-violet-300' : 'text-white'}`}>
                                                                 {Number(ticket.price) === 0 ? 'Free' : `₹${Number(ticket.price).toLocaleString('en-IN')}`}
                                                             </span>
                                                         </div>
-                                                    </div>
-                                                    
-                                                    <div className="relative z-10 ml-10 flex items-center justify-between">
-                                                        <p className="text-sm text-slate-400 leading-relaxed max-w-[70%]">{ticket.description || 'General Admission Entry'}</p>
-                                                        {isSoldOut ? (
-                                                            <span className="text-xs font-bold text-rose-400 bg-rose-400/10 px-3 py-1 rounded-full uppercase tracking-wider">Sold Out</span>
-                                                        ) : (
-                                                            tQty > 0 && availableQty <= 10 && (
-                                                                <span className="text-xs font-bold text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full uppercase tracking-wider">Only {availableQty} left</span>
-                                                            )
-                                                        )}
                                                     </div>
                                                 </div>
                                             );
@@ -570,15 +547,15 @@ export default function PublicEventBookingPage() {
                                     </div>
 
                                     {selectedTicket && (
-                                        <div className="flex items-center justify-between p-6 bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-[2rem] mt-6 animate-in fade-in slide-in-from-bottom-4">
+                                        <div className="flex items-center justify-between p-3 bg-slate-900/60 border border-white/5 rounded-xl mt-3">
                                             <div>
-                                                <p className="font-bold text-white text-lg">Select Quantity</p>
-                                                <p className="text-sm text-slate-400">Max {selectedTicket.maxPerBooking} per order</p>
+                                                <p className="font-medium text-white text-sm">Quantity</p>
+                                                <p className="text-xs text-slate-400">Max {selectedTicket.maxPerBooking} per order</p>
                                             </div>
-                                            <div className="flex items-center gap-6 bg-black/50 p-2 rounded-2xl border border-white/5">
-                                                <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white hover:bg-white/10 hover:scale-105 active:scale-95 transition-all text-xl font-light">−</button>
-                                                <span className="font-black text-white text-xl w-6 text-center tracking-tight">{quantity}</span>
-                                                <button type="button" onClick={() => setQuantity(Math.min(selectedTicket.maxPerBooking, quantity + 1))} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white hover:bg-white/10 hover:scale-105 active:scale-95 transition-all text-xl font-light">+</button>
+                                            <div className="flex items-center gap-3 bg-black/40 px-2 py-1 rounded-lg border border-white/5">
+                                                <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-7 h-7 rounded-md bg-white/5 flex items-center justify-center text-white hover:bg-white/10 text-sm">−</button>
+                                                <span className="font-bold text-white text-sm w-4 text-center">{quantity}</span>
+                                                <button type="button" onClick={() => setQuantity(Math.min(selectedTicket.maxPerBooking, quantity + 1))} className="w-7 h-7 rounded-md bg-white/5 flex items-center justify-center text-white hover:bg-white/10 text-sm">+</button>
                                             </div>
                                         </div>
                                     )}
@@ -586,35 +563,25 @@ export default function PublicEventBookingPage() {
 
                                 {/* Section 2: Guest Details */}
                                 <div>
-                                    <div className="mb-8">
-                                        <p className="text-violet-400 font-bold tracking-widest text-xs uppercase mb-2">Step 2 of 3</p>
-                                        <h2 className="text-3xl font-black text-white tracking-tight">Attendee Details</h2>
-                                    </div>
+                                    <p className="text-violet-400 font-semibold text-xs uppercase tracking-wider mb-1">Step 2 of 3</p>
+                                    <h2 className="text-lg font-bold text-white mb-4">Your Details</h2>
                                     
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                        <div className="col-span-2 md:col-span-1 group">
-                                            <div className="relative">
-                                                <input required type="text" id="firstName" value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} className="peer w-full px-5 pt-7 pb-3 bg-slate-900/60 backdrop-blur-md border border-white/10 focus:border-violet-500 rounded-[1.5rem] text-white outline-none transition-all placeholder-transparent" placeholder="First Name" />
-                                                <label htmlFor="firstName" className="absolute left-5 top-2 text-xs font-bold uppercase tracking-wider text-slate-500 peer-focus:text-violet-400 transition-colors pointer-events-none">First Name</label>
-                                            </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-400 mb-1">First Name *</label>
+                                            <input required type="text" value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} className="w-full px-3 py-2.5 bg-slate-900/60 border border-white/10 focus:border-violet-500 rounded-lg text-white text-sm outline-none transition-colors" placeholder="John" />
                                         </div>
-                                        <div className="col-span-2 md:col-span-1 group">
-                                            <div className="relative">
-                                                <input required type="text" id="lastName" value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} className="peer w-full px-5 pt-7 pb-3 bg-slate-900/60 backdrop-blur-md border border-white/10 focus:border-violet-500 rounded-[1.5rem] text-white outline-none transition-all placeholder-transparent" placeholder="Last Name" />
-                                                <label htmlFor="lastName" className="absolute left-5 top-2 text-xs font-bold uppercase tracking-wider text-slate-500 peer-focus:text-violet-400 transition-colors pointer-events-none">Last Name</label>
-                                            </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-400 mb-1">Last Name *</label>
+                                            <input required type="text" value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} className="w-full px-3 py-2.5 bg-slate-900/60 border border-white/10 focus:border-violet-500 rounded-lg text-white text-sm outline-none transition-colors" placeholder="Doe" />
                                         </div>
-                                        <div className="col-span-2 group">
-                                            <div className="relative">
-                                                <input required type="email" id="email" value={form.guestEmail} onChange={e => setForm({...form, guestEmail: e.target.value})} className="peer w-full px-5 pt-7 pb-3 bg-slate-900/60 backdrop-blur-md border border-white/10 focus:border-violet-500 rounded-[1.5rem] text-white outline-none transition-all placeholder-transparent" placeholder="Email Address" />
-                                                <label htmlFor="email" className="absolute left-5 top-2 text-xs font-bold uppercase tracking-wider text-slate-500 peer-focus:text-violet-400 transition-colors pointer-events-none">Email Address (for tickets)</label>
-                                            </div>
+                                        <div className="col-span-2">
+                                            <label className="block text-xs font-medium text-slate-400 mb-1">Email *</label>
+                                            <input required type="email" value={form.guestEmail} onChange={e => setForm({...form, guestEmail: e.target.value})} className="w-full px-3 py-2.5 bg-slate-900/60 border border-white/10 focus:border-violet-500 rounded-lg text-white text-sm outline-none transition-colors" placeholder="john@email.com" />
                                         </div>
-                                        <div className="col-span-2 group">
-                                            <div className="relative">
-                                                <input required type="tel" id="phone" value={form.guestPhone} onChange={e => setForm({...form, guestPhone: e.target.value})} className="peer w-full px-5 pt-7 pb-3 bg-slate-900/60 backdrop-blur-md border border-white/10 focus:border-violet-500 rounded-[1.5rem] text-white outline-none transition-all placeholder-transparent" placeholder="Phone Number" />
-                                                <label htmlFor="phone" className="absolute left-5 top-2 text-xs font-bold uppercase tracking-wider text-slate-500 peer-focus:text-violet-400 transition-colors pointer-events-none">Phone Number</label>
-                                            </div>
+                                        <div className="col-span-2">
+                                            <label className="block text-xs font-medium text-slate-400 mb-1">Phone *</label>
+                                            <input required type="tel" value={form.guestPhone} onChange={e => setForm({...form, guestPhone: e.target.value})} className="w-full px-3 py-2.5 bg-slate-900/60 border border-white/10 focus:border-violet-500 rounded-lg text-white text-sm outline-none transition-colors" placeholder="+91 98765 43210" />
                                         </div>
                                     </div>
                                 </div>
@@ -622,12 +589,10 @@ export default function PublicEventBookingPage() {
                                 {/* Section 3: Payment */}
                                 {!isFree && availableMethods.length > 0 && (
                                     <div>
-                                        <div className="mb-8">
-                                            <p className="text-violet-400 font-bold tracking-widest text-xs uppercase mb-2">Step 3 of 3</p>
-                                            <h2 className="text-3xl font-black text-white tracking-tight">Payment Method</h2>
-                                        </div>
+                                        <p className="text-violet-400 font-semibold text-xs uppercase tracking-wider mb-1">Step 3 of 3</p>
+                                        <h2 className="text-lg font-bold text-white mb-4">Payment</h2>
                                         
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
                                             {availableMethods.map((method) => {
                                                 const Icon = method.icon;
                                                 const isSelected = form.paymentMethod === method.id;
@@ -635,18 +600,18 @@ export default function PublicEventBookingPage() {
                                                     <div 
                                                         key={method.id}
                                                         onClick={() => setForm({...form, paymentMethod: method.id})}
-                                                        className={`relative p-5 rounded-[1.5rem] border-2 transition-all cursor-pointer flex items-center gap-4 ${
-                                                            isSelected ? 'bg-violet-600/10 border-violet-500 shadow-[0_0_20px_rgba(139,92,246,0.1)]' : 'bg-slate-900/60 border-white/10 hover:border-white/20'
+                                                        className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center gap-3 ${
+                                                            isSelected ? 'bg-violet-600/10 border-violet-500' : 'bg-slate-900/60 border-white/10 hover:border-white/20'
                                                         }`}
                                                     >
-                                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${isSelected ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/30' : 'bg-black/50 text-slate-400'}`}>
-                                                            <Icon className="w-6 h-6" />
+                                                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isSelected ? 'bg-violet-500 text-white' : 'bg-black/50 text-slate-400'}`}>
+                                                            <Icon className="w-4 h-4" />
                                                         </div>
-                                                        <div>
-                                                            <h4 className="font-bold text-white text-base tracking-tight mb-0.5">{method.name}</h4>
+                                                        <div className="flex-1">
+                                                            <h4 className="font-medium text-white text-sm">{method.name}</h4>
                                                             <p className="text-xs text-slate-400">{method.description}</p>
                                                         </div>
-                                                        {isSelected && <div className="absolute top-4 right-4 text-violet-400"><CheckCircle2 className="w-5 h-5" /></div>}
+                                                        {isSelected && <CheckCircle2 className="w-4 h-4 text-violet-400" />}
                                                     </div>
                                                 );
                                             })}
@@ -654,29 +619,26 @@ export default function PublicEventBookingPage() {
                                     </div>
                                 )}
 
-                                {/* Bottom Fixed Bar on Mobile, Normal on Desktop */}
-                                <div className="fixed bottom-0 left-0 w-full lg:relative lg:w-auto p-4 lg:p-0 bg-slate-950/80 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none border-t border-white/10 lg:border-none z-40">
-                                    <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-[2rem] p-1 relative shadow-[0_20px_60px_rgba(139,92,246,0.3)]">
-                                        <div className="bg-slate-950/90 backdrop-blur-3xl rounded-[1.8rem] p-6 flex items-center justify-between gap-6">
+                                {/* Checkout Bar */}
+                                <div className="fixed bottom-0 left-0 w-full lg:relative lg:w-auto p-3 lg:p-0 bg-slate-950/90 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none border-t border-white/10 lg:border-none z-40">
+                                    <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl p-[1px]">
+                                        <div className="bg-slate-950/90 rounded-[11px] p-4 flex items-center justify-between gap-4">
                                             <div>
-                                                <p className="text-slate-400 font-bold tracking-widest text-xs uppercase mb-1">Total</p>
-                                                <div className="flex items-end gap-2">
-                                                    <span className="text-4xl font-black text-white tracking-tighter">
-                                                        {isFree ? 'Free' : `₹${totalAmount.toLocaleString('en-IN')}`}
-                                                    </span>
-                                                    {!isFree && <span className="text-violet-400 font-bold mb-1">{event.currency || 'INR'}</span>}
-                                                </div>
+                                                <p className="text-slate-400 text-xs font-medium mb-0.5">Total</p>
+                                                <span className="text-2xl font-bold text-white">
+                                                    {isFree ? 'Free' : `₹${totalAmount.toLocaleString('en-IN')}`}
+                                                </span>
                                             </div>
                                             
                                             <button 
                                                 type="submit" 
                                                 disabled={processing}
-                                                className="px-8 py-5 bg-white hover:bg-slate-100 text-black font-black tracking-tight rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-lg group hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:shadow-[0_0_60px_rgba(255,255,255,0.3)] min-w-[200px]"
+                                                className="px-6 py-3 bg-white hover:bg-slate-100 text-black font-bold rounded-xl transition-all disabled:opacity-50 flex items-center gap-2 text-sm"
                                             >
                                                 {processing ? (
-                                                    <><Loader2 className="w-6 h-6 animate-spin" /> Processing</>
+                                                    <><Loader2 className="w-4 h-4 animate-spin" /> Processing</>
                                                 ) : (
-                                                    <>Complete Order <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
+                                                    <>Book Now <ArrowRight className="w-4 h-4" /></>
                                                 )}
                                             </button>
                                         </div>

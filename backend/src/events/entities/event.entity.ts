@@ -65,6 +65,9 @@ export class Event {
     @Column({ nullable: true })
     tags: string;
 
+    @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+    price: number;
+
     @Column({ default: 'INR' })
     currency: string;
 

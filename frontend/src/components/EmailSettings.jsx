@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { Mail, Save, Eye, EyeOff, Server, Shield, User } from 'lucide-react';
+import { Mail, Save, Eye, EyeOff, Server, Shield, User, Send } from 'lucide-react';
 import api from '../services/api';
 
 export default function EmailSettings() {
@@ -15,6 +15,7 @@ export default function EmailSettings() {
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [testing, setTesting] = useState(false);
     const [showPass, setShowPass] = useState(false);
 
     useEffect(() => {
@@ -41,6 +42,22 @@ export default function EmailSettings() {
             toast.error('Failed to save settings');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleTest = async () => {
+        setTesting(true);
+        try {
+            const res = await api.post('/email/config/test', config);
+            if (res.data.success) {
+                toast.success('Connection successful');
+            } else {
+                toast.error(res.data.message || 'Connection failed');
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Connection failed');
+        } finally {
+            setTesting(false);
         }
     };
 
@@ -154,14 +171,24 @@ export default function EmailSettings() {
                 </div>
             </div>
 
-            <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-all shadow-lg shadow-indigo-600/25 disabled:opacity-50"
-            >
-                <Save size={18} />
-                {saving ? 'Saving...' : 'Save Configuration'}
-            </button>
+            <div className="flex gap-4">
+                <button
+                    onClick={handleTest}
+                    disabled={testing}
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition-all disabled:opacity-50"
+                >
+                    <Send size={18} />
+                    {testing ? 'Testing...' : 'Test Connection'}
+                </button>
+                <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-all shadow-lg shadow-indigo-600/25 disabled:opacity-50"
+                >
+                    <Save size={18} />
+                    {saving ? 'Saving...' : 'Save Configuration'}
+                </button>
+            </div>
         </div>
     );
 }

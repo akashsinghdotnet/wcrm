@@ -16,6 +16,7 @@ import {
     Trash2
 } from 'lucide-react';
 import InvoiceViewModal from '../components/InvoiceViewModal';
+import SubscriptionInvoiceModal from '../components/SubscriptionInvoiceModal';
 
 const STATUS_STYLES = {
     pending: { bg: 'bg-yellow-500/10', text: 'text-yellow-400', label: 'Pending' },
@@ -37,6 +38,8 @@ export default function BillingPage() {
     const [invoiceToDelete, setInvoiceToDelete] = useState(null);
     const [currentPlan, setCurrentPlan] = useState(null);
     const [globalHistory, setGlobalHistory] = useState([]);
+    const [subscriptionInvoices, setSubscriptionInvoices] = useState([]);
+    const [selectedSubscriptionInvoice, setSelectedSubscriptionInvoice] = useState(null);
 
     // Form State
     const [form, setForm] = useState({
@@ -113,11 +116,22 @@ export default function BillingPage() {
         }
     };
 
+    const fetchSubscriptionHistory = async () => {
+        if (isSuperAdmin || !user?.companyId) return;
+        try {
+            const res = await api.get('/billing/subscription-history', { params: { companyId: user.companyId } });
+            setSubscriptionInvoices(res.data);
+        } catch {
+            // silent fail
+        }
+    };
+
     useEffect(() => {
         fetchInvoices();
         fetchClients();
         fetchCompanies();
         fetchCompany();
+        fetchSubscriptionHistory();
     }, [user, filterStatus]);
 
     // Form Handlers
@@ -257,11 +271,13 @@ export default function BillingPage() {
 
             {/* Current Plan Card (For Company Admins) */}
             {currentPlan && !isSuperAdmin && (
-                <div className="bg-gradient-to-r from-indigo-900/50 to-slate-900 border border-indigo-500/30 rounded-2xl p-6 relative overflow-hidden mb-8">
+                <div className={`bg-gradient-to-r ${user?.subscriptionStatus === 'past_due' ? 'from-red-900/50 to-slate-900 border-red-500/30' : 'from-indigo-900/50 to-slate-900 border-indigo-500/30'} border rounded-2xl p-6 relative overflow-hidden mb-2`}>
                     <div className="absolute top-0 right-0 p-32 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                    <div className="relative z-10 flex items-center justify-between">
+                    <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div>
-                            <p className="text-sm text-indigo-400 font-medium mb-1">Current Subscription</p>
+                            <p className={`text-sm ${user?.subscriptionStatus === 'past_due' ? 'text-red-400' : 'text-indigo-400'} font-medium mb-1`}>
+                                {user?.subscriptionStatus === 'past_due' ? '⚠ Subscription Expired' : 'Current Subscription'}
+                            </p>
                             <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{currentPlan.name}</h3>
                             <div className="flex items-center gap-4 text-gray-600 dark:text-slate-300 text-sm">
                                 <span>₹{currentPlan.priceMonthly}/mo</span>
@@ -271,12 +287,67 @@ export default function BillingPage() {
                                 <span>{currentPlan.employeeLimit} Employees</span>
                             </div>
                         </div>
-                        <a
-                            href="/plans"
-                            className="px-6 py-3 bg-white text-indigo-900 font-bold rounded-xl hover:bg-slate-200 transition-colors shadow-lg"
-                        >
-                            Upgrade Plan
-                        </a>
+                        {user?.subscriptionStatus === 'past_due' && (
+                            <a
+                                href={`/checkout/${currentPlan.slug || currentPlan.name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\\s+/g, '-')}`}
+                                className="w-full sm:w-auto text-center px-8 py-3 bg-amber-500 hover:bg-amber-400 text-white font-bold rounded-xl transition-colors shadow-lg shadow-amber-500/25 animate-pulse"
+                            >
+                                🔄 Renew Now
+                            </a>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Subscription Purchase History - For Company Admins */}
+            {!isSuperAdmin && subscriptionInvoices.length > 0 && (
+                <div className="bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-slate-700/50 rounded-2xl overflow-hidden mb-6">
+                    <div className="p-4 border-b border-gray-300 dark:border-slate-700/50">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Subscription Purchase History</h3>
+                        <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Your MagnetCRM subscription invoices</p>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-gray-300 dark:border-slate-700/50">
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Description</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                                    <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Invoice</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {subscriptionInvoices.map((inv) => (
+                                    <tr key={inv.id} className="border-b border-gray-300 dark:border-slate-700/30 hover:bg-gray-200 dark:hover:bg-slate-700/20 transition-colors">
+                                        <td className="px-6 py-4 text-gray-600 dark:text-slate-300 text-sm">
+                                            {new Date(inv.date).toLocaleDateString('en-IN')}
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-900 dark:text-white font-medium text-sm">
+                                            {inv.description}
+                                            <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{inv.period}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-900 dark:text-white font-mono text-sm">{fmt(inv.amount)}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${inv.status === 'paid'
+                                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                                }`}>
+                                                {inv.status === 'paid' ? 'PAID' : 'PENDING'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button
+                                                onClick={() => setSelectedSubscriptionInvoice(inv)}
+                                                className="text-indigo-400 hover:text-indigo-300 text-sm font-medium hover:underline"
+                                            >
+                                                View Invoice
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             )}
@@ -675,6 +746,13 @@ export default function BillingPage() {
                 invoice={selectedInvoice}
                 company={company}
                 onClose={() => setSelectedInvoice(null)}
+            />
+
+            {/* Subscription Invoice Modal */}
+            <SubscriptionInvoiceModal
+                invoice={selectedSubscriptionInvoice}
+                company={company}
+                onClose={() => setSelectedSubscriptionInvoice(null)}
             />
 
             {/* Custom Delete Confirmation Modal */}

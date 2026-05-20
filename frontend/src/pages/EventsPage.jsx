@@ -11,7 +11,7 @@ export default function EventsPage() {
     const [eventForm, setEventForm] = useState({
         title: '', slug: '', description: '', location: '', address: '',
         category: '', startDate: '', endDate: '', startTime: '', endTime: '',
-        timezone: 'Asia/Kolkata', capacity: 0, status: 'draft', isPublic: true
+        timezone: 'Asia/Kolkata', capacity: 0, price: 0, status: 'draft', isPublic: true
     });
     const [isSaving, setIsSaving] = useState(false);
     const [copiedLink, setCopiedLink] = useState(null);
@@ -227,17 +227,24 @@ export default function EventsPage() {
                                         <input type="date" value={eventForm.endDate} onChange={e => setEventForm({ ...eventForm, endDate: e.target.value })} className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none" />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Start Time</label>
-                                        <input type="time" required value={eventForm.startTime} onChange={e => setEventForm({ ...eventForm, startTime: e.target.value })} className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none" />
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Start Time <span className="text-gray-400 text-xs">(optional)</span></label>
+                                        <input type="time" value={eventForm.startTime} onChange={e => setEventForm({ ...eventForm, startTime: e.target.value })} className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none" />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">End Time</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">End Time <span className="text-gray-400 text-xs">(optional)</span></label>
                                         <input type="time" value={eventForm.endTime} onChange={e => setEventForm({ ...eventForm, endTime: e.target.value })} className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none" />
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Location Name</label>
-                                    <input type="text" value={eventForm.location} onChange={e => setEventForm({ ...eventForm, location: e.target.value })} className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none" placeholder="e.g. Central Park" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Event Price (₹)</label>
+                                        <input type="number" min="0" step="0.01" value={eventForm.price} onChange={e => setEventForm({ ...eventForm, price: Number(e.target.value) })} className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none" placeholder="0 = Free" />
+                                        <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Set to 0 for free events. You can also add ticket types with separate pricing later.</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Location Name</label>
+                                        <input type="text" value={eventForm.location} onChange={e => setEventForm({ ...eventForm, location: e.target.value })} className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none" placeholder="e.g. Central Park" />
+                                    </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="col-span-2 sm:col-span-1">
@@ -393,7 +400,7 @@ function EventDetailView({ event, onBack, onEdit }) {
                             {event.status === 'published' && (
                                 <>
                                     <button onClick={() => {
-                                        const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : window.location.origin;
+                                        const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '') : window.location.origin;
                                         const snippet = `<script src="${apiUrl}/widget/event-booking.js" data-slug="${event.slug}"></script>`;
                                         navigator.clipboard.writeText(snippet);
                                         toast.success('Widget snippet copied to clipboard!');
@@ -609,7 +616,7 @@ function EventDetailView({ event, onBack, onEdit }) {
                                     <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-500 to-indigo-500 rounded-xl opacity-20 group-hover:opacity-30 transition-opacity blur"></div>
                                     <div className="relative bg-slate-950 rounded-xl p-4 font-mono text-sm overflow-x-auto border border-slate-800">
                                         <button onClick={() => {
-                                            const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : window.location.origin;
+                                            const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '') : window.location.origin;
                                             const snippet = `<script src="${apiUrl}/widget/event-booking.js" data-slug="${event.slug}" data-theme-color="${customPrimaryColor}" data-bg-color="${customBgColor}" data-font="${customFont}"></script>`;
                                             navigator.clipboard.writeText(snippet);
                                             toast.success('Customized widget copied to clipboard');
@@ -618,7 +625,7 @@ function EventDetailView({ event, onBack, onEdit }) {
                                         </button>
                                         <pre className="text-slate-300 mt-2">
                                             <code>
-<span className="text-pink-400">&lt;script</span> <span className="text-emerald-400">src</span>=<span className="text-amber-300">"{import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : window.location.origin}/widget/event-booking.js"</span>
+<span className="text-pink-400">&lt;script</span> <span className="text-emerald-400">src</span>=<span className="text-amber-300">"{import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '') : window.location.origin}/widget/event-booking.js"</span>
         <span className="text-emerald-400">data-slug</span>=<span className="text-amber-300">"{event.slug}"</span>
         <span className="text-emerald-400">data-theme-color</span>=<span className="text-amber-300">"{customPrimaryColor}"</span>
         <span className="text-emerald-400">data-bg-color</span>=<span className="text-amber-300">"{customBgColor}"</span>

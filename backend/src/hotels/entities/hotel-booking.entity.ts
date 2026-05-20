@@ -17,7 +17,7 @@ export class HotelBooking {
     @JoinColumn({ name: 'hotelId' })
     hotel: Hotel;
 
-    @Column()
+    @Column({ nullable: true })
     roomTypeId: string;
 
     @ManyToOne(() => RoomType, { onDelete: 'SET NULL', nullable: true })

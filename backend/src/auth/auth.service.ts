@@ -124,10 +124,14 @@ export class AuthService {
         const gstAmount = Math.round(baseAmount * 18) / 100;
         const totalAmount = Math.round((baseAmount + gstAmount) * 100) / 100; // in rupees
 
+        const isFreePlan = Number(plan.priceMonthly) === 0 && Number(plan.priceYearly) === 0;
+
         if (totalAmount === 0) {
             // Activate immediately
-            const renewalDate = new Date();
-            if (dto.billingPeriod === 'yearly') {
+            let renewalDate: Date | null = new Date();
+            if (isFreePlan) {
+                renewalDate = null;
+            } else if (dto.billingPeriod === 'yearly') {
                 renewalDate.setFullYear(renewalDate.getFullYear() + 1);
             } else {
                 renewalDate.setMonth(renewalDate.getMonth() + 1);
@@ -135,7 +139,7 @@ export class AuthService {
 
             await this.companiesService.update(company.id, {
                 subscriptionStatus: 'active',
-                renewalDate: renewalDate.toISOString(),
+                renewalDate: renewalDate ? renewalDate.toISOString() : (null as any),
             });
 
             // Send purchase confirmation/welcome email
@@ -320,6 +324,229 @@ export class AuthService {
                     amount: usdAmount,
                     companyId: company.id,
                     userId: user.id,
+                    couponCode: appliedCouponCode || undefined,
+                };
+            } catch (err) {
+                this.logger.error(`PayPal order creation failed: ${err.message}`);
+                throw new BadRequestException(`PayPal Error: ${err.message}`);
+            }
+        }
+
+        // Fallback for unknown methods
+        return {
+            status: 'pending_payment',
+            message: 'Order placed. Your CRM will be activated once payment is verified.',
+        };
+    }
+
+    async renewSubscription(user: any, dto: any) {
+        // 1. Fetch Company
+        const company = await this.companiesService.findOne(user.companyId);
+        if (!company) {
+            throw new BadRequestException('Company not found');
+        }
+
+        // 2. Validate Plan
+        const plan = await this.plansService.findOne(dto.planId);
+        if (!plan) {
+            throw new BadRequestException('Invalid plan selected');
+        }
+
+        // Update company's pending plan details just in case they are upgrading/downgrading
+        await this.companiesService.update(company.id, {
+            planId: plan.id,
+            subscriptionPeriod: dto.billingPeriod,
+        });
+
+        const isBankTransfer = dto.paymentMethod === 'bank_transfer';
+        const isRazorpay = dto.paymentMethod === 'razorpay';
+        const isPayPal = dto.paymentMethod === 'paypal';
+
+        let baseAmount = Number(dto.billingPeriod === 'yearly' ? plan.priceYearly : plan.priceMonthly);
+
+        // Apply coupon discount if provided
+        let appliedCouponCode: string | null = null;
+        if (dto.couponCode) {
+            try {
+                const coupon = await this.couponsService.validate(dto.couponCode, dto.billingPeriod);
+                let discount = 0;
+                if (coupon.type === 'percentage') {
+                    discount = parseFloat((baseAmount * coupon.value / 100).toFixed(2));
+                } else {
+                    discount = Math.min(coupon.value, baseAmount);
+                }
+                baseAmount = Math.max(0, parseFloat((baseAmount - discount).toFixed(2)));
+                appliedCouponCode = coupon.code;
+                this.logger.log(`Coupon ${coupon.code} applied: discount=${discount}, newBaseAmount=${baseAmount}`);
+            } catch (err) {
+                this.logger.warn(`Coupon validation failed: ${err.message}`);
+                // Continue without discount — don't block registration
+            }
+        }
+
+        const gstAmount = Math.round(baseAmount * 18) / 100;
+        const totalAmount = Math.round((baseAmount + gstAmount) * 100) / 100; // in rupees
+
+        const isFreePlan = Number(plan.priceMonthly) === 0 && Number(plan.priceYearly) === 0;
+
+        if (totalAmount === 0) {
+            // Activate immediately
+            let renewalDate: Date | null = new Date();
+            if (isFreePlan) {
+                renewalDate = null;
+            } else if (dto.billingPeriod === 'yearly') {
+                renewalDate.setFullYear(renewalDate.getFullYear() + 1);
+            } else {
+                renewalDate.setMonth(renewalDate.getMonth() + 1);
+            }
+
+            await this.companiesService.update(company.id, {
+                subscriptionStatus: 'active',
+                renewalDate: renewalDate ? renewalDate.toISOString() : (null as any),
+            });
+
+            return {
+                status: 'active',
+                message: 'Subscription renewed successfully.',
+            };
+        }
+
+        if (isBankTransfer) {
+            return {
+                status: 'pending_payment',
+                message: 'Order placed successfully. Bank details have been sent to your email. Your CRM will be activated once payment is verified.',
+            };
+        }
+
+        if (isRazorpay) {
+            // Create Razorpay order
+            const rzp = await this.getRazorpayInstance();
+            if (!rzp) {
+                throw new BadRequestException('Razorpay is not configured. Please contact support.');
+            }
+
+            try {
+                const order = await rzp.orders.create({
+                    amount: Math.round(totalAmount * 100), // Razorpay expects paise
+                    currency: 'INR',
+                    receipt: `renew_${company.id.substring(0, 8)}_${Date.now()}`,
+                    notes: {
+                        companyId: company.id,
+                        userId: user.userId || user.id || user.sub,
+                        planId: plan.id,
+                        billingPeriod: dto.billingPeriod,
+                        couponCode: appliedCouponCode || undefined,
+                        isRenewal: 'true',
+                    },
+                });
+
+                const keyId = await this.getRazorpayKeyId();
+
+                return {
+                    status: 'razorpay_order_created',
+                    orderId: order.id,
+                    amount: order.amount,
+                    currency: order.currency,
+                    keyId,
+                    companyId: company.id,
+                    userId: user.userId || user.id || user.sub,
+                    couponCode: appliedCouponCode || undefined,
+                    prefill: {
+                        name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+                        email: user.email,
+                        contact: user.phone || '',
+                    },
+                };
+            } catch (err) {
+                this.logger.error(`Razorpay order creation failed: ${err.message}`);
+                throw new BadRequestException('Failed to create payment order. Please try again.');
+            }
+        }
+
+        if (isPayPal) {
+            const paymentSettingsRaw = await this.settingsService.getValue('payment_settings');
+            let paypalSettings = { clientId: '', secret: '', mode: 'sandbox' };
+            if (paymentSettingsRaw) {
+                try {
+                    const parsed = JSON.parse(paymentSettingsRaw || "{}");
+                    if (parsed.paypal) paypalSettings = parsed.paypal;
+                } catch { }
+            }
+
+            if (!paypalSettings.clientId || !paypalSettings.secret) {
+                throw new BadRequestException('PayPal is not configured. Please contact support.');
+            }
+
+            try {
+                const isSandbox = paypalSettings.mode !== 'live';
+                const baseUrl = isSandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
+
+                const auth = Buffer.from(`${paypalSettings.clientId}:${paypalSettings.secret}`).toString('base64');
+                const tokenRes = await fetch(`${baseUrl}/v1/oauth2/token`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Basic ${auth}`,
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'grant_type=client_credentials'
+                });
+                
+                if (!tokenRes.ok) {
+                    const errText = await tokenRes.text();
+                    this.logger.error(`PayPal Token Error: ${errText}`);
+                    throw new Error('Invalid PayPal Credentials');
+                }
+                const tokenData = await tokenRes.json();
+
+                // Fetch Live Exchange Rate (INR to USD)
+                let usdAmount = (totalAmount / 84).toFixed(2); // Initial fallback
+                try {
+                    const rateRes = await fetch('https://open.er-api.com/v6/latest/INR');
+                    if (rateRes.ok) {
+                        const rateData = await rateRes.json();
+                        if (rateData?.rates?.USD) {
+                            usdAmount = (totalAmount * rateData.rates.USD).toFixed(2);
+                            this.logger.log(`Live conversion: ₹${totalAmount} INR -> $${usdAmount} USD (Rate: ${rateData.rates.USD})`);
+                        }
+                    }
+                } catch (err) {
+                    this.logger.warn(`Failed to fetch live exchange rate, using fallback. Error: ${err.message}`);
+                }
+
+                const orderRes = await fetch(`${baseUrl}/v2/checkout/orders`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${tokenData.access_token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        intent: 'CAPTURE',
+                        purchase_units: [{
+                            reference_id: `renew_${company.id.substring(0, 8)}_${Date.now()}`,
+                            amount: {
+                                currency_code: 'USD',
+                                value: usdAmount
+                            },
+                            description: `${plan.name} Plan - ${dto.billingPeriod}`
+                        }]
+                    })
+                });
+
+                if (!orderRes.ok) {
+                    const errText = await orderRes.text();
+                    this.logger.error(`PayPal Order Error: ${errText}`);
+                    throw new Error('Failed to configure PayPal order payload');
+                }
+                const orderData = await orderRes.json();
+
+                return {
+                    status: 'paypal_order_created',
+                    orderId: orderData.id,
+                    clientId: paypalSettings.clientId,
+                    currency: 'USD',
+                    amount: usdAmount,
+                    companyId: company.id,
+                    userId: user.userId || user.id || user.sub,
                     couponCode: appliedCouponCode || undefined,
                 };
             } catch (err) {
@@ -539,11 +766,34 @@ export class AuthService {
         }
 
         // Block login for companies with pending_payment status
+        let companyStatus = 'active';
+        let companyPlanId: string | null = null;
+        let companyName: string | null = null;
+        let renewalDate: Date | null = null;
         if (user.companyId) {
             try {
                 const company = await this.companiesService.findOne(user.companyId);
+                companyStatus = company.subscriptionStatus;
+                companyPlanId = company.planId;
+                companyName = company.companyName;
+                renewalDate = company.renewalDate;
                 if (company.subscriptionStatus === 'pending_payment') {
                     throw new ForbiddenException('Your account is pending payment verification. Please complete the bank transfer and wait for activation.');
+                }
+                
+                const isFreePlan = company.plan && Number(company.plan.priceMonthly) === 0 && Number(company.plan.priceYearly) === 0;
+
+                if (isFreePlan) {
+                    if (company.subscriptionStatus === 'past_due') {
+                        await this.companiesService.update(company.id, { subscriptionStatus: 'active', renewalDate: null as any });
+                        companyStatus = 'active';
+                        renewalDate = null;
+                    }
+                } else if (company.renewalDate && new Date(company.renewalDate).getTime() < new Date().getTime()) {
+                    if (company.subscriptionStatus !== 'past_due') {
+                        await this.companiesService.update(company.id, { subscriptionStatus: 'past_due' });
+                        companyStatus = 'past_due';
+                    }
                 }
             } catch (e) {
                 if (e instanceof ForbiddenException) throw e;
@@ -562,7 +812,13 @@ export class AuthService {
         const payload = { email: user.email, sub: user.id, role: user.role, companyId: user.companyId };
         return {
             access_token: this.jwtService.sign(payload),
-            user,
+            user: { 
+                ...user, 
+                subscriptionStatus: companyStatus,
+                planId: companyPlanId,
+                companyName,
+                renewalDate
+            },
         };
     }
 
@@ -686,6 +942,21 @@ export class AuthService {
         await this.emailService.sendForgotPasswordEmail(user.email, user.firstName, resetLink);
 
         return { message: 'If an account exists with this email, a password reset link has been sent.' };
+    }
+
+    async impersonateCompany(companyId: string) {
+        const users = await this.usersService.findAll(companyId);
+        const adminUser = users.find(u => u.role === UserRole.ADMIN) || users[0];
+        
+        if (!adminUser) {
+            throw new BadRequestException('No users found for this company to impersonate.');
+        }
+
+        const payload = { email: adminUser.email, sub: adminUser.id, role: adminUser.role, companyId: adminUser.companyId };
+        return {
+            access_token: this.jwtService.sign(payload),
+            user: adminUser,
+        };
     }
 
     async resetPassword(dto: ResetPasswordDto) {
