@@ -363,6 +363,54 @@ export class IntegrationsService {
     // ──────────────────────────────────────────────────────────────────────────
 
     /**
+     * Test Meta connection credentials by calling Facebook Graph API
+     */
+    async testMetaConnection(credentials: Record<string, any>): Promise<{ success: boolean; message: string }> {
+        const { accessToken, pageId } = credentials;
+        if (!accessToken || !pageId) {
+            return { success: false, message: 'Access Token and Page ID are required.' };
+        }
+
+        try {
+            // 1. Fetch Page Info to verify Access Token & Page ID
+            const pageUrl = `https://graph.facebook.com/v21.0/${pageId}?fields=name&access_token=${accessToken}`;
+            const response = await fetch(pageUrl, { signal: AbortSignal.timeout(10000) });
+            const data = await response.json();
+
+            if (data.error) {
+                return { success: false, message: data.error.message || 'Facebook Graph API error' };
+            }
+
+            // 2. Fetch Page Permissions to verify scope check
+            const permUrl = `https://graph.facebook.com/v21.0/${pageId}/permissions?access_token=${accessToken}`;
+            const permResponse = await fetch(permUrl, { signal: AbortSignal.timeout(10000) });
+            const permData = await permResponse.json();
+
+            let hasLeadsRetrieval = false;
+            if (permData && Array.isArray(permData.data)) {
+                hasLeadsRetrieval = permData.data.some(
+                    (p: any) => p.permission === 'leads_retrieval' && p.status === 'granted'
+                );
+            }
+
+            const pageName = data.name || 'Facebook Page';
+            if (hasLeadsRetrieval) {
+                return { 
+                    success: true, 
+                    message: `Successfully connected to Page "${pageName}"! leads_retrieval permission is active.` 
+                };
+            } else {
+                return { 
+                    success: true, 
+                    message: `Connected to Page "${pageName}", but "leads_retrieval" permission was not found or not granted. Ensure your Page Access Token has leads_retrieval permissions.` 
+                };
+            }
+        } catch (error: any) {
+            return { success: false, message: `Failed to connect to Facebook: ${error.message}` };
+        }
+    }
+
+    /**
      * Verify Meta webhook — called by Meta when setting up the webhook.
      */
     verifyMetaWebhook(mode: string, challenge: string, verifyToken: string): string | null {

@@ -124,4 +124,11 @@ export class IntegrationsController {
     async testEmailParserConnection(@Body() credentials: Record<string, any>) {
         return this.emailParserService.testConnection(credentials);
     }
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Post('meta/test')
+    @Roles(UserRole.ADMIN)
+    async testMetaConnection(@Body() credentials: Record<string, any>) {
+        return this.integrationsService.testMetaConnection(credentials);
+    }
 }

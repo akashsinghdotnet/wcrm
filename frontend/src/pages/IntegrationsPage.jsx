@@ -328,6 +328,23 @@ export default function IntegrationsPage({ embedded = false }) {
         }
     };
 
+    const testMetaConnection = async () => {
+        setTesting(true);
+        const toastId = toast.loading('Testing Meta connection...');
+        try {
+            const res = await api.post('/integrations/meta/test', credentialForm);
+            if (res.data.success) {
+                toast.success(res.data.message, { id: toastId });
+            } else {
+                toast.error(`Connection failed: ${res.data.message}`, { id: toastId });
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to connect to Meta API', { id: toastId });
+        } finally {
+            setTesting(false);
+        }
+    };
+
     const isActive = (id) => integrationConfigs[id]?.isActive || false;
     const hasCredentials = (id) => {
         const creds = integrationConfigs[id]?.credentials;
@@ -906,6 +923,16 @@ function submitMagnetCRMForm(e) {
                                     <button
                                         type="button"
                                         onClick={testImapConnection}
+                                        disabled={testing}
+                                        className="flex-1 py-2.5 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 rounded-xl transition-all font-medium disabled:opacity-50"
+                                    >
+                                        {testing ? 'Testing...' : 'Test Connection'}
+                                    </button>
+                                )}
+                                {configModalPlatform === 'meta' && (
+                                    <button
+                                        type="button"
+                                        onClick={testMetaConnection}
                                         disabled={testing}
                                         className="flex-1 py-2.5 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 rounded-xl transition-all font-medium disabled:opacity-50"
                                     >
