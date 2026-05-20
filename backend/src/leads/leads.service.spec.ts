@@ -89,5 +89,34 @@ describe('LeadsService', () => {
             expect(result.imported).toBe(0);
             expect(result.errors).toContain('Missing required "name" column');
         });
+
+        it('should resolve column aliases like phone_number and strip p: prefix from phone numbers', async () => {
+            const csv = 'email,Name,phone_number\n' +
+                'ashishhack@gmail.com,ashish sharma,p:9993794378\n' +
+                'ishandevaliya77@gmail.com,Ishan,p:+917388285905';
+            const result = await service.importFromCsv(csv, 'company123');
+            expect(result.imported).toBe(2);
+            expect(result.errors.length).toBe(0);
+            expect(leadsRepositoryMock.create).toHaveBeenCalledWith([
+                {
+                    companyId: 'company123',
+                    name: 'ashish sharma',
+                    phone: '9993794378',
+                    email: 'ashishhack@gmail.com',
+                    source: 'manual',
+                    status: 'new',
+                    notes: undefined,
+                },
+                {
+                    companyId: 'company123',
+                    name: 'Ishan',
+                    phone: '+917388285905',
+                    email: 'ishandevaliya77@gmail.com',
+                    source: 'manual',
+                    status: 'new',
+                    notes: undefined,
+                },
+            ]);
+        });
     });
 });

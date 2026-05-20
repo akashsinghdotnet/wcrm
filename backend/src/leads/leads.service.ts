@@ -465,12 +465,21 @@ export class LeadsService {
              .trim()
         );
 
-        const nameIdx = headers.indexOf('name');
-        const phoneIdx = headers.indexOf('phone');
-        const emailIdx = headers.indexOf('email');
-        const sourceIdx = headers.indexOf('source');
-        const statusIdx = headers.indexOf('status');
-        const notesIdx = headers.indexOf('notes');
+        // Helper to match column headers using common aliases
+        const findColumnIndex = (aliases: string[]): number => {
+            for (const alias of aliases) {
+                const idx = headers.indexOf(alias);
+                if (idx !== -1) return idx;
+            }
+            return -1;
+        };
+
+        const nameIdx = findColumnIndex(['name', 'full name', 'fullname', 'lead name', 'lead_name']);
+        const phoneIdx = findColumnIndex(['phone', 'phone_number', 'phone number', 'mobile', 'mobile_number', 'mobile number', 'contact', 'contact_number', 'contact number', 'tel', 'telephone']);
+        const emailIdx = findColumnIndex(['email', 'email_address', 'email address', 'mail']);
+        const sourceIdx = findColumnIndex(['source', 'lead_source', 'lead source']);
+        const statusIdx = findColumnIndex(['status', 'lead_status', 'lead status']);
+        const notesIdx = findColumnIndex(['notes', 'note', 'remark', 'remarks', 'comment', 'comments', 'description']);
 
         if (nameIdx === -1) return { imported: 0, errors: ['Missing required "name" column'] };
 
@@ -487,10 +496,15 @@ export class LeadsService {
                 const name = fields[nameIdx];
                 if (!name) { errors.push(`Row ${i + 1}: missing name`); continue; }
 
+                let phone = phoneIdx >= 0 ? fields[phoneIdx] || undefined : undefined;
+                if (phone) {
+                    phone = phone.replace(/^(p|tel|phone):/i, '').trim();
+                }
+
                 leadsToCreate.push({
                     companyId,
                     name,
-                    phone: phoneIdx >= 0 ? fields[phoneIdx] || undefined : undefined,
+                    phone,
                     email: emailIdx >= 0 ? fields[emailIdx] || undefined : undefined,
                     source: sourceIdx >= 0 ? (fields[sourceIdx] as any) || 'manual' : 'manual',
                     status: statusIdx >= 0 ? (fields[statusIdx] as any) || 'new' : 'new',
