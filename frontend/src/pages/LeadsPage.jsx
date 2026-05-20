@@ -566,7 +566,19 @@ export default function LeadsPage() {
                                                         <Phone className="w-4 h-4" />
                                                     </button>
                                                     <button
-                                                        onClick={(e) => { e.stopPropagation(); setWhatsAppLead(lead); }}
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            try {
+                                                                const checkRes = await api.get('/whatsapp/check-config');
+                                                                if (checkRes.data?.configured) {
+                                                                    setWhatsAppLead(lead);
+                                                                } else {
+                                                                    toast.error('Connect your WhatsApp API first');
+                                                                }
+                                                            } catch {
+                                                                toast.error('Connect your WhatsApp API first');
+                                                            }
+                                                        }}
                                                         className="p-2 text-gray-500 dark:text-slate-400 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all cursor-pointer"
                                                         title="WhatsApp Chat"
                                                     >

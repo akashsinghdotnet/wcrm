@@ -19,6 +19,15 @@ export class WhatsAppController {
         return this.whatsappService.getConfig(companyId);
     }
 
+    @Get('check-config')
+    @UseGuards(JwtAuthGuard)
+    async checkConfig(@Request() req) {
+        const config = await this.whatsappService.getConfig(req.user.companyId);
+        return {
+            configured: !!(config && config.phoneNumberId && config.accessToken),
+        };
+    }
+
     @Post('config')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN)

@@ -152,7 +152,18 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                                             Call
                                         </button>
                                         <button
-                                            onClick={() => setShowWhatsAppChat(true)}
+                                            onClick={async () => {
+                                                try {
+                                                    const checkRes = await api.get('/whatsapp/check-config');
+                                                    if (checkRes.data?.configured) {
+                                                        setShowWhatsAppChat(true);
+                                                    } else {
+                                                        toast.error('Connect your WhatsApp API first');
+                                                    }
+                                                } catch {
+                                                    toast.error('Connect your WhatsApp API first');
+                                                }
+                                            }}
                                             className="flex items-center gap-1.5 px-2.5 py-1 bg-green-600 hover:bg-green-500 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer"
                                             title="Chat on WhatsApp"
                                         >
