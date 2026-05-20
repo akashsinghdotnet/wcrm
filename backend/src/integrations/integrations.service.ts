@@ -7,6 +7,7 @@ import { LeadsService } from '../leads/leads.service';
 import { LeadSource, LeadStatus } from '../leads/lead.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Cron } from '@nestjs/schedule';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class IntegrationsService {
@@ -366,14 +367,24 @@ export class IntegrationsService {
      * Test Meta connection credentials by calling Facebook Graph API
      */
     async testMetaConnection(credentials: Record<string, any>): Promise<{ success: boolean; message: string }> {
-        const { accessToken, pageId } = credentials;
+        const { accessToken, pageId, appSecret } = credentials;
         if (!accessToken || !pageId) {
             return { success: false, message: 'Access Token and Page ID are required.' };
         }
 
+        // Generate appsecret_proof if appSecret is provided
+        let appsecretProof = '';
+        if (appSecret) {
+            appsecretProof = crypto
+                .createHmac('sha256', appSecret)
+                .update(accessToken)
+                .digest('hex');
+        }
+
         try {
             // 1. Fetch Page Info to verify Access Token & Page ID
-            const pageUrl = `https://graph.facebook.com/v21.0/${pageId}?fields=name&access_token=${accessToken}`;
+            const pageUrl = `https://graph.facebook.com/v21.0/${pageId}?fields=name&access_token=${accessToken}` +
+                (appsecretProof ? `&appsecret_proof=${appsecretProof}` : '');
             const response = await fetch(pageUrl, { signal: AbortSignal.timeout(10000) });
             const data = await response.json();
 
@@ -382,7 +393,8 @@ export class IntegrationsService {
             }
 
             // 2. Fetch Page Permissions to verify scope check
-            const permUrl = `https://graph.facebook.com/v21.0/${pageId}/permissions?access_token=${accessToken}`;
+            const permUrl = `https://graph.facebook.com/v21.0/${pageId}/permissions?access_token=${accessToken}` +
+                (appsecretProof ? `&appsecret_proof=${appsecretProof}` : '');
             const permResponse = await fetch(permUrl, { signal: AbortSignal.timeout(10000) });
             const permData = await permResponse.json();
 
@@ -440,14 +452,24 @@ export class IntegrationsService {
             return;
         }
 
-        const { accessToken } = config.credentials;
+        const { accessToken, appSecret } = config.credentials;
         if (!accessToken) {
             this.logger.warn(`Meta integration for company ${config.companyId} has no access token`);
             return;
         }
 
+        // Generate appsecret_proof if appSecret is provided
+        let appsecretProof = '';
+        if (appSecret) {
+            appsecretProof = crypto
+                .createHmac('sha256', appSecret)
+                .update(accessToken)
+                .digest('hex');
+        }
+
         try {
-            const graphUrl = `https://graph.facebook.com/v21.0/${leadgenId}?fields=field_data,created_time,ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,form_id&access_token=${accessToken}`;
+            const graphUrl = `https://graph.facebook.com/v21.0/${leadgenId}?fields=field_data,created_time,ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,form_id&access_token=${accessToken}` +
+                (appsecretProof ? `&appsecret_proof=${appsecretProof}` : '');
             const response = await fetch(graphUrl, { signal: AbortSignal.timeout(15000) });
             const data = await response.json();
 
