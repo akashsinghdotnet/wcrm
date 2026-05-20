@@ -42,6 +42,14 @@ export class CreateLeadDto {
     notes?: string;
 
     @IsOptional()
+    @IsString()
+    city?: string;
+
+    @IsOptional()
+    @IsString()
+    state?: string;
+
+    @IsOptional()
     @IsDateString()
     followUpDate?: string;
 }

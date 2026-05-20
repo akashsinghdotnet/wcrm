@@ -168,9 +168,15 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                                     <span>{lead.email}</span>
                                 </div>
                             )}
+                            {(lead.city || lead.state) && (
+                                <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-slate-300">
+                                    <MapPin size={14} className="text-gray-400 dark:text-slate-500" />
+                                    <span>{[lead.city, lead.state].filter(Boolean).join(', ')}</span>
+                                </div>
+                            )}
                             <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-slate-300">
-                                <MapPin size={14} className="text-gray-400 dark:text-slate-500" />
-                                <span>{sourceLabels[lead.source] || lead.source}</span>
+                                <Send size={14} className="text-gray-400 dark:text-slate-500" />
+                                <span>Source: {sourceLabels[lead.source] || lead.source}</span>
                             </div>
                         </div>
                     </div>

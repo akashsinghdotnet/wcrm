@@ -34,6 +34,8 @@ const emptyForm = {
     status: 'new',
     assignedTo: '',
     notes: '',
+    city: '',
+    state: '',
     followUpDate: '',
 };
 
@@ -185,6 +187,8 @@ export default function LeadsPage() {
             status: lead.status,
             assignedTo: assignedUserId,
             notes: lead.notes || '',
+            city: lead.city || '',
+            state: lead.state || '',
             followUpDate: followUpDateTime,
         });
         setEditingId(lead.id);
@@ -512,6 +516,11 @@ export default function LeadsPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <p className="text-sm font-medium text-gray-900 dark:text-white">{lead.name}</p>
+                                        {(lead.city || lead.state) && (
+                                            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">
+                                                {[lead.city, lead.state].filter(Boolean).join(', ')}
+                                            </p>
+                                        )}
                                         {lead.notes && (
                                             <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 truncate max-w-[200px]">{lead.notes}</p>
                                         )}
@@ -716,6 +725,26 @@ export default function LeadsPage() {
                                             onChange={(e) => setForm({ ...form, email: e.target.value })}
                                             className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                             placeholder="lead@example.com"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">City</label>
+                                        <input
+                                            value={form.city}
+                                            onChange={(e) => setForm({ ...form, city: e.target.value })}
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            placeholder="Mumbai"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">State</label>
+                                        <input
+                                            value={form.state}
+                                            onChange={(e) => setForm({ ...form, state: e.target.value })}
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            placeholder="Maharashtra"
                                         />
                                     </div>
                                 </div>

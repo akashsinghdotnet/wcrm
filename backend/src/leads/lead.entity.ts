@@ -74,6 +74,12 @@ export class Lead {
     @Column({ type: 'text', nullable: true })
     notes: string;
 
+    @Column({ nullable: true })
+    city: string;
+
+    @Column({ nullable: true })
+    state: string;
+
     @Column({ type: 'timestamp', nullable: true })
     followUpDate: Date;
 

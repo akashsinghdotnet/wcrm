@@ -443,9 +443,19 @@ export class LeadsService {
 
     async exportCsv(companyId: string): Promise<string> {
         const leads = await this.leadsRepository.find({ where: { companyId }, order: { createdAt: 'DESC' } });
-        const header = 'name,phone,email,source,status,notes,createdAt\n';
+        const header = 'name,phone,email,source,status,notes,city,state,createdAt\n';
         const rows = leads.map((l) => {
-            const fields = [l.name, l.phone || '', l.email || '', l.source, l.status, (l.notes || '').replace(/"/g, '""'), l.createdAt?.toISOString() || ''];
+            const fields = [
+                l.name,
+                l.phone || '',
+                l.email || '',
+                l.source,
+                l.status,
+                (l.notes || '').replace(/"/g, '""'),
+                l.city || '',
+                l.state || '',
+                l.createdAt?.toISOString() || ''
+            ];
             return fields.map((f) => `"${f}"`).join(',');
         }).join('\n');
         return header + rows;
@@ -480,6 +490,8 @@ export class LeadsService {
         const sourceIdx = findColumnIndex(['source', 'lead_source', 'lead source']);
         const statusIdx = findColumnIndex(['status', 'lead_status', 'lead status']);
         const notesIdx = findColumnIndex(['notes', 'note', 'remark', 'remarks', 'comment', 'comments', 'description']);
+        const cityIdx = findColumnIndex(['city', 'town', 'location', 'lead city', 'lead_city']);
+        const stateIdx = findColumnIndex(['state', 'region', 'province', 'lead state', 'lead_state']);
 
         if (nameIdx === -1) return { imported: 0, errors: ['Missing required "name" column'] };
 
@@ -509,6 +521,8 @@ export class LeadsService {
                     source: sourceIdx >= 0 ? (fields[sourceIdx] as any) || 'manual' : 'manual',
                     status: statusIdx >= 0 ? (fields[statusIdx] as any) || 'new' : 'new',
                     notes: notesIdx >= 0 ? fields[notesIdx] || undefined : undefined,
+                    city: cityIdx >= 0 ? fields[cityIdx] || undefined : undefined,
+                    state: stateIdx >= 0 ? fields[stateIdx] || undefined : undefined,
                 });
             } catch {
                 errors.push(`Row ${i + 1}: parse error`);
