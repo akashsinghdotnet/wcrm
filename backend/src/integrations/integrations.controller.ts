@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request, Res, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request, Res, HttpStatus, Logger } from '@nestjs/common';
 import type { Response as HttpResponse } from 'express';
 import { IntegrationsService } from './integrations.service';
 import { SaveIntegrationDto } from './dto/save-integration.dto';
@@ -158,12 +158,16 @@ export class IntegrationsController {
         @Query('state') companyId: string,
         @Res() res: HttpResponse,
     ) {
+        const logger = new Logger('IntegrationsController');
+        logger.log(`Received Meta OAuth Callback: companyId=${companyId}`);
         if (!code || !companyId) {
+            logger.warn('Missing authorization code or state (companyId) in Meta callback');
             return res.status(HttpStatus.BAD_REQUEST).send('<h3>Error: Missing authorization code or state.</h3>');
         }
 
         try {
             const pages = await this.integrationsService.exchangeMetaCodeAndGetPages(code);
+            logger.log(`Meta OAuth Success: Exchanged code and retrieved ${pages.length} pages for companyId=${companyId}`);
             
             // Render popup redirect HTML to post message to parent window and close popup
             const html = `
@@ -189,6 +193,7 @@ export class IntegrationsController {
             `;
             return res.status(HttpStatus.OK).type('text/html').send(html);
         } catch (error: any) {
+            logger.error(`Meta OAuth Failed for companyId=${companyId}: ${error.message}`);
             const html = `
                 <!DOCTYPE html>
                 <html>

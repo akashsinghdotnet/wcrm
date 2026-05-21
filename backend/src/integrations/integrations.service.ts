@@ -740,12 +740,14 @@ export class IntegrationsService {
             throw new Error(`Failed to fetch pages: ${accountsData.error.message}`);
         }
 
-        return (accountsData.data || []).map((page: any) => ({
+        const pages = (accountsData.data || []).map((page: any) => ({
             id: page.id,
             name: page.name,
             accessToken: page.access_token,
             userAccessToken: longLivedToken,
         }));
+        this.logger.log(`exchangeMetaCodeAndGetPages: Found ${pages.length} pages: ${JSON.stringify(pages.map(p => ({ id: p.id, name: p.name })))}`);
+        return pages;
     }
 
     /**
