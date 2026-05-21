@@ -762,6 +762,8 @@ export class IntegrationsService {
         const appId = (process.env.META_CENTRAL_APP_ID || '').replace(/[\"\\']/g, '').trim();
         const appSecret = (process.env.META_CENTRAL_APP_SECRET || '').replace(/[\"\\']/g, '').trim();
 
+        this.logger.log(`Subscribing Meta Page: pageId=${data.pageId}, pageName=${data.pageName}, appSecretLen=${appSecret.length}, appSecretStart=${appSecret.substring(0, 4)}, tokenLen=${data.pageAccessToken?.length}, tokenStart=${data.pageAccessToken?.substring(0, 8)}`);
+
         // Generate appsecret_proof for page subscription request if appSecret is present
         let pageAppsecretProof = '';
         if (appSecret) {
