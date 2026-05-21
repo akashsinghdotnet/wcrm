@@ -285,13 +285,6 @@ export default function IntegrationsPage({ embedded = false }) {
         if (platform === 'meta') {
             setPagesList([]);
             setSelectedPageId(existing.pageId || '');
-            if (existing.userAccessToken) {
-                setMetaConnectTab('one-click');
-            } else if (existing.appId || existing.appSecret) {
-                setMetaConnectTab('manual');
-            } else {
-                setMetaConnectTab('one-click');
-            }
         }
     };
 
