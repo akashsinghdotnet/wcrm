@@ -379,12 +379,21 @@ export class IntegrationsService {
     // FACEBOOK / META ADS
     // ──────────────────────────────────────────────────────────────────────────
 
-    private async subscribePageToApp(pageId: string, accessToken: string, appsecretProof: string): Promise<string> {
+    private async subscribePageToApp(pageId: string, accessToken: string, appSecret: string): Promise<string> {
         try {
+            // Generate initial appsecret_proof for the User Access Token if appSecret is present
+            let userAppsecretProof = '';
+            if (appSecret) {
+                userAppsecretProof = crypto
+                    .createHmac('sha256', appSecret)
+                    .update(accessToken)
+                    .digest('hex');
+            }
+
             let pageAccessToken = accessToken;
             try {
                 const accountsUrl = `https://graph.facebook.com/v21.0/me/accounts?access_token=${accessToken}` +
-                    (appsecretProof ? `&appsecret_proof=${appsecretProof}` : '');
+                    (userAppsecretProof ? `&appsecret_proof=${userAppsecretProof}` : '');
                 const accountsResponse = await fetch(accountsUrl, { signal: AbortSignal.timeout(5000) });
                 if (accountsResponse.ok) {
                     const accountsData = await accountsResponse.json();
@@ -398,8 +407,17 @@ export class IntegrationsService {
                 this.logger.warn(`Failed to fetch page access token from /me/accounts: ${e.message}`);
             }
 
+            // Recalculate appsecret_proof for the Page Access Token (which is different from the User Access Token)
+            let pageAppsecretProof = '';
+            if (appSecret) {
+                pageAppsecretProof = crypto
+                    .createHmac('sha256', appSecret)
+                    .update(pageAccessToken)
+                    .digest('hex');
+            }
+
             const subUrl = `https://graph.facebook.com/v21.0/${pageId}/subscribed_apps?subscribed_fields=leadgen&access_token=${pageAccessToken}` +
-                (appsecretProof ? `&appsecret_proof=${appsecretProof}` : '');
+                (pageAppsecretProof ? `&appsecret_proof=${pageAppsecretProof}` : '');
             const subResponse = await fetch(subUrl, { method: 'POST', signal: AbortSignal.timeout(10000) });
             const subData = await subResponse.json();
 
@@ -459,7 +477,7 @@ export class IntegrationsService {
             }
 
             // Automatically subscribe the Page to our App's Webhooks
-            const subscriptionStatus = await this.subscribePageToApp(pageId, accessToken, appsecretProof);
+            const subscriptionStatus = await this.subscribePageToApp(pageId, accessToken, appSecret || '');
 
             const pageName = data.name || 'Facebook Page';
             if (hasLeadsRetrieval) {
