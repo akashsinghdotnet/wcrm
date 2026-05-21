@@ -4,6 +4,14 @@ import { Repository } from 'typeorm';
 import { IntegrationConfig, IntegrationPlatform } from './integrations/integration-config.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import * as crypto from 'crypto';
+import * as path from 'path';
+import * as dotenv from 'dotenv';
+
+// Load env from possible paths: same directory, parent directory, and parent's parent
+dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 async function diagnose() {
     console.log('🔍 Starting Facebook/Meta Lead Ads Diagnostics...\n');
