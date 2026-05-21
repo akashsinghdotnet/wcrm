@@ -141,7 +141,14 @@ export class IntegrationsController {
         const clientId = process.env.META_CENTRAL_APP_ID || '';
         const redirectUri = encodeURIComponent('https://api.magnetcrm.com/api/integrations/meta/callback');
         const state = req.user.companyId; // Pass client's company ID in state
-        const url = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=pages_show_list,leads_retrieval,pages_read_engagement,pages_manage_ads&state=${state}`;
+        
+        const configId = process.env.META_CENTRAL_CONFIG_ID;
+        let url = '';
+        if (configId) {
+            url = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&config_id=${configId}&state=${state}`;
+        } else {
+            url = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=pages_show_list,leads_retrieval,pages_read_engagement,pages_manage_ads&state=${state}`;
+        }
         return { url };
     }
 
