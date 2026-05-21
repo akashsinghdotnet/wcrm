@@ -731,6 +731,15 @@ export class IntegrationsService {
 
         const longLivedToken = longLivedData.access_token;
 
+        // Debug permissions
+        try {
+            const permRes = await fetch(`https://graph.facebook.com/v21.0/me/permissions?access_token=${longLivedToken}`);
+            const permData = await permRes.json();
+            this.logger.log(`exchangeMetaCodeAndGetPages: Token Permissions: ${JSON.stringify(permData.data || permData)}`);
+        } catch (err: any) {
+            this.logger.error(`exchangeMetaCodeAndGetPages: Failed to fetch permissions: ${err.message}`);
+        }
+
         // 3. Fetch managed pages list and their Page Access Tokens (which will be permanent because they were generated from a long-lived token)
         const accountsUrl = `https://graph.facebook.com/v21.0/me/accounts?access_token=${longLivedToken}`;
         const accountsRes = await fetch(accountsUrl);
