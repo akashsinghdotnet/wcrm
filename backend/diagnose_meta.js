@@ -1,49 +1,60 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { Repository } from 'typeorm';
-import { IntegrationConfig, IntegrationPlatform } from './integrations/integration-config.entity';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import * as crypto from 'crypto';
-import * as path from 'path';
-import * as dotenv from 'dotenv';
+const path = require('path');
+const dotenv = require('dotenv');
+const mysql = require('mysql2/promise');
+const crypto = require('crypto');
 
-// Load env from possible paths: same directory, parent directory, and parent's parent
-dotenv.config();
+// Load environmental variables using the exact path as the live app
+dotenv.config({ path: '/home/magnetcrmak/htdocs/api.magnetcrm.com/.env' });
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 async function diagnose() {
     console.log('🔍 Starting Facebook/Meta Lead Ads Diagnostics...\n');
 
-    // 1. Boot NestJS context
-    console.log('⚙️ Loading CRM Application Context...');
-    const app = await NestFactory.createApplicationContext(AppModule);
-    const configRepo = app.get<Repository<IntegrationConfig>>(getRepositoryToken(IntegrationConfig));
+    let connection;
+    let credentials = null;
 
-    // 2. Load Meta Integration from database
-    console.log('🗄️ Querying active Meta Integration Config...');
-    const configs = await configRepo.find({
-        where: { platform: IntegrationPlatform.META, isActive: true }
-    });
+    try {
+        console.log('🗄️ Connecting directly to MySQL Database...');
+        connection = await mysql.createConnection({
+            host: process.env.DB_HOST || '127.0.0.1',
+            user: process.env.DB_USERNAME,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME,
+            port: Number(process.env.DB_PORT || 3306),
+        });
 
-    if (configs.length === 0) {
-        console.error('❌ FAIL: No active Meta configuration found in the database. Please configure and activate Meta in your CRM dashboard first.');
-        await app.close();
-        process.exit(1);
+        console.log('✅ Connected to database. Querying Meta Integration Config...');
+        const [rows] = await connection.query(
+            "SELECT credentials FROM integration_configs WHERE platform = 'meta' AND isActive = 1 LIMIT 1"
+        );
+
+        if (rows.length === 0) {
+            console.error('❌ FAIL: No active Meta configuration found in the database. Please configure and activate Meta in your CRM dashboard first.');
+            await connection.end();
+            process.exit(1);
+        }
+
+        // Parse JSON credentials
+        const rawCreds = rows[0].credentials;
+        credentials = typeof rawCreds === 'string' ? JSON.parse(rawCreds) : rawCreds;
+        await connection.end();
+    } catch (dbErr) {
+        console.error(`❌ DB CONNECTION ERROR: ${dbErr.message}`);
+        console.log('⚠️ Will attempt to use environment variables for diagnostic steps instead...');
     }
 
-    const config = configs[0];
-    const { accessToken, pageId, appSecret } = config.credentials || {};
+    const accessToken = credentials?.accessToken || process.env.META_ACCESS_TOKEN;
+    const pageId = credentials?.pageId || process.env.META_PAGE_ID;
+    const appSecret = credentials?.appSecret || process.env.META_APP_SECRET;
 
-    console.log(`\n📋 Stored Credentials:`);
+    console.log(`\n📋 Configured Credentials:`);
     console.log(`  - Page ID: "${pageId}"`);
     console.log(`  - App Secret: ${appSecret ? 'Configured (starts with ' + appSecret.substring(0, 4) + '...)' : 'MISSING'}`);
     console.log(`  - Access Token: ${accessToken ? 'Configured (starts with ' + accessToken.substring(0, 10) + '...)' : 'MISSING'}`);
 
     if (!accessToken || !pageId) {
-        console.error('❌ FAIL: Missing Access Token or Page ID.');
-        await app.close();
+        console.error('❌ FAIL: Missing Access Token or Page ID. Cannot run Facebook API tests.');
         process.exit(1);
     }
 
@@ -69,7 +80,7 @@ async function diagnose() {
         } else {
             console.log(`✅ SUCCESS: Connected to Page "${pageData.name}" (${pageData.category})`);
         }
-    } catch (e: any) {
+    } catch (e) {
         console.error(`❌ FAIL: Could not reach Facebook Page API: ${e.message}`);
     }
 
@@ -83,7 +94,7 @@ async function diagnose() {
         const accountsRes = await fetch(accountsUrl);
         if (accountsRes.ok) {
             const accountsData = await accountsRes.json();
-            const pageAccount = accountsData.data?.find((acc: any) => String(acc.id) === String(pageId));
+            const pageAccount = accountsData.data?.find((acc) => String(acc.id) === String(pageId));
             if (pageAccount && pageAccount.access_token) {
                 pageAccessToken = pageAccount.access_token;
                 console.log(`✅ SUCCESS: Retrieved Page Access Token for Page ID ${pageId}`);
@@ -91,7 +102,7 @@ async function diagnose() {
                 console.log(`⚠️ WARNING: Selected Page ID was not found in the managed accounts of this user token.`);
             }
         }
-    } catch (e: any) {
+    } catch (e) {
         console.error(`❌ FAIL: Failed to list managed accounts: ${e.message}`);
     }
 
@@ -118,7 +129,7 @@ async function diagnose() {
                 console.log(`  - App Name: "${appItem.name}" | App ID: ${appItem.id}`);
                 console.log(`    Subscribed fields: ${JSON.stringify(appItem.subscribed_fields || [])}`);
             }
-            const isSubscribedToLeadgen = subData.data.some((appItem: any) => 
+            const isSubscribedToLeadgen = subData.data.some((appItem) => 
                 appItem.subscribed_fields?.includes('leadgen')
             );
             if (!isSubscribedToLeadgen) {
@@ -129,12 +140,12 @@ async function diagnose() {
         } else {
             console.log(`⚠️ Unexpected response format: ${JSON.stringify(subData)}`);
         }
-    } catch (e: any) {
+    } catch (e) {
         console.error(`❌ FAIL: Failed to query subscribed apps: ${e.message}`);
     }
 
     // 5. Test Webhook Callback URL verification
-    console.log('\n🖥️ 3. Testing Local Webhook Callback Endpoint (Verification)...');
+    console.log('\n🖥️ 3. Testing Webhook Callback Endpoint (Verification)...');
     try {
         const testChallenge = `challenge_test_${Math.floor(Math.random() * 100000)}`;
         const localWebhookUrl = `http://localhost:3000/api/webhooks/meta?hub.mode=subscribe&hub.verify_token=magnet-crm&hub.challenge=${testChallenge}`;
@@ -154,11 +165,10 @@ async function diagnose() {
         } else {
             console.error(`❌ FAIL: Webhook did not return the challenge string.`);
         }
-    } catch (e: any) {
+    } catch (e) {
         console.log(`⚠️ Note: Local server is not running on port 3000 (${e.message}). Skipping local webhook test.`);
     }
 
-    await app.close();
     console.log('\n🏁 Diagnostics complete.');
 }
 
