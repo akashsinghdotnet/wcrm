@@ -701,8 +701,8 @@ export class IntegrationsService {
      * and retrieve the list of managed Facebook Pages.
      */
     async exchangeMetaCodeAndGetPages(code: string) {
-        const appId = process.env.META_CENTRAL_APP_ID;
-        const appSecret = process.env.META_CENTRAL_APP_SECRET;
+        const appId = (process.env.META_CENTRAL_APP_ID || '').replace(/[\"\\']/g, '').trim();
+        const appSecret = (process.env.META_CENTRAL_APP_SECRET || '').replace(/[\"\\']/g, '').trim();
         const redirectUri = 'https://api.magnetcrm.com/api/integrations/meta/callback';
 
         if (!appId || !appSecret) {
@@ -759,8 +759,8 @@ export class IntegrationsService {
         pageName: string;
         userAccessToken: string;
     }) {
-        const appId = process.env.META_CENTRAL_APP_ID || '';
-        const appSecret = process.env.META_CENTRAL_APP_SECRET || '';
+        const appId = (process.env.META_CENTRAL_APP_ID || '').replace(/[\"\\']/g, '').trim();
+        const appSecret = (process.env.META_CENTRAL_APP_SECRET || '').replace(/[\"\\']/g, '').trim();
 
         // Generate appsecret_proof for page subscription request if appSecret is present
         let pageAppsecretProof = '';

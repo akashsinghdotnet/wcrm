@@ -138,11 +138,11 @@ export class IntegrationsController {
     @Get('meta/oauth-url')
     @Roles(UserRole.ADMIN)
     getMetaOauthUrl(@Request() req) {
-        const clientId = process.env.META_CENTRAL_APP_ID || '';
+        const clientId = (process.env.META_CENTRAL_APP_ID || '').replace(/[\"\\']/g, '').trim();
         const redirectUri = encodeURIComponent('https://api.magnetcrm.com/api/integrations/meta/callback');
         const state = req.user.companyId; // Pass client's company ID in state
         
-        const configId = process.env.META_CENTRAL_CONFIG_ID;
+        const configId = (process.env.META_CENTRAL_CONFIG_ID || '').replace(/[\"\\']/g, '').trim();
         let url = '';
         if (configId) {
             url = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&config_id=${configId}&state=${state}`;
