@@ -117,6 +117,51 @@ async function diagnose() {
             console.error(`❌ FAIL: Could not reach Facebook Page API: ${e.message}`);
         }
 
+        // 1.5 Fetch Leadgen Forms
+        console.log('\n🌐 1.5 Fetching Leadgen Forms for this Page...');
+        try {
+            // Retrieve page token and proof first to make the call
+            let tempPageAccessToken = accessToken;
+            const accountsUrl = `https://graph.facebook.com/v21.0/me/accounts?access_token=${accessToken}` +
+                (userAppsecretProof ? `&appsecret_proof=${userAppsecretProof}` : '');
+            const accountsRes = await fetch(accountsUrl);
+            if (accountsRes.ok) {
+                const accountsData = await accountsRes.json();
+                const pageAccount = accountsData.data?.find((acc) => String(acc.id) === String(pageId));
+                if (pageAccount && pageAccount.access_token) {
+                    tempPageAccessToken = pageAccount.access_token;
+                }
+            }
+            let tempPageAppsecretProof = '';
+            if (appSecret) {
+                tempPageAppsecretProof = crypto
+                    .createHmac('sha256', appSecret)
+                    .update(tempPageAccessToken)
+                    .digest('hex');
+            }
+
+            const formsUrl = `https://graph.facebook.com/v21.0/${pageId}/leadgen_forms?fields=name,status&access_token=${tempPageAccessToken}` +
+                (tempPageAppsecretProof ? `&appsecret_proof=${tempPageAppsecretProof}` : '');
+            const formsRes = await fetch(formsUrl);
+            const formsData = await formsRes.json();
+            if (formsData.error) {
+                console.error(`  ❌ FAIL to fetch forms: [${formsData.error.code}] ${formsData.error.message}`);
+            } else if (Array.isArray(formsData.data)) {
+                if (formsData.data.length === 0) {
+                    console.error(`  ❌ FAIL/WARNING: No Instant Forms (Lead Forms) found on this page! You must create at least one lead form under Meta Business Suite for this Page before you can generate leads or use the Lead Ads Testing Tool.`);
+                } else {
+                    console.log(`  ✅ SUCCESS: Found ${formsData.data.length} Instant Form(s) on this page:`);
+                    for (const form of formsData.data) {
+                        console.log(`    - Form Name: "${form.name}" (ID: ${form.id}, Status: ${form.status})`);
+                    }
+                }
+            } else {
+                console.log(`  ⚠️ Unexpected forms response format: ${JSON.stringify(formsData)}`);
+            }
+        } catch (e) {
+            console.error(`  ❌ FAIL: Failed to query leadgen forms: ${e.message}`);
+        }
+
         // 2. Check Webhook Subscriptions
         console.log('\n🌐 2. Fetching current Webhook Subscriptions for this Page...');
         let pageAccessToken = accessToken;
