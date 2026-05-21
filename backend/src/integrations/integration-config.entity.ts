@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Unique } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Unique, AfterLoad } from 'typeorm';
 
 export enum IntegrationPlatform {
     META = 'meta',
@@ -36,4 +36,15 @@ export class IntegrationConfig {
 
     @UpdateDateColumn()
     updatedAt: Date;
+
+    @AfterLoad()
+    parseCredentials() {
+        if (typeof this.credentials === 'string') {
+            try {
+                this.credentials = JSON.parse(this.credentials);
+            } catch {
+                this.credentials = {};
+            }
+        }
+    }
 }

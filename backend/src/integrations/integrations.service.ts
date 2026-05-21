@@ -520,13 +520,27 @@ export class IntegrationsService {
             where: { platform: IntegrationPlatform.META, isActive: true },
         });
 
+        // Ensure credentials are parsed objects if they were loaded as strings
+        for (const cfg of allMetaConfigs) {
+            if (typeof cfg.credentials === 'string') {
+                try {
+                    cfg.credentials = JSON.parse(cfg.credentials);
+                } catch {
+                    cfg.credentials = {};
+                }
+            }
+        }
+
         const config = allMetaConfigs.find(c => {
             const stored = String(c.credentials?.pageId || '').trim();
             const incoming = String(pageId || '').trim();
             return stored === incoming;
         });
         if (!config) {
-            this.logger.warn(`No active Meta integration found for pageId ${pageId}. Available pageIds: ${allMetaConfigs.map(c => String(c.credentials?.pageId || '').trim()).join(', ')}`);
+            this.logger.warn(`No active Meta integration found for pageId ${pageId}. Available pageIds: ${allMetaConfigs.map(c => {
+                const creds = typeof c.credentials === 'string' ? JSON.parse(c.credentials) : c.credentials;
+                return String(creds?.pageId || '').trim();
+            }).join(', ')}`);
             return;
         }
 
