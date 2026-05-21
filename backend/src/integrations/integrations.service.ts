@@ -39,7 +39,6 @@ export class IntegrationsService {
         });
         return allGoogleConfigs.find(c => c.credentials?.webhookKey === googleKey) || null;
     }
-
     async save(dto: SaveIntegrationDto): Promise<IntegrationConfig> {
         let config = await this.configRepo.findOne({
             where: { companyId: dto.companyId, platform: dto.platform },
@@ -57,7 +56,38 @@ export class IntegrationsService {
             });
         }
 
-        return this.configRepo.save(config);
+        const saved = await this.configRepo.save(config);
+
+        // If it's a Meta integration and is active, automatically subscribe the page to the app
+        if (saved.platform === IntegrationPlatform.META && saved.isActive) {
+            const { accessToken, pageId, appSecret } = saved.credentials || {};
+            if (accessToken && pageId) {
+                let appsecretProof = '';
+                if (appSecret) {
+                    appsecretProof = crypto
+                        .createHmac('sha256', appSecret)
+                        .update(accessToken)
+                        .digest('hex');
+                }
+                
+                try {
+                    const subUrl = `https://graph.facebook.com/v21.0/${pageId}/subscribed_apps?subscribed_fields=leadgen&access_token=${accessToken}` +
+                        (appsecretProof ? `&appsecret_proof=${appsecretProof}` : '');
+                    const subResponse = await fetch(subUrl, { method: 'POST', signal: AbortSignal.timeout(10000) });
+                    const subData = await subResponse.json();
+
+                    if (!subResponse.ok || subData.error) {
+                        this.logger.error(`[Meta Subscribe] Failed to subscribe page ${pageId} to app: ${JSON.stringify(subData)}`);
+                    } else {
+                        this.logger.log(`[Meta Subscribe] Successfully subscribed page ${pageId} to app: ${JSON.stringify(subData)}`);
+                    }
+                } catch (err: any) {
+                    this.logger.error(`[Meta Subscribe] Error subscribing page ${pageId} to app: ${err.message}`);
+                }
+            }
+        }
+
+        return saved;
     }
 
     async toggle(companyId: string, platform: IntegrationPlatform, isActive: boolean): Promise<IntegrationConfig | null> {
@@ -405,16 +435,36 @@ export class IntegrationsService {
                 );
             }
 
+            // Automatically subscribe the Page to our App's Webhooks
+            let subscriptionStatus = '';
+            try {
+                const subUrl = `https://graph.facebook.com/v21.0/${pageId}/subscribed_apps?subscribed_fields=leadgen&access_token=${accessToken}` +
+                    (appsecretProof ? `&appsecret_proof=${appsecretProof}` : '');
+                const subResponse = await fetch(subUrl, { method: 'POST', signal: AbortSignal.timeout(10000) });
+                const subData = await subResponse.json();
+
+                if (!subResponse.ok || subData.error) {
+                    this.logger.error(`Failed to subscribe page ${pageId} to app webhooks: ${JSON.stringify(subData)}`);
+                    subscriptionStatus = ` Note: Failed to associate Page with Developer App automatically. Error: ${subData.error?.message || 'Unknown error'}.`;
+                } else {
+                    this.logger.log(`Successfully subscribed page ${pageId} to app webhooks: ${JSON.stringify(subData)}`);
+                    subscriptionStatus = ` Page associated and subscribed to App successfully.`;
+                }
+            } catch (err: any) {
+                this.logger.error(`Error subscribing page ${pageId} to app webhooks: ${err.message}`);
+                subscriptionStatus = ` Note: Error subscribing page to webhooks: ${err.message}`;
+            }
+
             const pageName = data.name || 'Facebook Page';
             if (hasLeadsRetrieval) {
                 return { 
                     success: true, 
-                    message: `Successfully connected to Page "${pageName}"! leads_retrieval permission is active.` 
+                    message: `Successfully connected to Page "${pageName}"! leads_retrieval permission is active.${subscriptionStatus}` 
                 };
             } else {
                 return { 
                     success: true, 
-                    message: `Connected to Page "${pageName}", but "leads_retrieval" permission was not found or not granted. Ensure your Page Access Token has leads_retrieval permissions.` 
+                    message: `Connected to Page "${pageName}", but "leads_retrieval" permission was not found or not granted. Ensure your Page Access Token has leads_retrieval permissions.${subscriptionStatus}` 
                 };
             }
         } catch (error: any) {
