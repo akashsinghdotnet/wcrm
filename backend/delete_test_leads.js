@@ -128,16 +128,29 @@ async function run() {
             for (const lead of leads) {
                 // Delete the lead
                 console.log(`  Attempting to delete lead ID: ${lead.id}...`);
-                const deleteUrl = `https://graph.facebook.com/v21.0/${lead.id}?access_token=${pageAccessToken}` +
-                    (pageAppsecretProof ? `&appsecret_proof=${pageAppsecretProof}` : '');
                 
-                const deleteRes = await fetch(deleteUrl, { method: 'DELETE' });
-                const deleteData = await deleteRes.json();
+                // Try with User Access Token first
+                let deleteUrl = `https://graph.facebook.com/v21.0/${lead.id}?access_token=${accessToken}` +
+                    (userAppsecretProof ? `&appsecret_proof=${userAppsecretProof}` : '');
+                let deleteRes = await fetch(deleteUrl, { method: 'DELETE' });
+                let deleteData = await deleteRes.json();
 
                 if (deleteData.success) {
-                    console.log(`    ✅ SUCCESS: Deleted lead ID ${lead.id}`);
+                    console.log(`    ✅ SUCCESS: Deleted lead ID ${lead.id} using User Access Token`);
                 } else {
-                    console.error(`    ❌ FAIL: Could not delete lead ID ${lead.id}. ${JSON.stringify(deleteData.error || deleteData)}`);
+                    // Try with Page Access Token if User Access Token fails
+                    const deleteUrlPage = `https://graph.facebook.com/v21.0/${lead.id}?access_token=${pageAccessToken}` +
+                        (pageAppsecretProof ? `&appsecret_proof=${pageAppsecretProof}` : '');
+                    const deleteResPage = await fetch(deleteUrlPage, { method: 'DELETE' });
+                    const deleteDataPage = await deleteResPage.json();
+
+                    if (deleteDataPage.success) {
+                        console.log(`    ✅ SUCCESS: Deleted lead ID ${lead.id} using Page Access Token`);
+                    } else {
+                        console.error(`    ❌ FAIL: Could not delete lead ID ${lead.id}.`);
+                        console.error(`       User Token error: ${JSON.stringify(deleteData.error || deleteData)}`);
+                        console.error(`       Page Token error: ${JSON.stringify(deleteDataPage.error || deleteDataPage)}`);
+                    }
                 }
             }
         }
