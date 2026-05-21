@@ -147,7 +147,7 @@ export class IntegrationsController {
         if (configId) {
             url = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&config_id=${configId}&state=${state}`;
         } else {
-            url = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=pages_show_list,leads_retrieval,pages_read_engagement,pages_manage_ads&state=${state}`;
+            url = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=pages_show_list,leads_retrieval,pages_read_engagement,pages_manage_ads,pages_manage_metadata&state=${state}`;
         }
         return { url };
     }
