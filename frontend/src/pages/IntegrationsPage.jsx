@@ -9,13 +9,7 @@ import {
 import toast from 'react-hot-toast';
 
 const PLATFORM_CREDENTIALS = {
-    meta: [
-        { key: 'appId', label: 'App ID', type: 'text', placeholder: 'e.g. 123456789012345' },
-        { key: 'appSecret', label: 'App Secret', type: 'password', placeholder: 'Your App Secret' },
-        { key: 'accessToken', label: 'Access Token', type: 'password', placeholder: 'Long-lived access token' },
-        { key: 'pageId', label: 'Page ID', type: 'text', placeholder: 'e.g. 987654321098765' },
-        { key: 'adAccountId', label: 'Ad Account ID', type: 'text', placeholder: 'e.g. act_123456789' },
-    ],
+    meta: [],
     google: [
         { key: 'webhookKey', label: 'Webhook Key', type: 'password', placeholder: 'Your secret webhook key (e.g. my-secret-key-2026)' },
     ],
@@ -56,18 +50,11 @@ const INTEGRATIONS = [
             { name: 'email', required: false, description: 'Lead Email Address' },
         ],
         setupSteps: [
-            'METHOD 1: Via Middleware (Zapier / Make.com / Pabbly Connect) — [RECOMMENDED & EASIEST]',
-            '1. Create a workflow in your automation tool starting with the "Facebook Lead Ads" trigger.',
-            '2. Add a Webhook "POST" action pointing to the Webhook URL shown below.',
-            '3. Set payload type to JSON and map the fields to: "companyId" (copy from below), "name", "phone", and "email".',
-            '4. Test and publish. Leads will instantly sync to your CRM without requiring Meta App Review or dealing with expiring tokens.',
-            'METHOD 2: Direct Webhook (Requires Meta Developer App)',
-            '1. Create a Facebook Developer App (Business type) at developers.facebook.com.',
-            '2. Set up Webhooks in your App dashboard, select "Page" from the dropdown, and subscribe to the "leadgen" topic.',
-            '3. Set the Webhook URL to the address shown below and the Verify Token to: magnet-crm',
-            '4. Go to App Settings → Basic, copy your App ID and App Secret, then generate a long-lived Page Access Token with leads_retrieval and pages_manage_ads permissions.',
-            '5. Enter these credentials in the "Configure" modal below.',
-            '6. Note: Direct integration will only capture real customer leads after your Facebook App completes Meta App Review.'
+            '1. Click the "Configure" button on the Meta / Facebook Ads integration card.',
+            '2. Click the "Connect to Facebook" button in the configuration modal.',
+            '3. A popup will open requesting authorization. Log in and select the Facebook Pages you want to connect.',
+            '4. Select your preferred Facebook Page from the dropdown list and click "Save".',
+            '5. That\'s it! The CRM will automatically register the page webhooks and start importing new leads instantly in real time.'
         ],
     },
     {
@@ -224,6 +211,10 @@ export default function IntegrationsPage({ embedded = false }) {
     const [credentialForm, setCredentialForm] = useState({});
     const [allowedIntegrations, setAllowedIntegrations] = useState(null);
 
+    // Centralized Meta OAuth states
+    const [pagesList, setPagesList] = useState([]);
+    const [selectedPageId, setSelectedPageId] = useState('');
+
     const isSuperAdmin = user?.role === 'super_admin' || user?.role === 'superadmin_admin';
 
     // Webhook URLs must point to the backend API, not the frontend
@@ -290,22 +281,102 @@ export default function IntegrationsPage({ embedded = false }) {
         setCredentialForm({ ...existing });
         setShowPasswords({});
         setConfigModalPlatform(platform);
+
+        if (platform === 'meta') {
+            setPagesList([]);
+            setSelectedPageId(existing.pageId || '');
+        }
+    };
+
+    const handleFacebookConnect = async () => {
+        setTesting(true);
+        const toastId = toast.loading('Opening Facebook login...');
+        try {
+            const res = await api.get('/integrations/meta/oauth-url');
+            toast.dismiss(toastId);
+            
+            const width = 600, height = 650;
+            const left = window.screen.width / 2 - width / 2;
+            const top = window.screen.height / 2 - height / 2;
+            
+            const popup = window.open(
+                res.data.url,
+                'Facebook OAuth',
+                `width=${width},height=${height},left=${left},top=${top}`
+            );
+
+            if (!popup) {
+                toast.error('Popup blocked! Please allow popups for this site.');
+                setTesting(false);
+                return;
+            }
+
+            const handleMessage = (event) => {
+                if (event.data && event.data.type === 'META_OAUTH_SUCCESS') {
+                    window.removeEventListener('message', handleMessage);
+                    setPagesList(event.data.pages || []);
+                    toast.success('Retrieved Facebook pages successfully!');
+                } else if (event.data && event.data.type === 'META_OAUTH_FAILED') {
+                    window.removeEventListener('message', handleMessage);
+                    toast.error(`Facebook login failed: ${event.data.error}`);
+                }
+            };
+
+            window.addEventListener('message', handleMessage);
+        } catch (err) {
+            toast.error('Failed to get Facebook auth link', { id: toastId });
+        } finally {
+            setTesting(false);
+        }
     };
 
     const saveCredentials = async () => {
         setSaving(true);
         try {
-            await api.post('/integrations', {
-                companyId: user.companyId,
-                platform: configModalPlatform,
-                credentials: credentialForm,
-                isActive: integrationConfigs[configModalPlatform]?.isActive ?? true,
-            });
+            if (configModalPlatform === 'meta') {
+                if (!selectedPageId) {
+                    toast.error('Please select a Facebook page first');
+                    setSaving(false);
+                    return;
+                }
+                
+                let pageObj = pagesList.find(p => p.id === selectedPageId);
+                
+                if (!pageObj && credentialForm.pageId === selectedPageId) {
+                    pageObj = {
+                        id: credentialForm.pageId,
+                        accessToken: credentialForm.accessToken,
+                        name: credentialForm.pageName || credentialForm.pageId,
+                        userAccessToken: credentialForm.userAccessToken || '',
+                    };
+                }
+
+                if (!pageObj) {
+                    toast.error('Please connect your Facebook account to retrieve page tokens.');
+                    setSaving(false);
+                    return;
+                }
+
+                await api.post('/integrations/meta/subscribe', {
+                    companyId: user.companyId,
+                    pageId: pageObj.id,
+                    pageAccessToken: pageObj.accessToken,
+                    pageName: pageObj.name,
+                    userAccessToken: pageObj.userAccessToken,
+                });
+            } else {
+                await api.post('/integrations', {
+                    companyId: user.companyId,
+                    platform: configModalPlatform,
+                    credentials: credentialForm,
+                    isActive: integrationConfigs[configModalPlatform]?.isActive ?? true,
+                });
+            }
             toast.success('Credentials saved');
             setConfigModalPlatform(null);
             loadIntegrationConfigs();
-        } catch {
-            toast.error('Failed to save credentials');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to save credentials');
         } finally {
             setSaving(false);
         }
@@ -561,7 +632,7 @@ function submitMagnetCRMForm(e) {
                                                     Fetch Leads
                                                 </button>
                                             )}
-                                            {active && platformCreds.length > 0 && (
+                                            {active && (platformCreds.length > 0 || integration.id === 'meta') && (
                                                 <button
                                                     onClick={() => openConfigModal(integration.id)}
                                                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:text-white bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 rounded-lg transition-all border border-gray-300 dark:border-slate-700"
@@ -888,29 +959,77 @@ function submitMagnetCRMForm(e) {
                             </button>
                         </div>
                         <div className="p-6 space-y-4">
-                            {(PLATFORM_CREDENTIALS[configModalPlatform] || []).map((field) => (
-                                <div key={field.key}>
-                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">{field.label}</label>
-                                    <div className="relative">
-                                        <input
-                                            type={field.type === 'password' && !showPasswords[field.key] ? 'password' : 'text'}
-                                            value={credentialForm[field.key] || ''}
-                                            onChange={(e) => setCredentialForm({ ...credentialForm, [field.key]: e.target.value })}
-                                            placeholder={field.placeholder}
-                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
-                                        />
-                                        {field.type === 'password' && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPasswords({ ...showPasswords, [field.key]: !showPasswords[field.key] })}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-slate-400 hover:text-gray-600 dark:text-slate-300"
-                                            >
-                                                {showPasswords[field.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                            </button>
-                                        )}
+                            {configModalPlatform === 'meta' ? (
+                                <div className="space-y-4">
+                                    {credentialForm.pageName && (
+                                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 text-emerald-400">
+                                            <p className="text-xs font-semibold uppercase tracking-wide">Currently Connected Page</p>
+                                            <p className="text-sm font-bold mt-1">{credentialForm.pageName}</p>
+                                            <p className="text-[10px] text-gray-500 font-mono mt-0.5">ID: {credentialForm.pageId}</p>
+                                        </div>
+                                    )}
+
+                                    <div className="text-center py-4 bg-gray-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-gray-300 dark:border-slate-800">
+                                        <p className="text-xs text-gray-500 dark:text-slate-400 mb-3 px-4">
+                                            Link Magnet CRM to your Facebook profile to manage page lead forms.
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={handleFacebookConnect}
+                                            disabled={testing}
+                                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium text-sm transition-all disabled:opacity-50"
+                                        >
+                                            <Plug className="w-4 h-4" />
+                                            {testing ? 'Connecting...' : 'Connect to Facebook'}
+                                        </button>
                                     </div>
+
+                                    {(pagesList.length > 0 || credentialForm.pageId) && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">
+                                                Select Facebook Page
+                                            </label>
+                                            <select
+                                                value={selectedPageId}
+                                                onChange={(e) => setSelectedPageId(e.target.value)}
+                                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            >
+                                                <option value="">-- Select Page --</option>
+                                                {pagesList.map(p => (
+                                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                                ))}
+                                                {credentialForm.pageId && !pagesList.find(p => p.id === credentialForm.pageId) && (
+                                                    <option value={credentialForm.pageId}>{credentialForm.pageName || credentialForm.pageId} (Current)</option>
+                                                )}
+                                            </select>
+                                        </div>
+                                    )}
                                 </div>
-                            ))}
+                            ) : (
+                                (PLATFORM_CREDENTIALS[configModalPlatform] || []).map((field) => (
+                                    <div key={field.key}>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">{field.label}</label>
+                                        <div className="relative">
+                                            <input
+                                                type={field.type === 'password' && !showPasswords[field.key] ? 'password' : 'text'}
+                                                value={credentialForm[field.key] || ''}
+                                                onChange={(e) => setCredentialForm({ ...credentialForm, [field.key]: e.target.value })}
+                                                placeholder={field.placeholder}
+                                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+                                            />
+                                            {field.type === 'password' && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPasswords({ ...showPasswords, [field.key]: !showPasswords[field.key] })}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-slate-400 hover:text-gray-600 dark:text-slate-300"
+                                                >
+                                                    {showPasswords[field.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                             <div className="flex gap-3 pt-4">
                                 <button
                                     type="button"
