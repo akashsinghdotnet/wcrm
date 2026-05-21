@@ -222,6 +222,48 @@ async function diagnose() {
             console.error(`❌ FAIL: Failed to query subscribed apps: ${e.message}`);
         }
 
+        // 2.5 Check Webhook Subscriptions at the Developer App Level
+        console.log('\n🌐 2.5 Fetching Webhook Subscriptions for the Developer App...');
+        const appId = credentials?.appId;
+        if (appId && appSecret) {
+            try {
+                const appAccessToken = `${appId}|${appSecret}`;
+                const appSubUrl = `https://graph.facebook.com/v21.0/${appId}/subscriptions?access_token=${appAccessToken}`;
+                const appSubRes = await fetch(appSubUrl);
+                const appSubData = await appSubRes.json();
+
+                if (appSubData.error) {
+                    console.error(`  ❌ FAIL to fetch App subscriptions: [${appSubData.error.code}] ${appSubData.error.message}`);
+                } else if (Array.isArray(appSubData.data)) {
+                    console.log(`  ✅ SUCCESS: Found ${appSubData.data.length} App Subscription(s):`);
+                    let pageSubscribed = false;
+                    for (const sub of appSubData.data) {
+                        console.log(`    - Object: "${sub.object}" | Callback URL: "${sub.callback_url}"`);
+                        console.log(`      Active: ${sub.active} | Fields: ${JSON.stringify(sub.fields || [])}`);
+                        if (sub.object === 'page') {
+                            pageSubscribed = true;
+                            const expectedCallback = 'https://api.magnetcrm.com/api/webhooks/meta';
+                            const expectedCallbackAlt = 'https://api.magnetcrm.com/api/integrations/meta/webhook';
+                            if (sub.callback_url !== expectedCallback && sub.callback_url !== expectedCallbackAlt) {
+                                console.error(`      ❌ FAIL: App Callback URL is "${sub.callback_url}". It MUST be set to "${expectedCallback}" in your Facebook App Dashboard!`);
+                            } else {
+                                console.log(`      🎉 SUCCESS: App webhook callback URL is correctly configured.`);
+                            }
+                        }
+                    }
+                    if (!pageSubscribed) {
+                        console.error(`  ❌ FAIL: The App does NOT have a 'page' webhook subscription configured. Please set up the Webhook product in developers.facebook.com.`);
+                    }
+                } else {
+                    console.log(`  ⚠️ Unexpected app subscriptions response format: ${JSON.stringify(appSubData)}`);
+                }
+            } catch (e) {
+                console.error(`  ❌ FAIL: Failed to query app subscriptions: ${e.message}`);
+            }
+        } else {
+            console.log(`  ⚠️ Skipping App Webhook check: App ID or App Secret is missing in config.`);
+        }
+
         // 3. Test Webhook Callback URL verification
         console.log('\n🖥️ 3. Testing Webhook Callback Endpoint (Verification)...');
         try {
