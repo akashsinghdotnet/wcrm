@@ -446,9 +446,13 @@ export class IntegrationsService {
             where: { platform: IntegrationPlatform.META, isActive: true },
         });
 
-        const config = allMetaConfigs.find(c => c.credentials?.pageId === pageId);
+        const config = allMetaConfigs.find(c => {
+            const stored = String(c.credentials?.pageId || '').trim();
+            const incoming = String(pageId || '').trim();
+            return stored === incoming;
+        });
         if (!config) {
-            this.logger.warn(`No active Meta integration found for pageId ${pageId}. Available pageIds: ${allMetaConfigs.map(c => c.credentials?.pageId).join(', ')}`);
+            this.logger.warn(`No active Meta integration found for pageId ${pageId}. Available pageIds: ${allMetaConfigs.map(c => String(c.credentials?.pageId || '').trim()).join(', ')}`);
             return;
         }
 

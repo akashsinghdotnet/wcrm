@@ -48,7 +48,7 @@ export class WebhooksController {
         const VERIFY_TOKEN = 'magnet-crm';
         if (mode === 'subscribe' && token === VERIFY_TOKEN) {
             this.logger.log('Meta webhook verification successful');
-            return parseInt(challenge);
+            return challenge;
         }
         this.logger.warn(`Meta webhook verification failed: mode=${mode}, token=${token}`);
         return 'Verification failed';
