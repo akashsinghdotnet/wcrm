@@ -69,21 +69,7 @@ export class IntegrationsService {
                         .update(accessToken)
                         .digest('hex');
                 }
-                
-                try {
-                    const subUrl = `https://graph.facebook.com/v21.0/${pageId}/subscribed_apps?subscribed_fields=leadgen&access_token=${accessToken}` +
-                        (appsecretProof ? `&appsecret_proof=${appsecretProof}` : '');
-                    const subResponse = await fetch(subUrl, { method: 'POST', signal: AbortSignal.timeout(10000) });
-                    const subData = await subResponse.json();
-
-                    if (!subResponse.ok || subData.error) {
-                        this.logger.error(`[Meta Subscribe] Failed to subscribe page ${pageId} to app: ${JSON.stringify(subData)}`);
-                    } else {
-                        this.logger.log(`[Meta Subscribe] Successfully subscribed page ${pageId} to app: ${JSON.stringify(subData)}`);
-                    }
-                } catch (err: any) {
-                    this.logger.error(`[Meta Subscribe] Error subscribing page ${pageId} to app: ${err.message}`);
-                }
+                await this.subscribePageToApp(pageId, accessToken, appsecretProof);
             }
         }
 
@@ -393,6 +379,43 @@ export class IntegrationsService {
     // FACEBOOK / META ADS
     // ──────────────────────────────────────────────────────────────────────────
 
+    private async subscribePageToApp(pageId: string, accessToken: string, appsecretProof: string): Promise<string> {
+        try {
+            let pageAccessToken = accessToken;
+            try {
+                const accountsUrl = `https://graph.facebook.com/v21.0/me/accounts?access_token=${accessToken}` +
+                    (appsecretProof ? `&appsecret_proof=${appsecretProof}` : '');
+                const accountsResponse = await fetch(accountsUrl, { signal: AbortSignal.timeout(5000) });
+                if (accountsResponse.ok) {
+                    const accountsData = await accountsResponse.json();
+                    const pageAccount = accountsData.data?.find((acc: any) => String(acc.id) === String(pageId));
+                    if (pageAccount && pageAccount.access_token) {
+                        pageAccessToken = pageAccount.access_token;
+                        this.logger.log(`Exchanged User Access Token for Page Access Token for page ${pageId}`);
+                    }
+                }
+            } catch (e: any) {
+                this.logger.warn(`Failed to fetch page access token from /me/accounts: ${e.message}`);
+            }
+
+            const subUrl = `https://graph.facebook.com/v21.0/${pageId}/subscribed_apps?subscribed_fields=leadgen&access_token=${pageAccessToken}` +
+                (appsecretProof ? `&appsecret_proof=${appsecretProof}` : '');
+            const subResponse = await fetch(subUrl, { method: 'POST', signal: AbortSignal.timeout(10000) });
+            const subData = await subResponse.json();
+
+            if (!subResponse.ok || subData.error) {
+                this.logger.error(`Failed to subscribe page ${pageId} to app webhooks: ${JSON.stringify(subData)}`);
+                return ` Note: Failed to associate Page with Developer App automatically. Error: ${subData.error?.message || 'Unknown error'}.`;
+            } else {
+                this.logger.log(`Successfully subscribed page ${pageId} to app webhooks: ${JSON.stringify(subData)}`);
+                return ` Page associated and subscribed to App successfully.`;
+            }
+        } catch (err: any) {
+            this.logger.error(`Error subscribing page ${pageId} to app webhooks: ${err.message}`);
+            return ` Note: Error subscribing page to webhooks: ${err.message}`;
+        }
+    }
+
     /**
      * Test Meta connection credentials by calling Facebook Graph API
      */
@@ -436,24 +459,7 @@ export class IntegrationsService {
             }
 
             // Automatically subscribe the Page to our App's Webhooks
-            let subscriptionStatus = '';
-            try {
-                const subUrl = `https://graph.facebook.com/v21.0/${pageId}/subscribed_apps?subscribed_fields=leadgen&access_token=${accessToken}` +
-                    (appsecretProof ? `&appsecret_proof=${appsecretProof}` : '');
-                const subResponse = await fetch(subUrl, { method: 'POST', signal: AbortSignal.timeout(10000) });
-                const subData = await subResponse.json();
-
-                if (!subResponse.ok || subData.error) {
-                    this.logger.error(`Failed to subscribe page ${pageId} to app webhooks: ${JSON.stringify(subData)}`);
-                    subscriptionStatus = ` Note: Failed to associate Page with Developer App automatically. Error: ${subData.error?.message || 'Unknown error'}.`;
-                } else {
-                    this.logger.log(`Successfully subscribed page ${pageId} to app webhooks: ${JSON.stringify(subData)}`);
-                    subscriptionStatus = ` Page associated and subscribed to App successfully.`;
-                }
-            } catch (err: any) {
-                this.logger.error(`Error subscribing page ${pageId} to app webhooks: ${err.message}`);
-                subscriptionStatus = ` Note: Error subscribing page to webhooks: ${err.message}`;
-            }
+            const subscriptionStatus = await this.subscribePageToApp(pageId, accessToken, appsecretProof);
 
             const pageName = data.name || 'Facebook Page';
             if (hasLeadsRetrieval) {
