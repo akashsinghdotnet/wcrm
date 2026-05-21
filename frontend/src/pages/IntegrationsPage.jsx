@@ -286,7 +286,9 @@ export default function IntegrationsPage({ embedded = false }) {
         if (platform === 'meta') {
             setPagesList([]);
             setSelectedPageId(existing.pageId || '');
-            if (existing.appId || existing.appSecret) {
+            if (existing.userAccessToken) {
+                setMetaConnectTab('one-click');
+            } else if (existing.appId || existing.appSecret) {
                 setMetaConnectTab('manual');
             } else {
                 setMetaConnectTab('one-click');
@@ -1006,11 +1008,11 @@ function submitMagnetCRMForm(e) {
                                                     className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium text-sm transition-all disabled:opacity-50"
                                                 >
                                                     <Plug className="w-4 h-4" />
-                                                    {testing ? 'Connecting...' : 'Connect to Facebook'}
+                                                    {testing ? 'Connecting...' : (credentialForm.pageId ? 'Reconnect / Change Account' : 'Connect to Facebook')}
                                                 </button>
                                             </div>
 
-                                            {(pagesList.length > 0 || (credentialForm.pageId && !credentialForm.appId)) && (
+                                            {(pagesList.length > 0 || (credentialForm.pageId && credentialForm.userAccessToken)) && (
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">
                                                         Select Facebook Page
