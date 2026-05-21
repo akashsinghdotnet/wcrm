@@ -1,4 +1,5 @@
-import { Controller, Post, Get, Body, HttpCode, HttpStatus, Query, Logger, ValidationPipe } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, Query, Logger, ValidationPipe, Res } from '@nestjs/common';
+import type { Response as HttpResponse } from 'express';
 import { LeadsService } from '../leads/leads.service';
 import { LeadSource, LeadStatus } from '../leads/lead.entity';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -44,14 +45,15 @@ export class WebhooksController {
         @Query('hub.mode') mode: string,
         @Query('hub.verify_token') token: string,
         @Query('hub.challenge') challenge: string,
+        @Res() res: HttpResponse,
     ) {
         const VERIFY_TOKEN = 'magnet-crm';
         if (mode === 'subscribe' && token === VERIFY_TOKEN) {
             this.logger.log('Meta webhook verification successful');
-            return challenge;
+            return res.status(HttpStatus.OK).send(challenge);
         }
         this.logger.warn(`Meta webhook verification failed: mode=${mode}, token=${token}`);
-        return 'Verification failed';
+        return res.status(HttpStatus.FORBIDDEN).send('Verification failed');
     }
 
     /**
