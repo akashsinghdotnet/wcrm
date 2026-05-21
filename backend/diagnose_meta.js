@@ -26,7 +26,7 @@ async function diagnose() {
 
         console.log('✅ Connected to database. Querying Meta Integration Config...');
         const [rows] = await connection.query(
-            "SELECT credentials FROM integration_configs WHERE platform = 'meta' AND isActive = 1 LIMIT 1"
+            "SELECT * FROM integration_configs WHERE platform = 'meta' AND isActive = 1 LIMIT 1"
         );
 
         if (rows.length === 0) {
@@ -34,6 +34,8 @@ async function diagnose() {
             await connection.end();
             process.exit(1);
         }
+
+        console.log('DEBUG Raw Database Row:', JSON.stringify(rows[0]));
 
         // Parse JSON credentials
         const rawCreds = rows[0].credentials;
