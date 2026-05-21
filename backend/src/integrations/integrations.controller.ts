@@ -131,4 +131,94 @@ export class IntegrationsController {
     async testMetaConnection(@Body() credentials: Record<string, any>) {
         return this.integrationsService.testMetaConnection(credentials);
     }
+
+    // ── Centralized Meta OAuth flow ──────────────────────────────────────────
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Get('meta/oauth-url')
+    @Roles(UserRole.ADMIN)
+    getMetaOauthUrl(@Request() req) {
+        const clientId = process.env.META_CENTRAL_APP_ID || '';
+        const redirectUri = encodeURIComponent('https://api.magnetcrm.com/api/integrations/meta/callback');
+        const state = req.user.companyId; // Pass client's company ID in state
+        const url = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=pages_show_list,leads_retrieval,pages_read_engagement,pages_manage_ads&state=${state}`;
+        return { url };
+    }
+
+    @Get('meta/callback')
+    async handleMetaOauthCallback(
+        @Query('code') code: string,
+        @Query('state') companyId: string,
+        @Res() res: HttpResponse,
+    ) {
+        if (!code || !companyId) {
+            return res.status(HttpStatus.BAD_REQUEST).send('<h3>Error: Missing authorization code or state.</h3>');
+        }
+
+        try {
+            const pages = await this.integrationsService.exchangeMetaCodeAndGetPages(code);
+            
+            // Render popup redirect HTML to post message to parent window and close popup
+            const html = `
+                <!DOCTYPE html>
+                <html>
+                <head><title>Meta Authentication Successful</title></head>
+                <body>
+                    <div style="text-align: center; margin-top: 50px; font-family: sans-serif;">
+                        <h2>Authentication Successful!</h2>
+                        <p>Connecting to Magnet CRM... You can close this window now.</p>
+                    </div>
+                    <script>
+                        if (window.opener) {
+                            window.opener.postMessage({
+                                type: 'META_OAUTH_SUCCESS',
+                                pages: ${JSON.stringify(pages)}
+                            }, '*');
+                        }
+                        window.close();
+                    </script>
+                </body>
+                </html>
+            `;
+            return res.status(HttpStatus.OK).type('text/html').send(html);
+        } catch (error: any) {
+            const html = `
+                <!DOCTYPE html>
+                <html>
+                <head><title>Meta Authentication Failed</title></head>
+                <body>
+                    <div style="text-align: center; margin-top: 50px; font-family: sans-serif; color: red;">
+                        <h2>Authentication Failed</h2>
+                        <p>${error.message}</p>
+                    </div>
+                    <script>
+                        if (window.opener) {
+                            window.opener.postMessage({
+                                type: 'META_OAUTH_FAILED',
+                                error: ${JSON.stringify(error.message)}
+                            }, '*');
+                        }
+                        setTimeout(() => window.close(), 4000);
+                    </script>
+                </body>
+                </html>
+            `;
+            return res.status(HttpStatus.OK).type('text/html').send(html);
+        }
+    }
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Post('meta/subscribe')
+    @Roles(UserRole.ADMIN)
+    async subscribeMetaPage(
+        @Body() body: {
+            companyId: string;
+            pageId: string;
+            pageAccessToken: string;
+            pageName: string;
+            userAccessToken: string;
+        }
+    ) {
+        return this.integrationsService.subscribeMetaPage(body);
+    }
 }

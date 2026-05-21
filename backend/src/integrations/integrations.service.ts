@@ -695,4 +695,119 @@ export class IntegrationsService {
             }
         }
     }
+
+    /**
+     * Exchange central Facebook App authorization code for long-lived access tokens
+     * and retrieve the list of managed Facebook Pages.
+     */
+    async exchangeMetaCodeAndGetPages(code: string) {
+        const appId = process.env.META_CENTRAL_APP_ID;
+        const appSecret = process.env.META_CENTRAL_APP_SECRET;
+        const redirectUri = 'https://api.magnetcrm.com/api/integrations/meta/callback';
+
+        if (!appId || !appSecret) {
+            throw new Error('Central Facebook App credentials (META_CENTRAL_APP_ID, META_CENTRAL_APP_SECRET) are not configured on the server.');
+        }
+
+        // 1. Exchange authorization code for short-lived access token
+        const tokenExchangeUrl = `https://graph.facebook.com/v21.0/oauth/access_token?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&client_secret=${appSecret}&code=${code}`;
+        const tokenRes = await fetch(tokenExchangeUrl);
+        const tokenData = await tokenRes.json();
+
+        if (tokenData.error) {
+            throw new Error(`Token exchange failed: ${tokenData.error.message}`);
+        }
+
+        const shortLivedToken = tokenData.access_token;
+
+        // 2. Exchange short-lived token for a long-lived user access token (60 days)
+        const longLivedUrl = `https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${shortLivedToken}`;
+        const longLivedRes = await fetch(longLivedUrl);
+        const longLivedData = await longLivedRes.json();
+
+        if (longLivedData.error) {
+            throw new Error(`Failed to generate long-lived token: ${longLivedData.error.message}`);
+        }
+
+        const longLivedToken = longLivedData.access_token;
+
+        // 3. Fetch managed pages list and their Page Access Tokens (which will be permanent because they were generated from a long-lived token)
+        const accountsUrl = `https://graph.facebook.com/v21.0/me/accounts?access_token=${longLivedToken}`;
+        const accountsRes = await fetch(accountsUrl);
+        const accountsData = await accountsRes.json();
+
+        if (accountsData.error) {
+            throw new Error(`Failed to fetch pages: ${accountsData.error.message}`);
+        }
+
+        return (accountsData.data || []).map((page: any) => ({
+            id: page.id,
+            name: page.name,
+            accessToken: page.access_token,
+            userAccessToken: longLivedToken,
+        }));
+    }
+
+    /**
+     * Subscribe selected Facebook Page to Magnet CRM webhook
+     * and save page credentials in integration config.
+     */
+    async subscribeMetaPage(data: {
+        companyId: string;
+        pageId: string;
+        pageAccessToken: string;
+        pageName: string;
+        userAccessToken: string;
+    }) {
+        const appId = process.env.META_CENTRAL_APP_ID || '';
+        const appSecret = process.env.META_CENTRAL_APP_SECRET || '';
+
+        // Generate appsecret_proof for page subscription request if appSecret is present
+        let pageAppsecretProof = '';
+        if (appSecret) {
+            pageAppsecretProof = crypto
+                .createHmac('sha256', appSecret)
+                .update(data.pageAccessToken)
+                .digest('hex');
+        }
+
+        // 1. Subscribe page to leadgen Webhook
+        const subscribeUrl = `https://graph.facebook.com/v21.0/${data.pageId}/subscribed_apps?subscribed_fields=leadgen&access_token=${data.pageAccessToken}` +
+            (pageAppsecretProof ? `&appsecret_proof=${pageAppsecretProof}` : '');
+
+        const subRes = await fetch(subscribeUrl, { method: 'POST' });
+        const subData = await subRes.json();
+
+        if (subData.error) {
+            throw new Error(`Failed to subscribe page to webhooks: ${subData.error.message}`);
+        }
+
+        // 2. Save the configuration in the database
+        const credentials = {
+            appId,
+            appSecret, // Save central app secret so webhook proof logic works
+            accessToken: data.pageAccessToken, // Save page access token as accessToken so the lead fetcher uses it
+            pageId: data.pageId,
+            pageName: data.pageName,
+            userAccessToken: data.userAccessToken,
+        };
+
+        let config = await this.configRepo.findOne({
+            where: { companyId: data.companyId, platform: IntegrationPlatform.META },
+        });
+
+        if (config) {
+            config.credentials = credentials;
+            config.isActive = true;
+        } else {
+            config = this.configRepo.create({
+                companyId: data.companyId,
+                platform: IntegrationPlatform.META,
+                credentials,
+                isActive: true,
+            });
+        }
+
+        return this.configRepo.save(config);
+    }
 }
