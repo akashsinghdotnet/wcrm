@@ -214,6 +214,7 @@ export default function IntegrationsPage({ embedded = false }) {
     // Centralized Meta OAuth states
     const [pagesList, setPagesList] = useState([]);
     const [selectedPageId, setSelectedPageId] = useState('');
+    const [metaConnectTab, setMetaConnectTab] = useState('one-click');
 
     const isSuperAdmin = user?.role === 'super_admin' || user?.role === 'superadmin_admin';
 
@@ -285,6 +286,11 @@ export default function IntegrationsPage({ embedded = false }) {
         if (platform === 'meta') {
             setPagesList([]);
             setSelectedPageId(existing.pageId || '');
+            if (existing.appId || existing.appSecret) {
+                setMetaConnectTab('manual');
+            } else {
+                setMetaConnectTab('one-click');
+            }
         }
     };
 
@@ -333,7 +339,7 @@ export default function IntegrationsPage({ embedded = false }) {
     const saveCredentials = async () => {
         setSaving(true);
         try {
-            if (configModalPlatform === 'meta') {
+            if (configModalPlatform === 'meta' && metaConnectTab === 'one-click') {
                 if (!selectedPageId) {
                     toast.error('Please select a Facebook page first');
                     setSaving(false);
@@ -961,47 +967,101 @@ function submitMagnetCRMForm(e) {
                         <div className="p-6 space-y-4">
                             {configModalPlatform === 'meta' ? (
                                 <div className="space-y-4">
-                                    {credentialForm.pageName && (
-                                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 text-emerald-400">
-                                            <p className="text-xs font-semibold uppercase tracking-wide">Currently Connected Page</p>
-                                            <p className="text-sm font-bold mt-1">{credentialForm.pageName}</p>
-                                            <p className="text-[10px] text-gray-500 font-mono mt-0.5">ID: {credentialForm.pageId}</p>
-                                        </div>
-                                    )}
-
-                                    <div className="text-center py-4 bg-gray-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-gray-300 dark:border-slate-800">
-                                        <p className="text-xs text-gray-500 dark:text-slate-400 mb-3 px-4">
-                                            Link Magnet CRM to your Facebook profile to manage page lead forms.
-                                        </p>
+                                    {/* Tabs */}
+                                    <div className="flex border-b border-gray-200 dark:border-slate-800 mb-2">
                                         <button
                                             type="button"
-                                            onClick={handleFacebookConnect}
-                                            disabled={testing}
-                                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium text-sm transition-all disabled:opacity-50"
+                                            onClick={() => setMetaConnectTab('one-click')}
+                                            className={`flex-1 pb-2.5 text-xs font-semibold border-b-2 transition-colors ${metaConnectTab === 'one-click' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
                                         >
-                                            <Plug className="w-4 h-4" />
-                                            {testing ? 'Connecting...' : 'Connect to Facebook'}
+                                            Simple Connection (One-Click)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setMetaConnectTab('manual')}
+                                            className={`flex-1 pb-2.5 text-xs font-semibold border-b-2 transition-colors ${metaConnectTab === 'manual' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
+                                        >
+                                            Manual Setup (Developer Mode)
                                         </button>
                                     </div>
 
-                                    {(pagesList.length > 0 || credentialForm.pageId) && (
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">
-                                                Select Facebook Page
-                                            </label>
-                                            <select
-                                                value={selectedPageId}
-                                                onChange={(e) => setSelectedPageId(e.target.value)}
-                                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                            >
-                                                <option value="">-- Select Page --</option>
-                                                {pagesList.map(p => (
-                                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                                ))}
-                                                {credentialForm.pageId && !pagesList.find(p => p.id === credentialForm.pageId) && (
-                                                    <option value={credentialForm.pageId}>{credentialForm.pageName || credentialForm.pageId} (Current)</option>
-                                                )}
-                                            </select>
+                                    {metaConnectTab === 'one-click' ? (
+                                        <div className="space-y-4 pt-2">
+                                            {credentialForm.pageName && (
+                                                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 text-emerald-400">
+                                                    <p className="text-xs font-semibold uppercase tracking-wide">Currently Connected Page</p>
+                                                    <p className="text-sm font-bold mt-1">{credentialForm.pageName}</p>
+                                                    <p className="text-[10px] text-gray-500 font-mono mt-0.5">ID: {credentialForm.pageId}</p>
+                                                </div>
+                                            )}
+
+                                            <div className="text-center py-4 bg-gray-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-gray-300 dark:border-slate-800">
+                                                <p className="text-xs text-gray-500 dark:text-slate-400 mb-3 px-4">
+                                                    Link Magnet CRM to your Facebook profile to manage page lead forms.
+                                                </p>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleFacebookConnect}
+                                                    disabled={testing}
+                                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-medium text-sm transition-all disabled:opacity-50"
+                                                >
+                                                    <Plug className="w-4 h-4" />
+                                                    {testing ? 'Connecting...' : 'Connect to Facebook'}
+                                                </button>
+                                            </div>
+
+                                            {(pagesList.length > 0 || (credentialForm.pageId && !credentialForm.appId)) && (
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">
+                                                        Select Facebook Page
+                                                    </label>
+                                                    <select
+                                                        value={selectedPageId}
+                                                        onChange={(e) => setSelectedPageId(e.target.value)}
+                                                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    >
+                                                        <option value="">-- Select Page --</option>
+                                                        {pagesList.map(p => (
+                                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                                        ))}
+                                                        {credentialForm.pageId && !pagesList.find(p => p.id === credentialForm.pageId) && (
+                                                            <option value={credentialForm.pageId}>{credentialForm.pageName || credentialForm.pageId} (Current)</option>
+                                                        )}
+                                                    </select>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4 pt-2">
+                                            {[
+                                                { key: 'appId', label: 'App ID', type: 'text', placeholder: 'e.g. 123456789012345' },
+                                                { key: 'appSecret', label: 'App Secret', type: 'password', placeholder: 'Your App Secret' },
+                                                { key: 'accessToken', label: 'Access Token', type: 'password', placeholder: 'Long-lived access token' },
+                                                { key: 'pageId', label: 'Page ID', type: 'text', placeholder: 'e.g. 987654321098765' },
+                                                { key: 'adAccountId', label: 'Ad Account ID', type: 'text', placeholder: 'e.g. act_123456789' },
+                                            ].map((field) => (
+                                                <div key={field.key}>
+                                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">{field.label}</label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type={field.type === 'password' && !showPasswords[field.key] ? 'password' : 'text'}
+                                                            value={credentialForm[field.key] || ''}
+                                                            onChange={(e) => setCredentialForm({ ...credentialForm, [field.key]: e.target.value })}
+                                                            placeholder={field.placeholder}
+                                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
+                                                        />
+                                                        {field.type === 'password' && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowPasswords({ ...showPasswords, [field.key]: !showPasswords[field.key] })}
+                                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-slate-400 hover:text-gray-600 dark:text-slate-300"
+                                                            >
+                                                                {showPasswords[field.key] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     )}
                                 </div>
