@@ -17,28 +17,37 @@ export const MODULE_DEFINITIONS = [
 ];
 
 export function ModuleProvider({ children }) {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [activeModules, setActiveModules] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [modulesReady, setModulesReady] = useState(false);
 
     useEffect(() => {
-        if (user?.activeModules) {
+        if (!user) {
+            // Auth hasn't resolved yet — keep loading
+            setModulesReady(false);
+            return;
+        }
+        if (user.activeModules) {
             setActiveModules(user.activeModules);
-            setLoading(false);
-        } else if (user) {
+            setModulesReady(true);
+        } else {
             // Fallback: fetch from API
+            setModulesReady(false);
             api.get('/modules')
                 .then(res => setActiveModules(res.data.activeModules || []))
                 .catch(() => setActiveModules(MODULE_DEFINITIONS.map(m => m.key)))
-                .finally(() => setLoading(false));
-        } else {
-            setLoading(false);
+                .finally(() => setModulesReady(true));
         }
     }, [user]);
 
+    // Loading until both auth and modules are resolved
+    const loading = authLoading || !modulesReady;
+
     const hasModule = useCallback((moduleKey) => {
-        // Super admin always has all modules
-        if (!user?.companyId) return true;
+        // No user yet — don't show anything
+        if (!user) return false;
+        // Super admin always has all modules (they have a role but no companyId)
+        if (user.role && !user.companyId) return true;
         return activeModules.includes(moduleKey);
     }, [activeModules, user]);
 
