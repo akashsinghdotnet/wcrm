@@ -755,4 +755,47 @@ export class EmailService {
 
         return this.sendEmail(to, subject, body, 'event-booking', companyId);
     }
+
+    async sendRenewalConfirmation(to: string, userName: string, companyName: string, planName: string, amount: number, period?: string) {
+        const defaultSubject = 'Subscription Renewed - {{platform}}';
+        const defaultHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #4F46E5;">Subscription Renewed</h2>
+                <p>Hi <strong>{{userName}}</strong>,</p>
+                <p>Your subscription for <strong>{{companyName}}</strong> has been renewed successfully.</p>
+                <p><strong>Plan:</strong> {{planName}}</p>
+                <p><strong>Amount:</strong> ₹{{amount}}</p>
+                <div style="margin-top: 40px; border-top: 1px solid #e0e0e0; padding-top: 20px; text-align: center; color: #6b7280; font-size: 12px;">
+                    <p>&copy; ${new Date().getFullYear()} {{platform}}. All rights reserved.</p>
+                </div>
+            </div>
+        `;
+
+        const { subject, body } = await this.renderTemplate('renewal_confirmation', {
+            userName, companyName, planName, amount: Number(amount).toLocaleString('en-IN'), platform: 'Magnet CRM'
+        }, defaultSubject, defaultHtml);
+
+        return this.sendEmail(to, subject, body, 'system');
+    }
+
+    async sendRenewalReminder(to: string, userName: string, companyName: string, planName: string, amount: number, period?: string, daysLeft?: number) {
+        const defaultSubject = 'Subscription Renewal Reminder - {{platform}}';
+        const defaultHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #4F46E5;">Renewal Reminder</h2>
+                <p>Hi <strong>{{userName}}</strong>,</p>
+                <p>Your subscription for <strong>{{companyName}}</strong> on plan <strong>{{planName}}</strong> is due for renewal${daysLeft ? ` in ${daysLeft} days` : ' soon'}.</p>
+                <p><strong>Amount:</strong> ₹{{amount}}</p>
+                <div style="margin-top: 40px; border-top: 1px solid #e0e0e0; padding-top: 20px; text-align: center; color: #6b7280; font-size: 12px;">
+                    <p>&copy; ${new Date().getFullYear()} {{platform}}. All rights reserved.</p>
+                </div>
+            </div>
+        `;
+
+        const { subject, body } = await this.renderTemplate('renewal_reminder', {
+            userName, companyName, planName, amount: Number(amount).toLocaleString('en-IN'), platform: 'Magnet CRM'
+        }, defaultSubject, defaultHtml);
+
+        return this.sendEmail(to, subject, body, 'system');
+    }
 }
