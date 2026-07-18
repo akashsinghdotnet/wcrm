@@ -24,7 +24,7 @@ export class AuthController {
 
     @Post('login')
     async login(@Body() loginDto: LoginDto) {
-        const result = await this.authService.login(loginDto);
+        const result = await this.authService.login(loginDto) as any;
         if (result.requires2FA || !result.user?.companyId) {
             return result;
         }
@@ -131,7 +131,7 @@ export class AuthController {
     @Public()
     @Post('login/verify-2fa')
     async loginVerify2FA(@Body() body: { userId: string; token: string }) {
-        const result = await this.authService.loginVerify2FA(body.userId, body.token);
+        const result = await this.authService.loginVerify2FA(body.userId, body.token) as any;
         if (result.error || !result.user?.companyId) {
             return result;
         }
