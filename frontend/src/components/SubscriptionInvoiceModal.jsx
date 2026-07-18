@@ -102,18 +102,35 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
-                                <tr>
-                                    <td className="py-4">
-                                        <p className="font-semibold text-slate-800">{invoice.description}</p>
-                                        <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Subscription</p>
-                                    </td>
-                                    <td className="py-4 text-right text-sm text-slate-600">
-                                        {invoice.period}
-                                    </td>
-                                    <td className="py-4 text-right font-medium text-slate-800">
-                                        ₹{Number(invoice.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                    </td>
-                                </tr>
+                                {invoice.items && invoice.items.length > 0 ? (
+                                    invoice.items.map((item, i) => (
+                                        <tr key={i}>
+                                            <td className="py-4">
+                                                <p className="font-semibold text-slate-800">{item.description}</p>
+                                                {i === 0 && <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Subscription</p>}
+                                            </td>
+                                            <td className="py-4 text-right text-sm text-slate-600">
+                                                {i === 0 ? invoice.period : '-'}
+                                            </td>
+                                            <td className="py-4 text-right font-medium text-slate-800">
+                                                ₹{Number(item.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td className="py-4">
+                                            <p className="font-semibold text-slate-800">{invoice.description}</p>
+                                            <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Subscription</p>
+                                        </td>
+                                        <td className="py-4 text-right text-sm text-slate-600">
+                                            {invoice.period}
+                                        </td>
+                                        <td className="py-4 text-right font-medium text-slate-800">
+                                            ₹{Number(invoice.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -123,17 +140,17 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                         <div className="w-64 space-y-3">
                             <div className="flex justify-between text-sm text-slate-600">
                                 <span>Subtotal</span>
-                                <span>₹{Number(invoice.subtotal || invoice.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                <span>₹{Number(invoice.subtotal !== undefined ? invoice.subtotal : invoice.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                             </div>
-                            {(invoice.tax > 0 || !invoice.subtotal) && (
+                            {(invoice.tax > 0 || invoice.subtotal === undefined) && (
                                 <div className="flex justify-between text-sm text-slate-600">
                                     <span>GST (18%)</span>
-                                    <span>₹{Number(invoice.tax || (invoice.amount * 0.18)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                    <span>₹{Number(invoice.tax !== undefined ? invoice.tax : (invoice.amount * 0.18)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                                 </div>
                             )}
                             <div className="flex justify-between text-lg font-bold text-indigo-900 border-t-2 border-slate-100 pt-3">
                                 <span>Total</span>
-                                <span>₹{Number(invoice.subtotal ? (Number(invoice.subtotal) + Number(invoice.tax || 0)) : (invoice.amount * 1.18)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                <span>₹{Number(invoice.subtotal !== undefined ? (Number(invoice.subtotal) + Number(invoice.tax || 0)) : (invoice.amount * 1.18)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                     </div>
