@@ -37,6 +37,16 @@ export class UsersController {
         return this.usersService.changePassword(req.user.userId, body.oldPassword, body.newPassword);
     }
 
+    @Post('me/email/request')
+    requestEmailChange(@Request() req, @Body() body: { newEmail: string }) {
+        return this.usersService.requestEmailChange(req.user.userId, body.newEmail);
+    }
+
+    @Post('me/email/verify')
+    verifyEmailChange(@Request() req, @Body() body: { otp: string }) {
+        return this.usersService.verifyEmailChange(req.user.userId, body.otp);
+    }
+
     @Get(':id')
     @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN, UserRole.ADMIN)
     async findOne(@Param('id') id: string) {

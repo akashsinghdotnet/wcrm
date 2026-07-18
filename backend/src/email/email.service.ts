@@ -591,6 +591,55 @@ export class EmailService {
         return this.sendEmail(to, subject, body, 'system');
     }
 
+    async sendEmailChangeVerification(to: string, userName: string, otp: string) {
+        const defaultSubject = `Verify your new email address`;
+        const defaultHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #4F46E5;">Magnet CRM</h1>
+                </div>
+                <div style="color: #333333;">
+                    <p>Hi <strong>${userName}</strong>,</p>
+                    <p>We received a request to change your Magnet CRM account email address to this one.</p>
+                    <p>Please use the following verification code to confirm this change. The code is valid for 15 minutes.</p>
+                    
+                    <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                        <span style="font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #111827;">${otp}</span>
+                    </div>
+
+                    <p style="color: #dc2626; font-size: 14px;">If you did not request this change, please ignore this email.</p>
+                </div>
+                <div style="margin-top: 40px; border-top: 1px solid #e0e0e0; padding-top: 20px; text-align: center; color: #6b7280; font-size: 12px;">
+                    <p>&copy; ${new Date().getFullYear()} Magnet CRM. All rights reserved.</p>
+                </div>
+            </div>
+        `;
+        
+        return this.sendEmail(to, defaultSubject, defaultHtml, 'system');
+    }
+
+    async sendEmailChangeAlert(to: string, userName: string) {
+        const defaultSubject = `Security Alert: Your email address was changed`;
+        const defaultHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #4F46E5;">Magnet CRM</h1>
+                </div>
+                <div style="color: #333333;">
+                    <p>Hi <strong>${userName}</strong>,</p>
+                    <p>This is a security notification to let you know that the email address associated with your Magnet CRM account has been successfully changed.</p>
+                    
+                    <p style="color: #dc2626; font-size: 14px;">If you did not authorize this change, please contact your administrator or Magnet CRM support immediately to secure your account.</p>
+                </div>
+                <div style="margin-top: 40px; border-top: 1px solid #e0e0e0; padding-top: 20px; text-align: center; color: #6b7280; font-size: 12px;">
+                    <p>&copy; ${new Date().getFullYear()} Magnet CRM. All rights reserved.</p>
+                </div>
+            </div>
+        `;
+        
+        return this.sendEmail(to, defaultSubject, defaultHtml, 'system');
+    }
+
     async sendBankDetailsEmail(
         to: string,
         userName: string,

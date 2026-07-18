@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { User, Lock, Building2, Shield, Eye, EyeOff, Mail, Users, IndianRupee, FileText, MessageCircle, Plug, Phone, GitBranch, Calendar, CreditCard } from 'lucide-react';
+import { User, Lock, Building2, Shield, Eye, EyeOff, Mail, Users, IndianRupee, FileText, MessageCircle, Plug, Phone, GitBranch, Calendar, CreditCard, X } from 'lucide-react';
 import { useModules } from '../context/ModuleContext';
 import EmailSettings from '../components/EmailSettings';
 import TeamSettings from '../components/TeamSettings';
@@ -32,6 +32,10 @@ export default function SettingsPage() {
         return <div className="p-8 text-center text-gray-500 dark:text-slate-400">Please log in to view settings.</div>;
     }
     const [userForm, setUserForm] = useState({ firstName: '', lastName: '', phone: '', email: '' });
+    const [showEmailVerify, setShowEmailVerify] = useState(false);
+    const [emailOtp, setEmailOtp] = useState('');
+    const [verifyingEmail, setVerifyingEmail] = useState(false);
+    
     const [twoFactorData, setTwoFactorData] = useState(null);
     const [twoFactorToken, setTwoFactorToken] = useState('');
     const [showTwoFactorSetup, setShowTwoFactorSetup] = useState(false);
@@ -59,11 +63,34 @@ export default function SettingsPage() {
             await api.patch(`/users/${user.id}`, {
                 firstName: userForm.firstName,
                 lastName: userForm.lastName,
-                phone: userForm.phone
+                phone: userForm.phone,
             });
-            toast.success('Profile updated');
+            
+            if (userForm.email !== user.email) {
+                await api.post('/users/me/email/request', { newEmail: userForm.email });
+                setShowEmailVerify(true);
+                toast.success('Verification code sent to your new email.');
+            } else {
+                toast.success('Profile updated');
+                setTimeout(() => window.location.reload(), 1000);
+            }
         } catch (err) {
-            toast.error('Failed to update profile');
+            toast.error(err.response?.data?.message || 'Failed to update profile');
+        }
+    };
+
+    const handleEmailVerify = async (e) => {
+        e.preventDefault();
+        setVerifyingEmail(true);
+        try {
+            await api.post('/users/me/email/verify', { otp: emailOtp });
+            toast.success('Email updated successfully!');
+            setShowEmailVerify(false);
+            setTimeout(() => window.location.reload(), 1000);
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Invalid verification code');
+        } finally {
+            setVerifyingEmail(false);
         }
     };
 
@@ -234,8 +261,9 @@ export default function SettingsPage() {
                                         <input
                                             type="email"
                                             value={userForm.email}
-                                            disabled
-                                            className="w-full px-4 py-2.5 bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-500 dark:text-slate-400 cursor-not-allowed"
+                                            onChange={e => setUserForm({ ...userForm, email: e.target.value })}
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
+                                            placeholder="john@example.com"
                                         />
                                     </div>
                                     <div>
@@ -255,6 +283,51 @@ export default function SettingsPage() {
                                     </button>
                                 </div>
                             </form>
+
+                            {showEmailVerify && (
+                                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-slate-800">
+                                        <div className="p-6 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center">
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Verify New Email</h3>
+                                            <button onClick={() => setShowEmailVerify(false)} className="text-gray-400 hover:text-gray-500 dark:hover:text-slate-300">
+                                                <X className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                        <form onSubmit={handleEmailVerify} className="p-6 space-y-6">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">
+                                                    Enter the 6-digit code sent to <span className="text-indigo-500 font-semibold">{userForm.email}</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={emailOtp}
+                                                    onChange={e => setEmailOtp(e.target.value)}
+                                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 text-center tracking-[0.5em] text-lg font-bold"
+                                                    placeholder="000000"
+                                                    maxLength={6}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowEmailVerify(false)}
+                                                    className="flex-1 px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    type="submit"
+                                                    disabled={verifyingEmail || emailOtp.length !== 6}
+                                                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    {verifyingEmail ? 'Verifying...' : 'Verify'}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
 

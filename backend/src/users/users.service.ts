@@ -187,6 +187,64 @@ export class UsersService {
         return this.usersRepository.save(user);
     }
 
+    async requestEmailChange(userId: string, newEmail: string): Promise<void> {
+        const user = await this.usersRepository.findOneBy({ id: userId });
+        if (!user) throw new NotFoundException('User not found');
+
+        // Check if email already in use by another user (matching same role logic if necessary, but generally any existing is bad)
+        const existingUsers = await this.usersRepository.find({ where: { email: newEmail } });
+        const isSuperadminTeamMember = user.role === UserRole.SUPER_ADMIN || user.role === UserRole.SUPERADMIN_ADMIN || user.role === UserRole.SUPERADMIN_STAFF;
+        
+        for (const existing of existingUsers) {
+            const existingIsSuperadmin = existing.role === UserRole.SUPER_ADMIN || existing.role === UserRole.SUPERADMIN_ADMIN || existing.role === UserRole.SUPERADMIN_STAFF;
+            // If they are the same 'type' of user, it's a conflict
+            if (isSuperadminTeamMember === existingIsSuperadmin && existing.id !== userId) {
+                throw new ConflictException('Email address is already in use by another account');
+            }
+        }
+
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+        user.pendingEmail = newEmail;
+        user.emailChangeToken = otp;
+        user.emailChangeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+        await this.usersRepository.save(user);
+
+        await this.emailService.sendEmailChangeVerification(newEmail, user.name || user.firstName || 'User', otp);
+    }
+
+    async verifyEmailChange(userId: string, otp: string): Promise<User> {
+        const user = await this.usersRepository.findOneBy({ id: userId });
+        if (!user) throw new NotFoundException('User not found');
+
+        if (!user.emailChangeToken || !user.emailChangeExpires || !user.pendingEmail) {
+            throw new UnauthorizedException('No pending email change request');
+        }
+
+        if (new Date() > user.emailChangeExpires) {
+            throw new UnauthorizedException('Verification code has expired');
+        }
+
+        if (user.emailChangeToken !== otp) {
+            throw new UnauthorizedException('Invalid verification code');
+        }
+
+        const oldEmail = user.email;
+        user.email = user.pendingEmail;
+        
+        user.pendingEmail = null as any;
+        user.emailChangeToken = null as any;
+        user.emailChangeExpires = null as any;
+
+        const updatedUser = await this.usersRepository.save(user);
+
+        await this.emailService.sendEmailChangeAlert(oldEmail, user.name || user.firstName || 'User');
+
+        return updatedUser;
+    }
+
     async deactivate(id: string): Promise<User> {
         const user = await this.usersRepository.findOneBy({ id });
         if (!user) {
@@ -226,7 +284,12 @@ export class UsersService {
             throw new NotFoundException(`User with ID ${id} not found`);
         }
         if (user.role === UserRole.SUPER_ADMIN) {
-            throw new ForbiddenException('Cannot delete a super admin user');
+            if (requestingUser?.role !== UserRole.SUPER_ADMIN) {
+                throw new ForbiddenException('Only a super admin can delete another super admin');
+            }
+            if (requestingUser?.userId === user.id) {
+                throw new ForbiddenException('Cannot delete yourself');
+            }
         }
 
         if (requestingUser) {
