@@ -148,9 +148,15 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                                     <span>₹{Number(invoice.tax !== undefined ? invoice.tax : (invoice.amount * 0.18)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                                 </div>
                             )}
+                            {(invoice.subtotal !== undefined && Number(invoice.amount) < (Number(invoice.subtotal) + Number(invoice.tax || 0))) && (
+                                <div className="flex justify-between text-sm text-emerald-600">
+                                    <span>Discount</span>
+                                    <span>-₹{Number((Number(invoice.subtotal) + Number(invoice.tax || 0)) - Number(invoice.amount)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-lg font-bold text-indigo-900 border-t-2 border-slate-100 pt-3">
                                 <span>Total</span>
-                                <span>₹{Number(invoice.subtotal !== undefined ? (Number(invoice.subtotal) + Number(invoice.tax || 0)) : (invoice.amount * 1.18)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                <span>₹{Number(invoice.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                     </div>
