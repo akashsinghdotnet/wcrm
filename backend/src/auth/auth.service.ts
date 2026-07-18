@@ -5,6 +5,7 @@ import { PlansService } from '../plans/plans.service';
 import { EmailService } from '../email/email.service';
 import { SettingsService } from '../settings/settings.service';
 import { CouponsService } from '../coupons/coupons.service';
+import { BillingService } from '../billing/billing.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
@@ -30,6 +31,7 @@ export class AuthService {
         private emailService: EmailService,
         private settingsService: SettingsService,
         private couponsService: CouponsService,
+        private billingService: BillingService,
     ) { }
 
     private async getRazorpayInstance(): Promise<any> {
@@ -140,6 +142,26 @@ export class AuthService {
             await this.companiesService.update(company.id, {
                 subscriptionStatus: 'active',
                 renewalDate: renewalDate ? renewalDate.toISOString() : (null as any),
+            });
+
+            // Create system invoice for 0 amount
+            const now = new Date();
+            const originalPrice = dto.billingPeriod === 'yearly' ? plan.priceYearly : plan.priceMonthly;
+            await this.billingService.createSystemInvoice({
+                targetCompanyId: company.id,
+                amount: 0,
+                subtotal: originalPrice,
+                tax: 0,
+                invoiceDate: now,
+                dueDate: now,
+                month: now.toLocaleString('default', { month: 'short', year: 'numeric' }),
+                status: 'paid',
+                items: [{
+                    description: `MagnetCRM ${plan.name} Plan (${dto.billingPeriod}) — Activation ${appliedCouponCode ? `(Coupon: ${appliedCouponCode})` : ''}`,
+                    quantity: 1,
+                    rate: originalPrice,
+                    amount: originalPrice,
+                }],
             });
 
             // Send purchase confirmation/welcome email
@@ -405,9 +427,50 @@ export class AuthService {
                 renewalDate: renewalDate ? renewalDate.toISOString() : (null as any),
             });
 
+            // Create system invoice for 0 amount
+            const now = new Date();
+            const originalPrice = dto.billingPeriod === 'yearly' ? plan.priceYearly : plan.priceMonthly;
+            await this.billingService.createSystemInvoice({
+                targetCompanyId: company.id,
+                amount: 0,
+                subtotal: originalPrice,
+                tax: 0,
+                invoiceDate: now,
+                dueDate: now,
+                month: now.toLocaleString('default', { month: 'short', year: 'numeric' }),
+                status: 'paid',
+                items: [{
+                    description: `MagnetCRM ${plan.name} Plan (${dto.billingPeriod}) — Renewal ${appliedCouponCode ? `(Coupon: ${appliedCouponCode})` : ''}`,
+                    quantity: 1,
+                    rate: originalPrice,
+                    amount: originalPrice,
+                }],
+            });
+
+            // Fetch updated user to return
+            const updatedUser = await this.usersService.findById(user.id || user.userId || user.sub);
+            if (!updatedUser) throw new BadRequestException('User not found');
+            const payload = { email: updatedUser.email, sub: updatedUser.id, role: updatedUser.role, companyId: updatedUser.companyId };
+            const access_token = this.jwtService.sign(payload);
+
+            // Send renewal confirmation email
+            try {
+                await this.emailService.sendRenewalConfirmation(
+                    updatedUser.email,
+                    updatedUser.firstName || updatedUser.email,
+                    company.companyName,
+                    plan ? plan.name : 'Subscription',
+                    0
+                );
+            } catch (err) {
+                this.logger.error(`Failed to send renewal confirmation email: ${err.message}`);
+            }
+
             return {
                 status: 'active',
                 message: 'Subscription renewed successfully.',
+                access_token,
+                user: { ...updatedUser, companyId: updatedUser.companyId },
             };
         }
 
@@ -451,6 +514,7 @@ export class AuthService {
                     companyId: company.id,
                     userId: user.userId || user.id || user.sub,
                     couponCode: appliedCouponCode || undefined,
+                    isRenewal: true,
                     prefill: {
                         name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
                         email: user.email,
@@ -548,6 +612,7 @@ export class AuthService {
                     companyId: company.id,
                     userId: user.userId || user.id || user.sub,
                     couponCode: appliedCouponCode || undefined,
+                    isRenewal: true,
                 };
             } catch (err) {
                 this.logger.error(`PayPal order creation failed: ${err.message}`);
@@ -569,6 +634,7 @@ export class AuthService {
         companyId: string;
         userId: string;
         couponCode?: string;
+        isRenewal?: boolean;
     }) {
         // 1. Verify signature
         const paymentSettingsRaw = await this.settingsService.getValue('payment_settings');
@@ -616,19 +682,69 @@ export class AuthService {
 
         const payload = { email: user.email, sub: user.id, role: user.role, companyId: user.companyId };
 
-        // 4. Send purchase confirmation email (non-blocking)
+        // 4. Create real system invoice
         const plan = company.plan || (company.planId ? await this.plansService.findOne(company.planId) : null);
-        const amount = company.subscriptionPeriod === 'yearly' ? plan?.priceYearly : plan?.priceMonthly;
+        let baseAmount = Number(company.subscriptionPeriod === 'yearly' ? plan?.priceYearly : plan?.priceMonthly) || 0;
+        let appliedCouponCode: string | null = data.couponCode || null;
+
+        if (appliedCouponCode) {
+            try {
+                const coupon = await this.couponsService.validate(appliedCouponCode, company.subscriptionPeriod || 'monthly');
+                let discount = 0;
+                if (coupon.type === 'percentage') {
+                    discount = parseFloat((baseAmount * coupon.value / 100).toFixed(2));
+                } else {
+                    discount = Math.min(coupon.value, baseAmount);
+                }
+                baseAmount = Math.max(0, parseFloat((baseAmount - discount).toFixed(2)));
+            } catch (err) {
+                // Ignore if coupon is invalid at this stage
+                appliedCouponCode = null;
+            }
+        }
+
+        const gstAmount = Math.round(baseAmount * 18) / 100;
+        const finalAmount = Math.round((baseAmount + gstAmount) * 100) / 100;
+        const now = new Date();
+
+        await this.billingService.createSystemInvoice({
+            targetCompanyId: company.id,
+            amount: finalAmount,
+            subtotal: baseAmount,
+            tax: gstAmount,
+            invoiceDate: now,
+            dueDate: now,
+            month: now.toLocaleString('default', { month: 'short', year: 'numeric' }),
+            status: 'paid',
+            items: [{
+                description: `MagnetCRM ${plan?.name || 'Subscription'} (${company.subscriptionPeriod}) — ${data.isRenewal ? 'Renewal' : 'Activation'} ${appliedCouponCode ? `(Coupon: ${appliedCouponCode})` : ''}`,
+                quantity: 1,
+                rate: baseAmount,
+                amount: baseAmount,
+            }],
+        });
+
+        // 5. Send purchase/renewal confirmation email (non-blocking)
         try {
-            await this.emailService.sendPurchaseConfirmation(
-                user.email,
-                user.firstName || user.email,
-                company.companyName,
-                plan ? plan.name : 'Subscription',
-                Number(amount || 0)
-            );
+            if (data.isRenewal) {
+                await this.emailService.sendRenewalConfirmation(
+                    user.email,
+                    user.firstName || user.email,
+                    company.companyName,
+                    plan ? plan.name : 'Subscription',
+                    Number(finalAmount || 0)
+                );
+            } else {
+                await this.emailService.sendPurchaseConfirmation(
+                    user.email,
+                    user.firstName || user.email,
+                    company.companyName,
+                    plan ? plan.name : 'Subscription',
+                    Number(finalAmount || 0)
+                );
+            }
         } catch (err) {
-            this.logger.error(`Failed to send purchase confirmation email: ${err.message}`);
+            this.logger.error(`Failed to send confirmation email: ${err.message}`);
         }
 
         return {
@@ -643,6 +759,7 @@ export class AuthService {
         companyId: string;
         userId: string;
         couponCode?: string;
+        isRenewal?: boolean;
     }) {
         const paymentSettingsRaw = await this.settingsService.getValue('payment_settings');
         if (!paymentSettingsRaw) throw new BadRequestException('Payment settings not configured');
@@ -719,19 +836,69 @@ export class AuthService {
 
         const payload = { email: user.email, sub: user.id, role: user.role, companyId: user.companyId };
 
-        // 4. Send purchase confirmation email
+        // 4. Create real system invoice
         const plan = company.plan || (company.planId ? await this.plansService.findOne(company.planId) : null);
-        const amount = company.subscriptionPeriod === 'yearly' ? plan?.priceYearly : plan?.priceMonthly;
+        let baseAmount = Number(company.subscriptionPeriod === 'yearly' ? plan?.priceYearly : plan?.priceMonthly) || 0;
+        let appliedCouponCode: string | null = data.couponCode || null;
+
+        if (appliedCouponCode) {
+            try {
+                const coupon = await this.couponsService.validate(appliedCouponCode, company.subscriptionPeriod || 'monthly');
+                let discount = 0;
+                if (coupon.type === 'percentage') {
+                    discount = parseFloat((baseAmount * coupon.value / 100).toFixed(2));
+                } else {
+                    discount = Math.min(coupon.value, baseAmount);
+                }
+                baseAmount = Math.max(0, parseFloat((baseAmount - discount).toFixed(2)));
+            } catch (err) {
+                // Ignore if coupon is invalid at this stage
+                appliedCouponCode = null;
+            }
+        }
+
+        const gstAmount = Math.round(baseAmount * 18) / 100;
+        const finalAmount = Math.round((baseAmount + gstAmount) * 100) / 100;
+        const now = new Date();
+
+        await this.billingService.createSystemInvoice({
+            targetCompanyId: company.id,
+            amount: finalAmount,
+            subtotal: baseAmount,
+            tax: gstAmount,
+            invoiceDate: now,
+            dueDate: now,
+            month: now.toLocaleString('default', { month: 'short', year: 'numeric' }),
+            status: 'paid',
+            items: [{
+                description: `MagnetCRM ${plan?.name || 'Subscription'} (${company.subscriptionPeriod}) — ${data.isRenewal ? 'Renewal' : 'Activation'} ${appliedCouponCode ? `(Coupon: ${appliedCouponCode})` : ''}`,
+                quantity: 1,
+                rate: baseAmount,
+                amount: baseAmount,
+            }],
+        });
+
+        // 5. Send purchase/renewal confirmation email (non-blocking)
         try {
-            await this.emailService.sendPurchaseConfirmation(
-                user.email,
-                user.firstName || user.email,
-                company.companyName,
-                plan ? plan.name : 'Subscription',
-                Number(amount || 0)
-            );
+            if (data.isRenewal) {
+                await this.emailService.sendRenewalConfirmation(
+                    user.email,
+                    user.firstName || user.email,
+                    company.companyName,
+                    plan ? plan.name : 'Subscription',
+                    Number(finalAmount || 0)
+                );
+            } else {
+                await this.emailService.sendPurchaseConfirmation(
+                    user.email,
+                    user.firstName || user.email,
+                    company.companyName,
+                    plan ? plan.name : 'Subscription',
+                    Number(finalAmount || 0)
+                );
+            }
         } catch (err) {
-            this.logger.error(`Failed to send purchase confirmation email: ${err.message}`);
+            this.logger.error(`Failed to send confirmation email: ${err.message}`);
         }
 
         return {

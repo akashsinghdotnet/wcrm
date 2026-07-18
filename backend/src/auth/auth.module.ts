@@ -12,6 +12,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './jwt.strategy';
+import { BillingModule } from '../billing/billing.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { JwtStrategy } from './jwt.strategy';
     SettingsModule,
     CouponsModule,
     ModulesModule,
+    BillingModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
