@@ -53,6 +53,11 @@ export default function LoginPage({ type = 'client' }) {
             toast.success('Welcome back!');
             navigate('/');
         } catch (err) {
+            if (err.message && !err.response) {
+                toast.error(err.message);
+                return;
+            }
+
             const status = err.response?.status;
             const msg = err.response?.data?.message;
 
@@ -99,6 +104,10 @@ export default function LoginPage({ type = 'client' }) {
             toast.success('Welcome back!');
             navigate('/');
         } catch (err) {
+            if (err.message && !err.response) {
+                toast.error('Invalid credentials');
+                return;
+            }
             const msg = err.response?.data?.message;
             toast.error(msg || 'Invalid 2FA code. Please try again.');
         } finally {
