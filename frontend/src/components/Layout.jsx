@@ -247,6 +247,15 @@ export default function Layout() {
         return roleOk && moduleOk;
     });
 
+    // Block entire Layout until modules are resolved — prevents sidebar flash
+    if (modulesLoading) {
+        return (
+            <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-slate-950' : 'bg-gray-50'}`}>
+                <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
+
     return (
         <div className={`min-h-screen flex ${isDark ? 'bg-slate-950' : 'bg-gray-50'}`}>
             {/* Mobile overlay */}
