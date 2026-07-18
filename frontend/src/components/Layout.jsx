@@ -358,8 +358,14 @@ export default function Layout() {
 
                 {/* User info + logout */}
                 <div className={`p-4 border-t ${isDark ? 'border-slate-800' : 'border-gray-200'}`}>
-                    <div className="flex items-center gap-3 px-3 py-2">
-                        <div className="w-9 h-9 rounded-full bg-indigo-600/30 flex items-center justify-center">
+                    <button 
+                        onClick={() => {
+                            navigate('/settings');
+                            setSidebarOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-left ${isDark ? 'hover:bg-slate-800/80' : 'hover:bg-gray-100'}`}
+                    >
+                        <div className="w-9 h-9 rounded-full bg-indigo-600/30 flex items-center justify-center shrink-0">
                             <span className="text-sm font-semibold text-indigo-400">
                                 {displayName?.[0]?.toUpperCase()}
                             </span>
@@ -368,7 +374,7 @@ export default function Layout() {
                             <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{displayName}</p>
                             <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{getRoleLabel(user?.role)}</p>
                         </div>
-                    </div>
+                    </button>
                     <button
                         onClick={handleLogout}
                         className="mt-2 w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
