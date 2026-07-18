@@ -591,7 +591,7 @@ export class EmailService {
         return this.sendEmail(to, subject, body, 'system');
     }
 
-    async sendEmailChangeVerification(to: string, userName: string, otp: string) {
+    async sendEmailChangeVerification(to: string, userName: string, otp: string, companyId?: string) {
         const defaultSubject = `Verify your new email address`;
         const defaultHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
@@ -601,7 +601,7 @@ export class EmailService {
                 <div style="color: #333333;">
                     <p>Hi <strong>${userName}</strong>,</p>
                     <p>We received a request to change your Magnet CRM account email address to this one.</p>
-                    <p>Please use the following verification code to confirm this change. The code is valid for 15 minutes.</p>
+                    <p>Please use the following verification code to confirm this change. The code is valid for 10 minutes.</p>
                     
                     <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
                         <span style="font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #111827;">${otp}</span>
@@ -615,10 +615,10 @@ export class EmailService {
             </div>
         `;
         
-        return this.sendEmail(to, defaultSubject, defaultHtml, 'system');
+        return this.sendEmail(to, defaultSubject, defaultHtml, 'system', companyId);
     }
 
-    async sendEmailChangeAlert(to: string, userName: string) {
+    async sendEmailChangeAlert(to: string, userName: string, companyId?: string) {
         const defaultSubject = `Security Alert: Your email address was changed`;
         const defaultHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
@@ -637,7 +637,7 @@ export class EmailService {
             </div>
         `;
         
-        return this.sendEmail(to, defaultSubject, defaultHtml, 'system');
+        return this.sendEmail(to, defaultSubject, defaultHtml, 'system', companyId);
     }
 
     async sendBankDetailsEmail(

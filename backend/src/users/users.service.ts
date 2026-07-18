@@ -227,7 +227,7 @@ export class UsersService {
 
         await this.usersRepository.save(user);
 
-        await this.emailService.sendEmailChangeVerification(newEmail, user.name || user.firstName || 'User', otp);
+        await this.emailService.sendEmailChangeVerification(newEmail, user.name || user.firstName || 'User', otp, user.companyId);
     }
 
     async verifyEmailChange(userId: string, otp: string): Promise<User> {
@@ -257,7 +257,7 @@ export class UsersService {
 
         const updatedUser = await this.usersRepository.save(user);
 
-        await this.emailService.sendEmailChangeAlert(oldEmail, user.name || user.firstName || 'User');
+        await this.emailService.sendEmailChangeAlert(oldEmail, user.name || user.firstName || 'User', user.companyId);
 
         return updatedUser;
     }
