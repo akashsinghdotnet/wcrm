@@ -357,18 +357,44 @@ export default function Layout() {
                 </nav>
 
                 {/* User info + logout */}
-                <div className={`p-4 border-t ${isDark ? 'border-slate-800' : 'border-gray-200'}`}>
-                    <div className="flex items-center gap-3 px-3 py-2">
-                        <div className="w-9 h-9 rounded-full bg-indigo-600/30 flex items-center justify-center">
-                            <span className="text-sm font-semibold text-indigo-400">
-                                {displayName?.[0]?.toUpperCase()}
-                            </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{displayName}</p>
-                            <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{getRoleLabel(user?.role)}</p>
+                <div className={`p-4 border-t ${isDark ? 'border-slate-800' : 'border-gray-200'} relative`}>
+                    <div className="group relative">
+                        <button
+                            onClick={() => {
+                                navigate('/settings');
+                                setSidebarOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-left ${isDark ? 'hover:bg-slate-800/80' : 'hover:bg-gray-100'}`}
+                        >
+                            <div className="w-9 h-9 rounded-full bg-indigo-600/30 flex items-center justify-center shrink-0">
+                                <span className="text-sm font-semibold text-indigo-400">
+                                    {displayName?.[0]?.toUpperCase()}
+                                </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{displayName}</p>
+                                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{getRoleLabel(user?.role)}</p>
+                            </div>
+                            <Settings className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                        </button>
+                        
+                        {/* Hover Tooltip / Dropdown */}
+                        <div className="absolute bottom-full left-0 mb-1 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <div className={`p-2 rounded-xl border shadow-xl ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}`}>
+                                <button
+                                    onClick={() => {
+                                        navigate('/settings');
+                                        setSidebarOpen(false);
+                                    }}
+                                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isDark ? 'text-slate-300 hover:text-white hover:bg-slate-700' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`}
+                                >
+                                    <UserCircle className="w-4 h-4" />
+                                    Edit Profile
+                                </button>
+                            </div>
                         </div>
                     </div>
+
                     <button
                         onClick={handleLogout}
                         className="mt-2 w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
