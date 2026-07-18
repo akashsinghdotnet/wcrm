@@ -81,7 +81,7 @@ const getRoleLabel = (role) => roleLabels[role] || role?.replace('_', ' ');
 export default function Layout() {
     const { user, logout } = useAuth();
     const { config } = useConfig();
-    const { hasModule } = useModules();
+    const { hasModule, loading: modulesLoading } = useModules();
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -313,28 +313,38 @@ export default function Layout() {
 
                 {/* Navigation */}
                 <nav className="flex-1 p-4 space-y-1">
-                    {filteredNav.map((item) => (
-                        <NavLink
-                            key={item.to}
-                            to={item.to}
-                            end={item.to === '/'}
-                            onClick={() => setSidebarOpen(false)}
-                            className={({ isActive }) =>
-                                `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${isActive
-                                    ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
-                                    : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/60' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                                }`
-                            }
-                        >
-                            <item.icon className="w-5 h-5" />
-                            <span className="flex-1">{item.label}</span>
-                            {item.to === '/whatsapp-chats' && unreadWhatsApp > 0 && (
-                                <span className="px-2 py-0.5 text-[10px] font-bold bg-green-500 text-white rounded-full">
-                                    {unreadWhatsApp > 99 ? '99+' : unreadWhatsApp}
-                                </span>
-                            )}
-                        </NavLink>
-                    ))}
+                    {modulesLoading ? (
+                        /* Skeleton placeholders while modules load */
+                        Array.from({ length: 7 }).map((_, i) => (
+                            <div key={i} className={`flex items-center gap-3 px-4 py-3 rounded-xl animate-pulse`}>
+                                <div className={`w-5 h-5 rounded ${isDark ? 'bg-slate-700' : 'bg-gray-200'}`} />
+                                <div className={`h-3.5 rounded-md ${isDark ? 'bg-slate-700' : 'bg-gray-200'}`} style={{ width: `${60 + Math.random() * 60}px` }} />
+                            </div>
+                        ))
+                    ) : (
+                        filteredNav.map((item) => (
+                            <NavLink
+                                key={item.to}
+                                to={item.to}
+                                end={item.to === '/'}
+                                onClick={() => setSidebarOpen(false)}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${isActive
+                                        ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
+                                        : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/60' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                                    }`
+                                }
+                            >
+                                <item.icon className="w-5 h-5" />
+                                <span className="flex-1">{item.label}</span>
+                                {item.to === '/whatsapp-chats' && unreadWhatsApp > 0 && (
+                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-green-500 text-white rounded-full">
+                                        {unreadWhatsApp > 99 ? '99+' : unreadWhatsApp}
+                                    </span>
+                                )}
+                            </NavLink>
+                        ))
+                    )}
                 </nav>
 
                 {/* User info + logout */}
