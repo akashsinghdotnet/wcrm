@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException, UnauthorizedException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, UnauthorizedException, ForbiddenException, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -191,24 +191,39 @@ export class UsersService {
         const user = await this.usersRepository.findOneBy({ id: userId });
         if (!user) throw new NotFoundException('User not found');
 
-        // Check if email already in use by another user (matching same role logic if necessary, but generally any existing is bad)
+        if (user.emailOtpLockoutUntil && new Date() < user.emailOtpLockoutUntil) {
+            const minutesLeft = Math.ceil((user.emailOtpLockoutUntil.getTime() - Date.now()) / 60000);
+            throw new BadRequestException(`Too many attempts. Please wait ${minutesLeft} minutes before trying again.`);
+        }
+
+        if (user.pendingEmail !== newEmail || (user.emailOtpLockoutUntil && new Date() >= user.emailOtpLockoutUntil)) {
+            user.emailOtpResendCount = 0;
+            user.emailOtpLockoutUntil = null as any;
+        }
+
+        if (user.emailOtpResendCount >= 5) {
+            user.emailOtpLockoutUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+            await this.usersRepository.save(user);
+            throw new BadRequestException(`Too many attempts. Please wait 15 minutes before trying again.`);
+        }
+
+        // Check if email already in use by another user
         const existingUsers = await this.usersRepository.find({ where: { email: newEmail } });
         const isSuperadminTeamMember = user.role === UserRole.SUPER_ADMIN || user.role === UserRole.SUPERADMIN_ADMIN || user.role === UserRole.SUPERADMIN_STAFF;
         
         for (const existing of existingUsers) {
             const existingIsSuperadmin = existing.role === UserRole.SUPER_ADMIN || existing.role === UserRole.SUPERADMIN_ADMIN || existing.role === UserRole.SUPERADMIN_STAFF;
-            // If they are the same 'type' of user, it's a conflict
             if (isSuperadminTeamMember === existingIsSuperadmin && existing.id !== userId) {
                 throw new ConflictException('Email address is already in use by another account');
             }
         }
 
-        // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
         user.pendingEmail = newEmail;
         user.emailChangeToken = otp;
-        user.emailChangeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+        user.emailChangeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+        user.emailOtpResendCount += 1;
 
         await this.usersRepository.save(user);
 
@@ -220,15 +235,15 @@ export class UsersService {
         if (!user) throw new NotFoundException('User not found');
 
         if (!user.emailChangeToken || !user.emailChangeExpires || !user.pendingEmail) {
-            throw new UnauthorizedException('No pending email change request');
+            throw new BadRequestException('No pending email change request');
         }
 
         if (new Date() > user.emailChangeExpires) {
-            throw new UnauthorizedException('Verification code has expired');
+            throw new BadRequestException('Verification code has expired. Please request a new one.');
         }
 
         if (user.emailChangeToken !== otp) {
-            throw new UnauthorizedException('Invalid verification code');
+            throw new BadRequestException('Invalid verification code');
         }
 
         const oldEmail = user.email;
@@ -237,6 +252,8 @@ export class UsersService {
         user.pendingEmail = null as any;
         user.emailChangeToken = null as any;
         user.emailChangeExpires = null as any;
+        user.emailOtpResendCount = 0;
+        user.emailOtpLockoutUntil = null as any;
 
         const updatedUser = await this.usersRepository.save(user);
 

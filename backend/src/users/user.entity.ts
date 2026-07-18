@@ -84,4 +84,10 @@ export class User {
 
     @Column({ nullable: true })
     emailChangeExpires: Date;
+
+    @Column({ type: 'int', default: 0 })
+    emailOtpResendCount: number;
+
+    @Column({ nullable: true })
+    emailOtpLockoutUntil: Date;
 }

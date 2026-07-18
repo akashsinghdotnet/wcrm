@@ -94,6 +94,16 @@ export default function SettingsPage() {
         }
     };
 
+    const handleResendOtp = async () => {
+        try {
+            await api.post('/users/me/email/request', { newEmail: userForm.email });
+            toast.success('A new verification code has been sent.');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to resend code');
+        }
+    };
+
+
     const enableTwoFactor = async () => {
         try {
             const res = await api.post('/auth/2fa/generate');
@@ -322,6 +332,15 @@ export default function SettingsPage() {
                                                     className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     {verifyingEmail ? 'Verifying...' : 'Verify'}
+                                                </button>
+                                            </div>
+                                            <div className="text-center mt-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={handleResendOtp}
+                                                    className="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium"
+                                                >
+                                                    Didn't receive the code? Resend
                                                 </button>
                                             </div>
                                         </form>
