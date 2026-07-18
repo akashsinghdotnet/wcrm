@@ -33,14 +33,14 @@ jobs:
           # Build Backend
           echo "Building Backend..."
           cd backend
-          npm install
+          npm install --legacy-peer-deps
           npm run build
           cd ..
           
           # Build Frontend
           echo "Building Frontend..."
           cd frontend
-          npm install
+          npm install --legacy-peer-deps
           npm run build
           
           # Move Frontend to Public Directory
