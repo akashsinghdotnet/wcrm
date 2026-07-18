@@ -24,7 +24,13 @@ export class AuthController {
 
     @Post('login')
     async login(@Body() loginDto: LoginDto) {
-        return this.authService.login(loginDto);
+        const result = await this.authService.login(loginDto);
+        if (result.requires2FA || !result.user?.companyId) {
+            return result;
+        }
+        const activeModules = await this.modulesService.getActiveModules(result.user.companyId);
+        result.user.activeModules = activeModules;
+        return result;
     }
 
     @UseGuards(JwtAuthGuard, RolesGuard)
@@ -124,8 +130,14 @@ export class AuthController {
 
     @Public()
     @Post('login/verify-2fa')
-    loginVerify2FA(@Body() body: { userId: string; token: string }) {
-        return this.authService.loginVerify2FA(body.userId, body.token);
+    async loginVerify2FA(@Body() body: { userId: string; token: string }) {
+        const result = await this.authService.loginVerify2FA(body.userId, body.token);
+        if (result.error || !result.user?.companyId) {
+            return result;
+        }
+        const activeModules = await this.modulesService.getActiveModules(result.user.companyId);
+        result.user.activeModules = activeModules;
+        return result;
     }
 
     @Public()

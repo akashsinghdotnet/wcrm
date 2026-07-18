@@ -17,9 +17,9 @@ export class ModulesController {
                 allModules: this.modulesService.getAllModuleDefinitions(),
             };
         }
-        const config = await this.modulesService.getModuleConfig(companyId);
+        const activeModules = await this.modulesService.getActiveModules(companyId);
         return {
-            activeModules: config.activeModules,
+            activeModules,
             allModules: this.modulesService.getAllModuleDefinitions(),
         };
     }
