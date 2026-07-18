@@ -8,7 +8,7 @@ export class ModuleConfig {
     @Column({ unique: true })
     companyId: string;
 
-    @Column({ type: 'simple-json', default: '["SALES","FINANCE","MARKETING","WHATSAPP","CALLING","SUPPORT","REPORTS","APPOINTMENTS"]' })
+    @Column({ type: 'simple-json', default: '["SALES","FINANCE","MARKETING","WHATSAPP","CALLING","REPORTS","APPOINTMENTS"]' })
     activeModules: string[];
 
     @CreateDateColumn()

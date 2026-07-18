@@ -195,12 +195,12 @@ export default function App() {
             </ProtectedRoute>
           } />
           <Route path="tickets" element={
-            <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin', 'manager']} module="SUPPORT">
+            <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin', 'manager']}>
               <TicketsPage />
             </ProtectedRoute>
           } />
           <Route path="tickets/:id" element={
-            <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin', 'manager']} module="SUPPORT">
+            <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin', 'manager']}>
               <TicketDetailsPage />
             </ProtectedRoute>
           } />

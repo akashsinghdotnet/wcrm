@@ -11,7 +11,6 @@ export const MODULE_DEFINITIONS = [
     { key: 'MARKETING', label: 'Marketing', description: 'Email campaigns, marketing automation, and outreach', icon: 'Mail', color: 'from-purple-500 to-pink-500' },
     { key: 'WHATSAPP', label: 'WhatsApp', description: 'WhatsApp messaging, chats, and broadcast campaigns', icon: 'MessageCircle', color: 'from-green-500 to-emerald-500' },
     { key: 'CALLING', label: 'Calling', description: 'Phone calling integration with Twilio', icon: 'Phone', color: 'from-orange-500 to-amber-500' },
-    { key: 'SUPPORT', label: 'Support & Tickets', description: 'Customer support tickets and issue tracking', icon: 'Ticket', color: 'from-red-500 to-rose-500' },
     { key: 'REPORTS', label: 'Reports & Analytics', description: 'Advanced reports, dashboards, and analytics', icon: 'BarChart3', color: 'from-indigo-500 to-violet-500' },
     { key: 'APPOINTMENTS', label: 'Appointments & Booking', description: 'Calendar integration, meeting types, and public booking pages', icon: 'Calendar', color: 'from-sky-500 to-cyan-500' },
     { key: 'EVENTS', label: 'Event Booking', description: 'Create and manage events, ticket types, and public booking pages with payment collection', icon: 'CalendarDays', color: 'from-violet-500 to-purple-500' },
