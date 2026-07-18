@@ -1073,13 +1073,6 @@ export class AuthService {
         return { message: '2FA disabled successfully' };
     }
 
-    async fixHistoricalInvoicesFinal() {
-        return this.billingService.fixHistoricalInvoicesFinal();
-    }
-
-    getCompanyRepo() { return this.companyRepo; }
-    getBillingService() { return this.billingService; }
-
     async getUserById(userId: string) {
         return this.usersService.findById(userId);
     }

@@ -147,17 +147,6 @@ export class AuthController {
     }
 
     @Public()
-    @Get('debug-invoices')
-    async debugInvoices() {
-        const companies = await this.authService.getCompanyRepo().find({ where: { email: 'nutriworldforyou@gmail.com' } });
-        if (companies.length === 0) return { error: 'Company not found' };
-        const companyId = companies[0].id;
-        
-        const history = await this.authService.getBillingService().getSubscriptionHistory(companyId);
-        return { companyId, history };
-    }
-
-    @Public()
     @Post('reset-password')
     resetPassword(@Body() dto: ResetPasswordDto) {
         return this.authService.resetPassword(dto);
