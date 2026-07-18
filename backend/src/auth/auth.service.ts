@@ -743,7 +743,8 @@ export class AuthService {
 
 
 
-    async validateUser(email: string, pass: string): Promise<any> {
+    async validateUser(emailRaw: string, pass: string): Promise<any> {
+        const email = emailRaw.trim().toLowerCase();
         // Get all users with this email (might be multiple: superadmin + company)
         const users = await this.usersService.findAllByEmail(email);
 

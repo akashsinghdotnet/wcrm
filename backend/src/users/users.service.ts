@@ -187,7 +187,8 @@ export class UsersService {
         return this.usersRepository.save(user);
     }
 
-    async requestEmailChange(userId: string, newEmail: string): Promise<void> {
+    async requestEmailChange(userId: string, newEmailRaw: string): Promise<void> {
+        const newEmail = newEmailRaw.trim().toLowerCase();
         const user = await this.usersRepository.findOneBy({ id: userId });
         if (!user) throw new NotFoundException('User not found');
 
@@ -227,7 +228,7 @@ export class UsersService {
 
         await this.usersRepository.save(user);
 
-        await this.emailService.sendEmailChangeVerification(newEmail, user.name || user.firstName || 'User', otp, user.companyId);
+        await this.emailService.sendEmailChangeVerification(newEmail, user.name || user.firstName || 'User', otp);
     }
 
     async verifyEmailChange(userId: string, otp: string): Promise<User> {
@@ -257,7 +258,7 @@ export class UsersService {
 
         const updatedUser = await this.usersRepository.save(user);
 
-        await this.emailService.sendEmailChangeAlert(oldEmail, user.name || user.firstName || 'User', user.companyId);
+        await this.emailService.sendEmailChangeAlert(oldEmail, user.name || user.firstName || 'User');
 
         return updatedUser;
     }
