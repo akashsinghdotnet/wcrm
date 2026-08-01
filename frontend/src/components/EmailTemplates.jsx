@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Save, Mail, Code, Eye, MonitorPlay, X } from 'lucide-react';
-import JoditEditor from 'jodit-react';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import api from '../services/api';
 
 export default function EmailTemplates() {
@@ -12,30 +13,13 @@ export default function EmailTemplates() {
     const [editorMode, setEditorMode] = useState('visual'); // 'visual' or 'html'
     const [showPreview, setShowPreview] = useState(false);
 
-    const joditConfig = {
-        readonly: false,
-        height: 400,
-        enableDragAndDropFileToEditor: false,
-        uploader: {
-            insertImageAsBase64URI: false
-        },
-        imageDefaultWidth: 300,
-        style: {
-            background: '#ffffff',
-            color: '#000000',
-        },
-        controls: {
-            font: {
-                list: {
-                    'Arial,Helvetica,sans-serif': 'Arial',
-                    'Georgia,serif': 'Georgia',
-                    'Impact,Charcoal,sans-serif': 'Impact',
-                    'Tahoma,Geneva,sans-serif': 'Tahoma',
-                    'Times New Roman,Times,serif': 'Times New Roman',
-                    'Verdana,Geneva,sans-serif': 'Verdana'
-                }
-            }
-        }
+    const quillModules = {
+        toolbar: [
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            ['link', 'clean']
+        ]
     };
 
     useEffect(() => {
@@ -150,14 +134,16 @@ export default function EmailTemplates() {
                                     </div>
                                     <div className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white rounded-xl overflow-hidden border border-gray-300 dark:border-slate-700">
                                         {editorMode === 'visual' ? (
-                                            <div className="text-black">
-                                                <JoditEditor
+                                            <div className="text-black bg-white">
+                                                <ReactQuill
+                                                    theme="snow"
                                                     value={selectedTemplate.body}
-                                                    config={joditConfig}
-                                                    onBlur={newContent => {
+                                                    onChange={newContent => {
                                                         const updated = templates.map(t => t.id === selectedTemplate.id ? { ...t, body: newContent } : t);
                                                         setTemplates(updated);
                                                     }}
+                                                    modules={quillModules}
+                                                    className="h-[350px] overflow-hidden rounded-md border-0"
                                                 />
                                             </div>
                                         ) : (

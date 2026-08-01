@@ -1,16 +1,14 @@
 import { X, Download, Printer, Building2, Phone, Mail, MapPin } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
-import { useReactToPrint } from 'react-to-print';
 import api from '../services/api';
 
 export default function InvoiceViewModal({ invoice, company, onClose }) {
     const printRef = useRef(null);
     const [settings, setSettings] = useState(null);
 
-    const handlePrint = useReactToPrint({
-        contentRef: printRef,
-        documentTitle: invoice ? `Invoice-${invoice.invoiceNumber || invoice.id}` : 'Invoice',
-    });
+    const handlePrint = () => {
+        window.print();
+    };
 
     useEffect(() => {
         if (!invoice) return;
@@ -35,10 +33,10 @@ export default function InvoiceViewModal({ invoice, company, onClose }) {
     ];
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white text-slate-900 w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:p-0 print:bg-white print:static print:block">
+            <div className="bg-white text-slate-900 w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden print:shadow-none print:max-w-none print:max-h-none print:overflow-visible">
                 {/* Toolbar */}
-                <div className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white p-4 flex items-center justify-between shrink-0">
+                <div className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white p-4 flex items-center justify-between shrink-0 print:hidden">
                     <h2 className="font-bold text-lg">Invoice Details</h2>
                     <div className="flex items-center gap-2">
                         <button
@@ -57,8 +55,8 @@ export default function InvoiceViewModal({ invoice, company, onClose }) {
                 </div>
 
                 {/* Invoice Preview */}
-                <div className="flex-1 overflow-y-auto bg-slate-100 p-8">
-                    <div ref={printRef} className="bg-white max-w-3xl mx-auto shadow-sm p-12 min-h-[1000px]">
+                <div className="flex-1 overflow-y-auto bg-slate-100 p-8 print:p-0 print:bg-white print:overflow-visible">
+                    <div ref={printRef} className="bg-white max-w-3xl mx-auto shadow-sm p-12 min-h-[1000px] print:shadow-none print:p-0">
                         {/* Header */}
                         <div className="flex justify-between items-start mb-12">
                             <div>

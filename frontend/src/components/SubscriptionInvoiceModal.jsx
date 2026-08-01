@@ -1,11 +1,9 @@
 import { useRef, useState, useEffect } from 'react';
-import { X, Download, Printer } from 'lucide-react';
-import { useReactToPrint } from 'react-to-print';
+import { X, Printer } from 'lucide-react';
 import api from '../services/api';
 import InvoicePreviewTemplate from './InvoicePreviewTemplate';
 
 export default function SubscriptionInvoiceModal({ invoice, company, onClose }) {
-    const componentRef = useRef(null);
     const [settings, setSettings] = useState(null);
 
     useEffect(() => {
@@ -16,18 +14,17 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
         }
     }, [invoice]);
 
-    const handlePrint = useReactToPrint({
-        contentRef: componentRef,
-        documentTitle: `Invoice-${invoice?.invoiceNumber}`,
-    });
+    const handlePrint = () => {
+        window.print();
+    };
 
     if (!invoice || !company) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-3xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-scale-in">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 print:p-0 print:bg-white print:static print:block">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-3xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-scale-in print:shadow-none print:max-w-none print:max-h-none print:overflow-visible">
                 {/* Header Actions */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 print:hidden">
                     <h3 className="text-gray-900 dark:text-white font-semibold">Subscription Invoice</h3>
                     <div className="flex items-center gap-2">
                         <button
@@ -46,7 +43,7 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                 </div>
 
                 {/* Printable Content */}
-                <div className="flex-1 overflow-y-auto bg-white text-slate-900" ref={componentRef}>
+                <div className="flex-1 overflow-y-auto bg-white text-slate-900 print:overflow-visible">
                     <InvoicePreviewTemplate 
                         form={settings || {}} 
                         user={{ company: { companyName: 'MagnetCRM', email: 'billing@magnetcrm.com' } }} 

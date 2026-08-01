@@ -3,7 +3,6 @@ import { useParams, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { useReactToPrint } from 'react-to-print';
 import { ArrowLeft, Printer, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import dayjs from 'dayjs';
 import InvoicePreviewTemplate from '../components/InvoicePreviewTemplate';
@@ -22,10 +21,10 @@ export default function InvoiceViewPage() {
     const [loading, setLoading] = useState(true);
 
     const printRef = useRef(null);
-    const handlePrint = useReactToPrint({
-        contentRef: printRef,
-        documentTitle: invoice ? `Invoice-${invoice.invoiceNumber}` : 'Invoice',
-    });
+
+    const handlePrint = () => {
+        window.print();
+    };
 
     useEffect(() => {
         const fetchInvoiceAndSettings = async () => {
@@ -81,7 +80,7 @@ export default function InvoiceViewPage() {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
                 <div className="flex items-center gap-4">
                     <Link
                         to="/invoices"
@@ -118,8 +117,8 @@ export default function InvoiceViewPage() {
             </div>
 
             {/* Print Container */}
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden print:shadow-none print:bg-white text-slate-900" ref={printRef}>
-                <InvoicePreviewTemplate form={settings || {}} invoice={invoice} user={user} />
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 p-8 print:p-0 print:border-none print:shadow-none" ref={printRef}>
+                <InvoicePreviewTemplate invoice={invoice} form={settings} user={user} />
             </div>
         </div>
     );
