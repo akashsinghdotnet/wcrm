@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { FileText, Upload } from 'lucide-react';
+import { FileText, Upload, CheckCircle2 } from 'lucide-react';
+import InvoicePreviewTemplate from './InvoicePreviewTemplate';
 
 export default function InvoiceSettings() {
     const { user } = useAuth();
@@ -73,6 +74,10 @@ export default function InvoiceSettings() {
     };
 
     const [form, setForm] = useState({
+        companyName: '',
+        phone: '',
+        email: '',
+        website: '',
         logoUrl: '',
         address: '',
         gstNo: '',
@@ -85,6 +90,7 @@ export default function InvoiceSettings() {
         upiId: '',
         upiQrUrl: '',
         signatureUrl: '',
+        template: 'template1',
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -95,6 +101,10 @@ export default function InvoiceSettings() {
             .then(res => {
                 if (res.data) {
                     setForm({
+                        companyName: res.data.companyName || '',
+                        phone: res.data.phone || '',
+                        email: res.data.email || '',
+                        website: res.data.website || '',
                         logoUrl: res.data.logoUrl || '',
                         address: res.data.address || '',
                         gstNo: res.data.gstNo || '',
@@ -107,6 +117,7 @@ export default function InvoiceSettings() {
                         upiId: res.data.upiId || '',
                         upiQrUrl: res.data.upiQrUrl || '',
                         signatureUrl: res.data.signatureUrl || '',
+                        template: res.data.template || 'template1',
                     });
                 }
             })
@@ -136,8 +147,9 @@ export default function InvoiceSettings() {
     }
 
     return (
-        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 max-w-2xl">
-            <div className="flex items-center gap-3 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-indigo-600/20 rounded-xl flex items-center justify-center">
                     <FileText className="w-5 h-5 text-indigo-400" />
                 </div>
@@ -152,6 +164,72 @@ export default function InvoiceSettings() {
             </div>
 
             <form onSubmit={handleSave} className="space-y-4">
+                <div className="mb-6 border-b border-gray-200 dark:border-slate-800 pb-6">
+                    <label className="block text-sm font-medium text-gray-900 dark:text-white mb-3">Invoice Template</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {[
+                            { id: 'template1', name: 'Classic Blue' },
+                            { id: 'template2', name: 'Modern Minimal' },
+                            { id: 'template3', name: 'Bold Header' }
+                        ].map((t) => (
+                            <div 
+                                key={t.id}
+                                onClick={() => setForm({ ...form, template: t.id })}
+                                className={`cursor-pointer rounded-xl border-2 p-3 transition-all flex items-center justify-between ${
+                                    form.template === t.id 
+                                        ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-500/10' 
+                                        : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-indigo-300'
+                                }`}
+                            >
+                                <span className={`text-sm font-medium ${form.template === t.id ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-700 dark:text-slate-300'}`}>
+                                    {t.name}
+                                </span>
+                                {form.template === t.id && <CheckCircle2 className="w-5 h-5 text-indigo-600" />}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Company Name (For Invoices)</label>
+                    <input
+                        value={form.companyName || ''}
+                        onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        placeholder="Leave blank to use default company name"
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Phone Number</label>
+                        <input
+                            value={form.phone || ''}
+                            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            placeholder="+91 9999999999"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Email Address</label>
+                        <input
+                            value={form.email || ''}
+                            onChange={(e) => setForm({ ...form, email: e.target.value })}
+                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            placeholder="billing@company.com"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Website</label>
+                        <input
+                            value={form.website || ''}
+                            onChange={(e) => setForm({ ...form, website: e.target.value })}
+                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            placeholder="https://company.com"
+                        />
+                    </div>
+                </div>
+
                 <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Company Logo</label>
                     <div className="flex flex-col sm:flex-row gap-4 items-start">
@@ -353,6 +431,13 @@ export default function InvoiceSettings() {
                     </button>
                 </div>
             </form>
+            </div>
+
+            {/* Right Column: Live Preview */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 p-6 shadow-sm h-fit sticky top-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Live Preview</h3>
+                <InvoicePreviewTemplate form={form} user={user} />
+            </div>
         </div>
     );
 }

@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { X, Download, Printer } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import api from '../services/api';
+import InvoicePreviewTemplate from './InvoicePreviewTemplate';
 
 export default function SubscriptionInvoiceModal({ invoice, company, onClose }) {
     const componentRef = useRef(null);
@@ -45,175 +46,12 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                 </div>
 
                 {/* Printable Content */}
-                <div className="flex-1 overflow-y-auto bg-white text-slate-900 p-8" ref={componentRef}>
-                    {/* Header */}
-                    <div className="flex justify-between items-start mb-12">
-                        <div>
-                            <div className="flex items-center gap-2 mb-4">
-                                {settings?.logoUrl ? (
-                                    <img src={settings.logoUrl} alt="Logo" className="h-10 object-contain" />
-                                ) : (
-                                    <>
-                                        <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                                            M
-                                        </div>
-                                        <span className="text-2xl font-bold text-indigo-900">MagnetCRM</span>
-                                    </>
-                                )}
-                            </div>
-                            <div className="text-sm text-gray-400 dark:text-slate-500 space-y-1">
-                                {settings?.address && (
-                                    <div className="whitespace-pre-wrap">{settings.address}</div>
-                                )}
-                                {settings?.gstNo && <p>GSTIN: {settings.gstNo}</p>}
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <h1 className="text-4xl font-light text-indigo-900 mb-2">INVOICE</h1>
-                            <p className="text-gray-400 dark:text-slate-500 font-medium">
-                                #{invoice.invoiceNumber}
-                            </p>
-                            <div className="mt-4 space-y-1 text-sm">
-                                <p><span className="text-gray-500 dark:text-slate-400 w-24 inline-block">Date:</span> {new Date(invoice.date).toLocaleDateString('en-IN')}</p>
-                                <p><span className="text-gray-500 dark:text-slate-400 w-24 inline-block">Status:</span> <span className={`font-bold uppercase text-xs px-2 py-0.5 rounded ${invoice.status === 'paid' ? 'text-emerald-600 bg-emerald-100' : 'text-amber-600 bg-amber-100'}`}>{invoice.status === 'paid' ? 'Paid' : 'Pending'}</span></p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Bill To */}
-                    <div className="mb-12">
-                        <h3 className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-3">Bill To</h3>
-                        <div className="text-slate-800 font-medium">{company.companyName}</div>
-                        <div className="text-sm text-gray-400 dark:text-slate-500 mt-1 max-w-xs space-y-1">
-                            {company.address && <p>{company.address}</p>}
-                            {company.gstNo && <p>GSTIN: {company.gstNo}</p>}
-                            {company.email && <p>{company.email}</p>}
-                        </div>
-                    </div>
-
-                    {/* Items */}
-                    <div className="mb-8">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b-2 border-slate-100">
-                                    <th className="text-left py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Description</th>
-                                    <th className="text-right py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Period</th>
-                                    <th className="text-right py-3 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {invoice.items && invoice.items.length > 0 ? (
-                                    invoice.items.map((item, i) => (
-                                        <tr key={i}>
-                                            <td className="py-4">
-                                                <p className="font-semibold text-slate-800">{item.description}</p>
-                                                {i === 0 && <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Subscription</p>}
-                                            </td>
-                                            <td className="py-4 text-right text-sm text-slate-600">
-                                                {i === 0 ? invoice.period : '-'}
-                                            </td>
-                                            <td className="py-4 text-right font-medium text-slate-800">
-                                                ₹{Number(item.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td className="py-4">
-                                            <p className="font-semibold text-slate-800">{invoice.description}</p>
-                                            <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Subscription</p>
-                                        </td>
-                                        <td className="py-4 text-right text-sm text-slate-600">
-                                            {invoice.period}
-                                        </td>
-                                        <td className="py-4 text-right font-medium text-slate-800">
-                                            ₹{Number(invoice.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Totals */}
-                    <div className="flex justify-end mb-12">
-                        <div className="w-64 space-y-3">
-                            <div className="flex justify-between text-sm text-slate-600">
-                                <span>Subtotal</span>
-                                <span>₹{Number(invoice.subtotal !== undefined ? invoice.subtotal : invoice.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                            </div>
-                            {(invoice.tax > 0 || invoice.subtotal === undefined) && (
-                                <div className="flex justify-between text-sm text-slate-600">
-                                    <span>GST (18%)</span>
-                                    <span>₹{Number(invoice.tax !== undefined ? invoice.tax : (invoice.amount * 0.18)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                                </div>
-                            )}
-                            {(invoice.subtotal !== undefined && Number(invoice.amount) < (Number(invoice.subtotal) + Number(invoice.tax || 0))) && (
-                                <div className="flex justify-between text-sm text-emerald-600">
-                                    <span>Discount</span>
-                                    <span>-₹{Number((Number(invoice.subtotal) + Number(invoice.tax || 0)) - Number(invoice.amount)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                                </div>
-                            )}
-                            <div className="flex justify-between text-lg font-bold text-indigo-900 border-t-2 border-slate-100 pt-3">
-                                <span>Total</span>
-                                <span>₹{Number(invoice.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Payment Details */}
-                    {settings && (settings.bankName || settings.upiId || settings.upiQrUrl) && (
-                        <div className="border-t border-slate-100 pt-6 mb-6">
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-3">Payment Details</h3>
-                            <div className="flex justify-between items-start gap-8">
-                                <div className="space-y-1 text-sm">
-                                    {settings.bankName && (
-                                        <div>
-                                            <p className="text-gray-400 dark:text-slate-500">Bank: <span className="text-slate-800 font-medium">{settings.bankName}</span></p>
-                                            {settings.accountHolderName && <p className="text-gray-400 dark:text-slate-500">A/C Holder: <span className="text-slate-800 font-medium">{settings.accountHolderName}</span></p>}
-                                            {settings.accountNumber && <p className="text-gray-400 dark:text-slate-500">A/C No: <span className="text-slate-800 font-medium">{settings.accountNumber}</span></p>}
-                                            {settings.ifscCode && <p className="text-gray-400 dark:text-slate-500">IFSC: <span className="text-slate-800 font-medium">{settings.ifscCode}</span></p>}
-                                        </div>
-                                    )}
-                                    {settings.upiId && <p className="text-gray-400 dark:text-slate-500">UPI: <span className="text-slate-800 font-medium">{settings.upiId}</span></p>}
-                                </div>
-                                {settings.upiQrUrl && (
-                                    <div className="flex-shrink-0">
-                                        <img src={settings.upiQrUrl} alt="UPI QR Code" className="w-24 h-24 object-contain border border-slate-200 rounded-lg" />
-                                        <p className="text-xs text-gray-500 dark:text-slate-400 text-center mt-1">Scan to Pay</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Notes & Signature */}
-                    <div className="border-t border-slate-100 pt-6 flex justify-between items-end gap-8 mb-6">
-                        <div className="flex-1">
-                            {settings?.terms && (
-                                <div>
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-2">Terms & Conditions</h3>
-                                    <p className="text-sm text-slate-600 whitespace-pre-line leading-relaxed">{settings.terms}</p>
-                                </div>
-                            )}
-                        </div>
-                        {settings?.signatureUrl && (
-                            <div className="flex-shrink-0 text-center">
-                                <img src={settings.signatureUrl} alt="Authorized Signature" className="h-14 object-contain mb-1" />
-                                <div className="border-t border-slate-300 pt-1">
-                                    <p className="text-xs text-gray-400 dark:text-slate-500">Authorized Signatory</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Footer */}
-                    <div className="border-t border-slate-100 pt-6 text-center text-xs text-gray-500 dark:text-slate-400">
-                        <p className="mb-2">Thank you for your business!</p>
-                        {settings?.accountHolderName && (
-                            <p>{settings.accountHolderName}</p>
-                        )}
-                    </div>
+                <div className="flex-1 overflow-y-auto bg-white text-slate-900" ref={componentRef}>
+                    <InvoicePreviewTemplate 
+                        form={settings || {}} 
+                        user={{ company: { companyName: 'MagnetCRM', email: 'billing@magnetcrm.com' } }} 
+                        invoice={{...invoice, company: company}} 
+                    />
                 </div>
             </div>
         </div>

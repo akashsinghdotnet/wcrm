@@ -14,6 +14,18 @@ export class InvoiceSettings {
     company: Company;
 
     @Column({ type: 'text', nullable: true })
+    companyName: string;
+
+    @Column({ nullable: true })
+    phone: string;
+
+    @Column({ nullable: true })
+    email: string;
+
+    @Column({ nullable: true })
+    website: string;
+
+    @Column({ type: 'text', nullable: true })
     logoUrl: string;
 
     @Column({ type: 'text', nullable: true })
@@ -48,6 +60,9 @@ export class InvoiceSettings {
 
     @Column({ type: 'text', nullable: true })
     signatureUrl: string;
+
+    @Column({ default: 'template1' })
+    template: string;
 
     @CreateDateColumn()
     createdAt: Date;
