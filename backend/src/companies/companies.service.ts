@@ -135,7 +135,7 @@ export class CompaniesService {
             await safeDelete('DELETE FROM whatsapp_configs WHERE companyId = ?', [id]);
 
             // 2. Billing & Invoices
-            await safeDelete('DELETE FROM invoices WHERE companyId = ?', [id]);
+            await safeDelete('DELETE FROM invoices WHERE companyId = ? OR targetCompanyId = ?', [id, id]);
             await safeDelete('DELETE FROM invoice_settings WHERE companyId = ?', [id]);
 
             // 3. Leads, Activities & Lead Assignment Rules
