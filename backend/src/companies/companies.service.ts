@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, Inject, forwardRef, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Company } from './company.entity';
@@ -24,6 +24,24 @@ export class CompaniesService {
 
     async create(createCompanyDto: CreateCompanyDto) {
         const { password, ...companyData } = createCompanyDto;
+
+        // Prevent duplicate companies with the same email
+        if (companyData.email) {
+            const existingCompany = await this.companiesRepository.findOneBy({ email: companyData.email });
+            if (existingCompany) {
+                throw new ConflictException(`A company with email "${companyData.email}" already exists (${existingCompany.companyName}). Please use a different email.`);
+            }
+
+            // Also check if a company-level user (admin/staff) already exists with this email
+            const existingUsers = await this.usersService.findAllByEmail(companyData.email);
+            const hasCompanyAccount = existingUsers.some(
+                u => u.role === 'admin' || u.role === 'staff'
+            );
+            if (hasCompanyAccount) {
+                throw new ConflictException(`A user with email "${companyData.email}" already has a company account. Please use a different email.`);
+            }
+        }
+
         const company = this.companiesRepository.create(companyData as unknown as import('typeorm').DeepPartial<Company>);
         const savedCompany = await this.companiesRepository.save(company);
 
