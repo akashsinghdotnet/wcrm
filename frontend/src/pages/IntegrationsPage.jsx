@@ -23,13 +23,6 @@ const PLATFORM_CREDENTIALS = {
         { key: 'profile_id', label: 'Profile ID', type: 'text', placeholder: 'Your Trade India profile ID' },
         { key: 'key', label: 'API Key', type: 'password', placeholder: 'Your Trade India API key' },
     ],
-    email_parser: [
-        { key: 'host', label: 'IMAP Host Server', type: 'text', placeholder: 'e.g. imap.gmail.com or imap.hostinger.com' },
-        { key: 'port', label: 'IMAP Port', type: 'text', placeholder: 'e.g. 993' },
-        { key: 'username', label: 'Email Address / Username', type: 'text', placeholder: 'e.g. leads@mycompany.com' },
-        { key: 'password', label: 'App Password', type: 'password', placeholder: 'Your Email App Password (Do not use normal password)' },
-        { key: 'tls', label: 'Enable TLS/SSL (true/false)', type: 'text', placeholder: 'true' },
-    ],
     website: [],
 };
 
@@ -172,26 +165,6 @@ const INTEGRATIONS = [
             'Paste the code into your website (works with WordPress, Shopify, Wix, React, plain HTML, or any CMS)',
             'Customize the form styles (colors, fonts) to match your website design',
             'Form submissions will automatically create leads in your CRM and assign them via round-robin',
-        ],
-    },
-    {
-        id: 'email_parser',
-        name: 'Universal Email Lead Parser',
-        description: 'Auto-extracts TradeIndia Buy Leads and JustDial inquiries directly from your email inbox.',
-        color: 'from-pink-500 to-rose-500',
-        iconBg: 'bg-pink-500/10 border-pink-500/20',
-        iconColor: 'text-pink-400',
-        webhookPath: '',
-        fields: [],
-        setupSteps: [
-            'Enable this integration and click "Configure"',
-            "Enter your email provider's IMAP Host (e.g., imap.gmail.com or imap.hostinger.com)",
-            'Enter the IMAP Port (usually 993)',
-            'Enter your full Email Address (e.g., leads@yourcompany.com)',
-            'Enter your Email App Password (If using Gmail, go to Google Account Security -> 2-Step Verification -> App Passwords to generate one).',
-            'Leave TLS as "true".',
-            'Save configuration. The CRM will securely log in to your inbox every 5 minutes in the background.',
-            'It will automatically read UNREAD emails, smartly extract Name, Phone, and Requirements, and import them seamlessly into your Leads dashboard!'
         ],
     },
 ];
@@ -379,23 +352,6 @@ export default function IntegrationsPage({ embedded = false }) {
             toast.error(err.response?.data?.message || 'Failed to save credentials');
         } finally {
             setSaving(false);
-        }
-    };
-
-    const testImapConnection = async () => {
-        setTesting(true);
-        const toastId = toast.loading('Testing connection...');
-        try {
-            const res = await api.post('/integrations/email-parser/test', credentialForm);
-            if (res.data.success) {
-                toast.success('Connection successful! Credentials are valid.', { id: toastId });
-            } else {
-                toast.error(`Connection failed: ${res.data.message}`, { id: toastId });
-            }
-        } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to connect to server', { id: toastId });
-        } finally {
-            setTesting(false);
         }
     };
 
@@ -664,7 +620,7 @@ function submitMagnetCRMForm(e) {
                                     {active && (
                                         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                                             {/* Combined Webhook URL (with companyId for platforms that need it) */}
-                                            <div className={`bg-black/30 rounded-xl p-3 ${needsCompanyIdInUrl(integration.id) || integration.id === 'email_parser' ? 'md:col-span-2' : ''}`}>
+                                            <div className={`bg-black/30 rounded-xl p-3 ${needsCompanyIdInUrl(integration.id) ? 'md:col-span-2' : ''}`}>
                                                 <div className="flex items-center justify-between mb-1.5">
                                                     <span className="text-xs text-gray-400 dark:text-slate-500 font-medium uppercase tracking-wide">
                                                         {needsCompanyIdInUrl(integration.id) ? 'Ready-to-use Webhook URL (includes your Company ID)' : 'Webhook URL'}
@@ -686,7 +642,7 @@ function submitMagnetCRMForm(e) {
                                             </div>
 
                                             {/* Separate Company ID box only for platforms that don't embed it */}
-                                            {!needsCompanyIdInUrl(integration.id) && integration.id !== 'email_parser' && (
+                                            {!needsCompanyIdInUrl(integration.id) && (
                                                 <div className="bg-black/30 rounded-xl p-3">
                                                     <div className="flex items-center justify-between mb-1.5">
                                                         <span className="text-xs text-gray-400 dark:text-slate-500 font-medium uppercase tracking-wide">Company ID</span>
@@ -1038,16 +994,6 @@ function submitMagnetCRMForm(e) {
                                 >
                                     Cancel
                                 </button>
-                                {configModalPlatform === 'email_parser' && (
-                                    <button
-                                        type="button"
-                                        onClick={testImapConnection}
-                                        disabled={testing}
-                                        className="flex-1 py-2.5 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 rounded-xl transition-all font-medium disabled:opacity-50"
-                                    >
-                                        {testing ? 'Testing...' : 'Test Connection'}
-                                    </button>
-                                )}
                                 {configModalPlatform === 'meta' && (
                                     <button
                                         type="button"

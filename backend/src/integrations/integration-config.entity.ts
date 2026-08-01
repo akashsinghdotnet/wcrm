@@ -7,7 +7,6 @@ export enum IntegrationPlatform {
     INDIAMART = 'indiamart',
     TRADEINDIA = 'tradeindia',
     WEBSITE = 'website',
-    EMAIL_PARSER = 'email_parser',
 }
 
 @Entity('integration_configs')
@@ -22,8 +21,8 @@ export class IntegrationConfig {
     @Column({ type: 'enum', enum: IntegrationPlatform })
     platform: IntegrationPlatform;
 
-    @Column({ type: 'simple-json', default: '{}' })
-    credentials: Record<string, string>;
+    @Column({ type: 'simple-json', nullable: true })
+    credentials: Record<string, string> = {};
 
     @Column({ default: false })
     isActive: boolean;

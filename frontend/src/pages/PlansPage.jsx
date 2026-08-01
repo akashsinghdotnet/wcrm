@@ -373,8 +373,7 @@ export default function PlansPage() {
                                             { key: 'indiamart', label: 'IndiaMart' },
                                             { key: 'tradeindia', label: 'Trade India' },
                                             { key: 'justdial', label: 'JustDial' },
-                                            { key: 'website', label: 'Website Form' },
-                                            { key: 'email_parser', label: 'Universal Email Parser' }
+                                            { key: 'website', label: 'Website Form' }
                                         ].map(int => (
                                             <label key={int.key} className="flex items-center gap-3 p-2 hover:bg-white dark:hover:bg-slate-800 rounded-lg cursor-pointer transition-colors">
                                                 <input
