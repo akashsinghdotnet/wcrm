@@ -16,13 +16,13 @@ export class InvoiceSettings {
     @Column({ type: 'text', nullable: true })
     companyName: string;
 
-    @Column({ nullable: true })
+    @Column({ type: 'text', nullable: true })
     phone: string;
 
-    @Column({ nullable: true })
+    @Column({ type: 'text', nullable: true })
     email: string;
 
-    @Column({ nullable: true })
+    @Column({ type: 'text', nullable: true })
     website: string;
 
     @Column({ type: 'text', nullable: true })
