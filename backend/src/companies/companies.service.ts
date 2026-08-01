@@ -163,6 +163,22 @@ export class CompaniesService {
             // 9. Email Logs
             await safeDelete('DELETE FROM email_logs WHERE companyId = ?', [id]);
 
+            // 9.5 Recent Modules (Events, Appointments, Hotels, Modules, Settings)
+            await safeDelete('DELETE FROM event_bookings WHERE eventId IN (SELECT id FROM events WHERE companyId = ?)', [id]);
+            await safeDelete('DELETE FROM event_ticket_types WHERE eventId IN (SELECT id FROM events WHERE companyId = ?)', [id]);
+            await safeDelete('DELETE FROM events WHERE companyId = ?', [id]);
+            
+            await safeDelete('DELETE FROM appointments WHERE meetingTypeId IN (SELECT id FROM meeting_types WHERE companyId = ?)', [id]);
+            await safeDelete('DELETE FROM meeting_types WHERE companyId = ?', [id]);
+            await safeDelete('DELETE FROM appointment_settings WHERE companyId = ?', [id]);
+            
+            await safeDelete('DELETE FROM hotel_bookings WHERE hotelId IN (SELECT id FROM hotels WHERE companyId = ?)', [id]);
+            await safeDelete('DELETE FROM hotel_room_types WHERE hotelId IN (SELECT id FROM hotels WHERE companyId = ?)', [id]);
+            await safeDelete('DELETE FROM hotels WHERE companyId = ?', [id]);
+            
+            await safeDelete('DELETE FROM module_configs WHERE companyId = ?', [id]);
+            await safeDelete('DELETE FROM company_settings WHERE companyId = ?', [id]);
+
             // 10. Users (must be deleted before company)
             await queryRunner.query('DELETE FROM users WHERE companyId = ?', [id]);
 
