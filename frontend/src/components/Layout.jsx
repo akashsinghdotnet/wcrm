@@ -269,6 +269,7 @@ export default function Layout() {
         { to: '/automations', label: 'Automations', icon: Zap, match: ['/automations'] },
         { to: '/flows', label: 'Flows', icon: GitFork, match: ['/flows'] },
         { to: '/ai-agents', label: 'AI Agents', icon: Bot, match: ['/ai-agents'] },
+        ...(!isSelfHosted ? [{ to: '/tickets', label: 'Support', icon: Ticket, match: ['/tickets'] }] : []),
         { to: '/settings', label: 'Settings', icon: Settings, match: ['/settings'] },
     ];
 
@@ -381,6 +382,23 @@ export default function Layout() {
 
                 {/* User info + logout */}
                 <div className={`p-4 border-t ${isDark ? 'border-slate-800' : 'border-gray-200'}`}>
+                    {isSelfHosted && (
+                        <div className={`mb-3 p-3 rounded-xl border ${isDark ? 'bg-emerald-950/20 border-emerald-800/40' : 'bg-emerald-50 border-emerald-200'}`}>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-[11px] font-bold text-emerald-500 uppercase tracking-wider">Community</span>
+                                <span className="text-[10px] text-gray-400 dark:text-slate-500">v{config?.app_version || '1.0.0'}</span>
+                            </div>
+                            <p className="text-[11px] text-gray-500 dark:text-slate-400 mb-2 leading-tight">Self-hosted WhatsApp CRM.</p>
+                            <a
+                                href={config?.cloud_url || 'https://wcrm.si'}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                            >
+                                <span>☁️ Managed Cloud</span>
+                            </a>
+                        </div>
+                    )}
                     <button 
                         onClick={() => {
                             navigate('/settings');
@@ -398,23 +416,6 @@ export default function Layout() {
                             <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{getRoleLabel(user?.role)}</p>
                         </div>
                     </button>
-                    {isSelfHosted && (
-                        <div className={`mt-3 p-3 rounded-xl border ${isDark ? 'bg-emerald-950/20 border-emerald-800/40' : 'bg-emerald-50 border-emerald-200'}`}>
-                            <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-[11px] font-bold text-emerald-500 uppercase tracking-wider">Community</span>
-                                <span className="text-[10px] text-gray-400 dark:text-slate-500">v{config?.app_version || '1.0.0'}</span>
-                            </div>
-                            <p className="text-[11px] text-gray-500 dark:text-slate-400 mb-2 leading-tight">Self-hosted WhatsApp CRM.</p>
-                            <a
-                                href={config?.cloud_url || 'https://wcrm.si'}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
-                            >
-                                <span>☁️ Managed Cloud</span>
-                            </a>
-                        </div>
-                    )}
                     <button
                         onClick={handleLogout}
                         className="mt-2 w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
