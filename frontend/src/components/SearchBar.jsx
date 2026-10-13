@@ -69,12 +69,11 @@ export default function SearchBar() {
     const handleSelect = (type, item) => {
         setOpen(false);
         setQuery('');
-        setResults({ leads: [], clients: [] });
-        if (type === 'lead') navigate('/leads');
-        else navigate('/clients');
+        setResults({ leads: [] });
+        navigate('/leads');
     };
 
-    const hasResults = results.leads.length > 0 || results.clients.length > 0;
+    const hasResults = results.leads.length > 0;
 
     return (
         <div ref={containerRef} className="relative">
@@ -140,25 +139,6 @@ export default function SearchBar() {
                                                 }`}>
                                                 {lead.status}
                                             </span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            {results.clients.length > 0 && (
-                                <div>
-                                    <div className="px-4 py-2 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase bg-gray-100 dark:bg-slate-800/50">Clients</div>
-                                    {results.clients.map((client) => (
-                                        <button
-                                            key={client.id}
-                                            onClick={() => handleSelect('client', client)}
-                                            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white dark:bg-slate-800 transition-colors text-left"
-                                        >
-                                            <User size={14} className="text-cyan-400 flex-shrink-0" />
-                                            <div className="min-w-0">
-                                                <p className="text-sm text-gray-900 dark:text-white truncate">{client.clientName}</p>
-                                                <p className="text-xs text-gray-400 dark:text-slate-500">{client.email || client.phone}</p>
-                                            </div>
                                         </button>
                                     ))}
                                 </div>

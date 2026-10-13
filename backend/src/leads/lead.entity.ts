@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Company } from '../companies/company.entity';
-import { Client } from '../clients/client.entity';
 import { User } from '../users/user.entity';
 
 export enum LeadSource {
@@ -33,13 +32,6 @@ export class Lead {
     @ManyToOne(() => Company)
     @JoinColumn({ name: 'companyId' })
     company: Company;
-
-    @Column({ nullable: true })
-    clientId: string;
-
-    @ManyToOne(() => Client, { nullable: true })
-    @JoinColumn({ name: 'clientId' })
-    client: Client;
 
     @Column()
     name: string;

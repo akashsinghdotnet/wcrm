@@ -9,8 +9,6 @@ import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
-
-import ClientsPage from './pages/ClientsPage';
 import LeadsPage from './pages/LeadsPage';
 import UsersPage from './pages/UsersPage';
 import BillingPage from './pages/BillingPage';
@@ -23,9 +21,6 @@ import PlansPage from './pages/PlansPage';
 import IntegrationsPage from './pages/IntegrationsPage';
 import PaymentSettingsPage from './pages/PaymentSettingsPage';
 import CheckoutPage from './pages/CheckoutPage';
-import CouponsPage from './pages/CouponsPage';
-import EmailHistoryPage from './pages/EmailHistoryPage';
-import MarketingPage from './pages/MarketingPage';
 import WhatsAppChatsPage from './pages/WhatsAppChatsPage';
 import WhatsAppChatPage from './pages/WhatsAppChatPage';
 import WhatsAppDirectChatPage from './pages/WhatsAppDirectChatPage';
@@ -102,11 +97,6 @@ export default function App() {
           }
         >
           <Route index element={<DashboardPage />} />
-          <Route path="clients" element={
-            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
-              <ClientsPage />
-            </ProtectedRoute>
-          } />
           <Route path="leads" element={
             <ProtectedRoute roles={['admin', 'manager', 'staff']} module="SALES">
               <LeadsPage />
@@ -269,22 +259,6 @@ export default function App() {
             element={
               <ProtectedRoute roles={['super_admin', 'superadmin_admin']}>
                 <CouponsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="marketing"
-            element={
-              <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin', 'manager']} module="MARKETING">
-                <MarketingPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="email-history"
-            element={
-              <ProtectedRoute roles={['super_admin', 'superadmin_admin']} module="MARKETING">
-                <EmailHistoryPage />
               </ProtectedRoute>
             }
           />

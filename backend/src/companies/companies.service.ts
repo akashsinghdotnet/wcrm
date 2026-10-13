@@ -165,23 +165,14 @@ export class CompaniesService {
             await safeDelete('DELETE FROM ticket_replies WHERE ticketId IN (SELECT id FROM tickets WHERE companyId = ?)', [id]);
             await safeDelete('DELETE FROM tickets WHERE companyId = ?', [id]);
 
-            // 5. Clients
-            await safeDelete('DELETE FROM clients WHERE companyId = ?', [id]);
-
-            // 6. Calling & Call Logs
+            // 5. Calling & Call Logs
             await safeDelete('DELETE FROM call_logs WHERE companyId = ?', [id]);
             await safeDelete('DELETE FROM calling_configs WHERE companyId = ?', [id]);
 
-            // 7. Integration Configs
+            // 6. Integration Configs
             await safeDelete('DELETE FROM integration_configs WHERE companyId = ?', [id]);
 
-            // 8. Marketing Settings
-            await safeDelete('DELETE FROM marketing_settings WHERE companyId = ?', [id]);
-
-            // 9. Email Logs
-            await safeDelete('DELETE FROM email_logs WHERE companyId = ?', [id]);
-
-            // 9.5 Module & Company Settings
+            // 7. Module & Company Settings
             await safeDelete('DELETE FROM module_configs WHERE companyId = ?', [id]);
             await safeDelete('DELETE FROM company_settings WHERE companyId = ?', [id]);
 

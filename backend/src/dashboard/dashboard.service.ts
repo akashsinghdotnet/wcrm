@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { LeadsService } from '../leads/leads.service';
-import { ClientsService } from '../clients/clients.service';
 import { BillingService } from '../billing/billing.service';
 import { CompaniesService } from '../companies/companies.service';
 
@@ -8,7 +7,6 @@ import { CompaniesService } from '../companies/companies.service';
 export class DashboardService {
     constructor(
         private leadsService: LeadsService,
-        private clientsService: ClientsService,
         private billingService: BillingService,
         private companiesService: CompaniesService,
     ) { }
@@ -17,14 +15,14 @@ export class DashboardService {
      * Admin dashboard — company-wide stats
      */
     async getAdminStats(companyId: string) {
-        const [totalLeads, leadsToday, conversionRate, totalRevenue, convertedLeads, billing] = await Promise.all([
+        const [totalLeads, leadsToday, conversionRate, convertedLeads, billing] = await Promise.all([
             this.leadsService.countAll(companyId),
             this.leadsService.countToday(companyId),
             this.leadsService.conversionRate(companyId),
-            this.clientsService.totalRevenue(companyId),
             this.leadsService.countConverted(companyId),
             this.billingService.billingStats(companyId).catch(() => ({ totalPending: 0, totalPaid: 0 })),
         ]);
+        const totalRevenue = billing.totalPaid || 0;
 
         // Get revenue by month from billing
         let revenueByMonth: { month: string; total: number }[] = [];
@@ -94,17 +92,14 @@ export class DashboardService {
     }
 
     /**
-     * Global search across leads and clients
+     * Global search across leads
      */
     async search(companyId: string, query: string) {
         if (!query || query.length < 2) return { leads: [], clients: [] };
 
-        const [leads, clients] = await Promise.all([
-            this.leadsService.search(companyId, query),
-            this.clientsService.search(companyId, query),
-        ]);
+        const leads = await this.leadsService.search(companyId, query);
 
-        return { leads, clients };
+        return { leads, clients: [] };
     }
 
     /**

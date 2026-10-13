@@ -9,7 +9,7 @@ export class ModuleConfig {
     companyId: string;
 
     @Column({ type: 'simple-json', nullable: true })
-    activeModules: string[] = ['SALES', 'MARKETING', 'WHATSAPP', 'CALLING', 'REPORTS'];
+    activeModules: string[] = ['SALES', 'WHATSAPP', 'CALLING', 'REPORTS'];
 
     @CreateDateColumn()
     createdAt: Date;

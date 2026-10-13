@@ -10,24 +10,10 @@ import toast from 'react-hot-toast';
 
 const PLATFORM_CREDENTIALS = {
     meta: [],
-    google: [
-        { key: 'webhookKey', label: 'Webhook Key', type: 'password', placeholder: 'Your secret webhook key (e.g. my-secret-key-2026)' },
-    ],
-    indiamart: [
-        { key: 'mobileNumber', label: 'Registered Mobile Number', type: 'text', placeholder: 'e.g. 9876543210' },
-        { key: 'crmKey', label: 'CRM Key', type: 'password', placeholder: 'Your IndiaMart CRM key' },
-    ],
-    justdial: [],
-    tradeindia: [
-        { key: 'userid', label: 'User ID', type: 'text', placeholder: 'Your Trade India user ID' },
-        { key: 'profile_id', label: 'Profile ID', type: 'text', placeholder: 'Your Trade India profile ID' },
-        { key: 'key', label: 'API Key', type: 'password', placeholder: 'Your Trade India API key' },
-    ],
     website: [],
 };
 
 const INTEGRATIONS = [
-
     {
         id: 'meta',
         name: 'Meta / Facebook Ads',
@@ -51,102 +37,9 @@ const INTEGRATIONS = [
         ],
     },
     {
-        id: 'google',
-        name: 'Google Ads',
-        description: 'Capture leads directly from Google Ads Lead Form Extensions via webhook — no middleware needed.',
-        color: 'from-red-500 to-orange-500',
-        iconBg: 'bg-red-500/10 border-red-500/20',
-        iconColor: 'text-red-400',
-        webhookPath: '/api/webhooks/google',
-        fields: [],
-        setupSteps: [
-            'Enable this integration and click "Configure" to set your Webhook Key (choose any secret key, e.g. my-company-key-2026)',
-            'Log in to ads.google.com and go to Ads & Assets → Assets',
-            'Click "+" → select "Lead Form" (or edit an existing Lead Form)',
-            'Add the fields you want to collect: Full Name, Email, Phone Number, etc.',
-            'Scroll down to "Lead delivery options" or "Webhook integration"',
-            'Paste the Webhook URL shown below into the "Webhook URL" field',
-            'Enter the same Webhook Key you set in step 1 into the "Key" field',
-            'Click "Send test data" to verify the connection — a test lead should appear in your CRM',
-            'Save the Lead Form and attach it to your Search, Display, YouTube, or Performance Max campaign',
-            'Leads submitted through your ads will automatically appear in your CRM and get assigned via round-robin!',
-        ],
-    },
-    {
-        id: 'indiamart',
-        name: 'IndiaMart',
-        description: 'Sync buyer inquiries from your IndiaMart seller dashboard.',
-        color: 'from-orange-500 to-yellow-500',
-        iconBg: 'bg-orange-500/10 border-orange-500/20',
-        iconColor: 'text-orange-400',
-        webhookPath: '/api/webhooks/indiamart',
-        fields: [
-            { name: 'companyId', required: true, description: 'Your Company ID (auto-included)' },
-            { name: 'name', required: false, description: 'Buyer name' },
-            { name: 'phone', required: false, description: 'Buyer phone' },
-            { name: 'email', required: false, description: 'Buyer email address' },
-            { name: 'category', required: false, description: 'Product/service category' },
-            { name: 'city', required: false, description: 'Buyer city' },
-        ],
-        setupSteps: [
-            'Log in to your IndiaMart Seller Dashboard',
-            'Go to Lead Manager → CRM Settings or API Integration',
-            'Enable Lead Push via Webhook',
-            'Paste the Webhook URL shown below',
-            'Use a middleware (Zapier, Make, or Pabbly) to map IndiaMart fields to the accepted format',
-            'Add "companyId" field in the middleware mapping',
-            'Test by checking if new IndiaMart enquiries appear in your Leads page',
-        ],
-    },
-    {
-        id: 'tradeindia',
-        name: 'Trade India',
-        description: 'Receive Trade India enquiry leads into your pipeline.',
-        color: 'from-emerald-500 to-teal-500',
-        iconBg: 'bg-emerald-500/10 border-emerald-500/20',
-        iconColor: 'text-emerald-400',
-        webhookPath: '/api/webhooks/tradeindia',
-        fields: [
-            { name: 'companyId', required: true, description: 'Your Company ID (auto-included)' },
-            { name: 'name', required: false, description: 'Enquiry sender name' },
-            { name: 'phone', required: false, description: 'Phone number' },
-            { name: 'email', required: false, description: 'Email address' },
-            { name: 'category', required: false, description: 'Product/service category' },
-            { name: 'city', required: false, description: 'City of the enquiry' },
-        ],
-        setupSteps: [
-            'Log in to your Trade India Seller account',
-            'Navigate to Settings → API/Webhook Integration',
-            'Use a middleware tool (Zapier, Make, or Pabbly Connect) to forward enquiries',
-            'Set the middleware to POST to the Webhook URL shown below',
-            'Map fields: sender_name → name, sender_phone → phone, sender_email → email',
-            'Add "companyId" in the middleware payload',
-            'Verify by checking new enquiries in your CRM Leads page',
-        ],
-    },
-    {
-        id: 'justdial',
-        name: 'JustDial',
-        description: 'Receive enquiry leads from your JustDial business listing automatically.',
-        color: 'from-cyan-500 to-blue-500',
-        iconBg: 'bg-cyan-500/10 border-cyan-500/20',
-        iconColor: 'text-cyan-400',
-        webhookPath: '/api/webhooks/justdial',
-        fields: [],
-        setupSteps: [
-            'Enable this integration by toggling the switch on',
-            'Copy the Webhook URL and your Company ID shown below',
-            'Contact your JustDial Account Manager (the person who manages your JustDial listing)',
-            'Send them this message: "Please enable Lead Push (webhook) to this URL: [paste webhook URL]?companyId=[paste company ID]. Send data as JSON via HTTP POST."',
-            'JustDial\'s backend team will configure it on their end (usually takes 24-48 hours)',
-            'Once they confirm it\'s active, generate a test enquiry on your JustDial listing to verify',
-            'Leads will automatically appear in your CRM and get assigned via round-robin',
-        ],
-    },
-    {
         id: 'website',
-        name: 'Website Form',
-        description: 'Connect your website contact form to auto-create leads.',
+        name: 'Website Form (WordPress / Webhook)',
+        description: 'Connect your website contact form or WordPress plugin to auto-create leads and trigger instant WhatsApp automations.',
         color: 'from-violet-500 to-purple-500',
         iconBg: 'bg-violet-500/10 border-violet-500/20',
         iconColor: 'text-violet-400',
@@ -387,7 +280,7 @@ export default function IntegrationsPage({ embedded = false }) {
         return { label: 'Needs Setup', color: 'bg-amber-500/15 text-amber-400 border border-amber-500/20' };
     };
 
-    const needsCompanyIdInUrl = (id) => ['indiamart', 'justdial', 'website', 'tradeindia'].includes(id);
+    const needsCompanyIdInUrl = (id) => ['website'].includes(id);
 
     const getFullWebhookUrl = (integration) => {
         const base = `${baseUrl}${integration.webhookPath}`;

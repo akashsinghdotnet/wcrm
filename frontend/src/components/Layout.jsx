@@ -54,9 +54,6 @@ const navItems = [
     { to: '/tickets', label: 'Support', icon: Ticket, roles: ['super_admin', 'superadmin_admin', 'admin', 'manager'] },
     { to: '/announcements', label: 'Announcements', icon: Megaphone, roles: ['super_admin', 'superadmin_admin', 'superadmin_staff'] },
     { to: '/settings', label: 'Settings', icon: Settings },
-    // Notifications removed as per user request
-    // { to: '/notifications', label: 'Notifications', icon: Mail, roles: ['admin'] },
-    { to: '/marketing', label: 'Marketing', icon: Mail, roles: ['super_admin', 'superadmin_admin', 'admin', 'manager'], module: 'MARKETING' },
     { to: '/users', label: 'Users', icon: Users, roles: ['super_admin', 'superadmin_admin'] },
 ];
 

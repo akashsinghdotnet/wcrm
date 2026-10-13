@@ -6,7 +6,6 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { CompaniesModule } from './companies/companies.module';
-import { ClientsModule } from './clients/clients.module';
 import { LeadsModule } from './leads/leads.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { DashboardModule } from './dashboard/dashboard.module';
@@ -14,7 +13,6 @@ import { BillingModule } from './billing/billing.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PlansModule } from './plans/plans.module';
 import { SettingsModule } from './settings/settings.module';
-import { MarketingModule } from './marketing/marketing.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { TicketsModule } from './tickets/tickets.module';
@@ -54,7 +52,6 @@ import { ScheduleModule } from '@nestjs/schedule';
     UsersModule,
     AuthModule,
     CompaniesModule,
-    ClientsModule,
     LeadsModule,
     WebhooksModule,
     DashboardModule,
@@ -62,7 +59,6 @@ import { ScheduleModule } from '@nestjs/schedule';
     NotificationsModule,
     PlansModule,
     SettingsModule,
-    MarketingModule,
     IntegrationsModule,
     WhatsAppModule,
     TicketsModule,

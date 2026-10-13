@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Company } from '../companies/company.entity';
-import { Client } from '../clients/client.entity';
 
 export enum InvoiceStatus {
     PENDING = 'pending',
@@ -19,13 +18,6 @@ export class Invoice {
     @ManyToOne(() => Company, { nullable: true })
     @JoinColumn({ name: 'companyId' })
     company: Company;
-
-    @Column({ nullable: true })
-    clientId: string;
-
-    @ManyToOne(() => Client, { nullable: true })
-    @JoinColumn({ name: 'clientId' })
-    client: Client;
 
     // Guest client details (for invoices without linked client)
     @Column({ nullable: true })

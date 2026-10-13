@@ -4,14 +4,10 @@ import toast from 'react-hot-toast';
 import { Plus, Trash2, Loader2, Shuffle, RefreshCcw, UserCheck } from 'lucide-react';
 
 const SOURCE_OPTIONS = [
+    { value: 'whatsapp', label: 'WhatsApp Inbound' },
     { value: 'meta_ads', label: 'Meta Ads' },
-    { value: 'google_ads', label: 'Google Ads' },
-    { value: 'justdial', label: 'JustDial' },
-    { value: 'indiamart', label: 'IndiaMart' },
-    { value: 'tradeindia', label: 'TradeIndia' },
-    { value: 'website', label: 'Website' },
-    { value: 'whatsapp', label: 'WhatsApp' },
-    { value: 'manual', label: 'Manual' },
+    { value: 'website', label: 'Website / Webhook' },
+    { value: 'manual', label: 'Manual Entry' },
 ];
 
 export default function LeadAssignmentSettings() {

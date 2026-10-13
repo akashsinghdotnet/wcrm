@@ -22,7 +22,6 @@ export default function DashboardPage() {
     const [recentLeads, setRecentLeads] = useState([]);
     const [followUps, setFollowUps] = useState({ overdue: [], today: [] });
     const [loading, setLoading] = useState(true);
-    const [hasSmtpConfigured, setHasSmtpConfigured] = useState(true);
 
     useEffect(() => {
         loadData();
@@ -40,16 +39,12 @@ export default function DashboardPage() {
 
             if (user.role === 'admin') {
                 const hasSales = hasModule('SALES');
-                const [statsRes, leadsRes, smtpRes] = await Promise.all([
+                const [statsRes, leadsRes] = await Promise.all([
                     api.get(`/dashboard/admin?companyId=${user.companyId}`),
                     hasSales ? api.get('/leads') : Promise.resolve({ data: { data: [] } }),
-                    api.get('/marketing/settings').catch(() => ({ data: null }))
                 ]);
                 setStats(statsRes.data);
-                setRecentLeads(leadsRes.data.data.slice(0, 5));
-                if (!smtpRes.data?.smtpHost) {
-                    setHasSmtpConfigured(false);
-                }
+                setRecentLeads(leadsRes.data?.data?.slice(0, 5) || []);
             }
 
             if (isCompanyUser) {

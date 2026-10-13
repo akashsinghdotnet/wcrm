@@ -101,7 +101,6 @@ export class LeadsService {
         const query = this.leadsRepository.createQueryBuilder('lead')
             .leftJoinAndSelect('lead.assignedUser', 'assignedUser')
             .leftJoinAndSelect('lead.lastUpdatedByUser', 'lastUpdatedByUser')
-            .leftJoinAndSelect('lead.client', 'client')
             .orderBy('lead.createdAt', 'DESC')
             .skip(skip)
             .take(limit);
@@ -159,7 +158,7 @@ export class LeadsService {
     async findOne(id: string): Promise<Lead> {
         const lead = await this.leadsRepository.findOne({
             where: { id },
-            relations: ['company', 'client', 'assignedUser'],
+            relations: ['company', 'assignedUser'],
         });
         if (!lead) {
             throw new NotFoundException(`Lead with ID ${id} not found`);

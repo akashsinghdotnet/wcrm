@@ -4,7 +4,6 @@ import { Repository, IsNull } from 'typeorm';
 import * as nodemailer from 'nodemailer';
 import { EmailConfig } from './email-config.entity';
 import { EmailLog } from './email-log.entity';
-import { MarketingSettings } from '../marketing/marketing-settings.entity';
 import { EmailTemplate } from './email-template.entity';
 
 @Injectable()
@@ -16,8 +15,6 @@ export class EmailService {
         private configRepo: Repository<EmailConfig>,
         @InjectRepository(EmailLog)
         private logRepo: Repository<EmailLog>,
-        @InjectRepository(MarketingSettings)
-        private marketingSettingsRepo: Repository<MarketingSettings>,
         @InjectRepository(EmailTemplate)
         private templateRepo: Repository<EmailTemplate>,
     ) { }
@@ -47,21 +44,7 @@ export class EmailService {
             });
         }
 
-        // 2. Try to get Super Admin Marketing Settings
-        const systemSettings = await this.marketingSettingsRepo.findOne({ where: { companyId: IsNull() } });
-        if (systemSettings) {
-            return nodemailer.createTransport({
-                host: systemSettings.smtpHost,
-                port: systemSettings.smtpPort,
-                secure: systemSettings.smtpSecure,
-                auth: {
-                    user: systemSettings.smtpUser,
-                    pass: systemSettings.smtpPassword,
-                },
-            });
-        }
-
-        // 3. Fallback to Env vars
+        // 2. Fallback to Env vars
         return nodemailer.createTransport({
             host: process.env.SMTP_HOST || 'smtp.gmail.com',
             port: parseInt(process.env.SMTP_PORT || '587'),
@@ -217,52 +200,18 @@ export class EmailService {
             let from = `"Wcrm" <noreply@wcrm.com>`;
             let settingsFound = false;
 
-            // 1. Try company-specific settings first
-            if (companyId) {
-                const companySettings = await this.marketingSettingsRepo.findOne({ where: { companyId } });
-                if (companySettings && companySettings.smtpHost && companySettings.smtpUser) {
-                    transporter = nodemailer.createTransport({
-                        host: companySettings.smtpHost,
-                        port: companySettings.smtpPort,
-                        secure: companySettings.smtpSecure,
-                        auth: { user: companySettings.smtpUser, pass: companySettings.smtpPassword },
-                    });
-                    const fromEmail = companySettings.fromEmail || companySettings.smtpUser;
-                    from = `"${companySettings.fromName || 'Wcrm Support'}" <${fromEmail}>`;
-                    settingsFound = true;
-                }
-            }
-
-            // 2. Try legacy global config
-            if (!settingsFound) {
-                const config = await this.configRepo.findOne({ where: {} });
-                if (config) {
-                    transporter = nodemailer.createTransport({
-                        host: config.host,
-                        port: config.port,
-                        secure: config.isSecure,
-                        auth: { user: config.user, pass: config.pass },
-                    });
-                    const fromEmail = config.fromEmail || config.user;
-                    from = `"${config.fromName || 'Wcrm'}" <${fromEmail}>`;
-                    settingsFound = true;
-                }
-            }
-
-            // 3. Try System Superadmin settings
-            if (!settingsFound) {
-                const systemSettings = await this.marketingSettingsRepo.findOne({ where: { companyId: IsNull() } });
-                if (systemSettings && systemSettings.smtpHost && systemSettings.smtpUser) {
-                    transporter = nodemailer.createTransport({
-                        host: systemSettings.smtpHost,
-                        port: systemSettings.smtpPort,
-                        secure: systemSettings.smtpSecure,
-                        auth: { user: systemSettings.smtpUser, pass: systemSettings.smtpPassword },
-                    });
-                    const fromEmail = systemSettings.fromEmail || systemSettings.smtpUser;
-                    from = `"${systemSettings.fromName || 'Wcrm'}" <${fromEmail}>`;
-                    settingsFound = true;
-                }
+            // 1. Try global email config
+            const config = await this.configRepo.findOne({ where: {} });
+            if (config) {
+                transporter = nodemailer.createTransport({
+                    host: config.host,
+                    port: config.port,
+                    secure: config.isSecure,
+                    auth: { user: config.user, pass: config.pass },
+                });
+                const fromEmail = config.fromEmail || config.user;
+                from = `"${config.fromName || 'Wcrm'}" <${fromEmail}>`;
+                settingsFound = true;
             }
 
             if (!settingsFound) {

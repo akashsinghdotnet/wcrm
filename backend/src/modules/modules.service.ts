@@ -5,8 +5,7 @@ import { ModuleConfig } from './module-config.entity';
 import { Company } from '../companies/company.entity';
 
 export const ALL_MODULES = [
-    { key: 'SALES', label: 'Sales & Pipeline', description: 'Leads management, pipeline view, and client tracking', icon: 'kanban' },
-    { key: 'MARKETING', label: 'Marketing', description: 'Email campaigns, marketing automation, and outreach', icon: 'mail' },
+    { key: 'SALES', label: 'Sales & Pipeline', description: 'Leads management, pipeline view, and deal tracking', icon: 'kanban' },
     { key: 'WHATSAPP', label: 'WhatsApp', description: 'WhatsApp messaging, chats, and broadcast campaigns', icon: 'message-circle' },
     { key: 'CALLING', label: 'Calling', description: 'Phone calling integration with Twilio', icon: 'phone' },
     { key: 'REPORTS', label: 'Reports & Analytics', description: 'Advanced reports, dashboards, and analytics', icon: 'bar-chart' },

@@ -101,20 +101,6 @@ export class IntegrationsController {
         return this.integrationsService.remove(companyId, platform);
     }
 
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Post('tradeindia/fetch')
-    @Roles(UserRole.ADMIN, UserRole.MANAGER)
-    async fetchTradeIndiaLeads(@Body() body: { companyId: string }) {
-        return this.integrationsService.fetchTradeIndiaLeads(body.companyId);
-    }
-
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Post('indiamart/fetch')
-    @Roles(UserRole.ADMIN, UserRole.MANAGER)
-    async fetchIndiaMartLeads(@Body() body: { companyId: string }) {
-        return this.integrationsService.fetchIndiaMartLeads(body.companyId);
-    }
-
 
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Post('meta/test')

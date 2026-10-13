@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne } from 'typeorm';
 import { User } from '../users/user.entity';
-import { Client } from '../clients/client.entity';
 import { Plan } from '../plans/plan.entity';
 
 @Entity('companies')
@@ -46,9 +45,6 @@ export class Company {
 
     @OneToMany(() => User, (user) => user.company)
     users: User[];
-
-    @OneToMany(() => Client, (client) => client.company)
-    clients: Client[];
 
     @CreateDateColumn()
     createdAt: Date;
