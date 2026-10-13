@@ -343,7 +343,7 @@ export default function PaymentSettingsPage() {
                                     value={settings.bankTransfer.accountHolder}
                                     onChange={(e) => updateGateway('bankTransfer', 'accountHolder', e.target.value)}
                                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
-                                    placeholder="Magnet Technologies Pvt Ltd"
+                                    placeholder="Wcrm Technologies Ltd"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-3">

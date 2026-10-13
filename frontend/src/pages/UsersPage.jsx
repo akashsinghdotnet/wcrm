@@ -357,7 +357,7 @@ export default function UsersPage() {
                                         value={form.email}
                                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                                         className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        placeholder={isSuperAdmin && form.role === 'super_admin' ? "admin@magnethq.com" : "staff@magnethq.com"}
+                                        placeholder={isSuperAdmin && form.role === 'super_admin' ? "admin@wcrm.si" : "staff@wcrm.si"}
                                     />
                                 </div>
                                 <div>

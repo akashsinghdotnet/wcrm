@@ -4,11 +4,11 @@ import api from '../services/api';
 import toast from 'react-hot-toast';
 import {
     Kanban, Receipt, Mail, MessageCircle, Phone, Ticket, BarChart3,
-    Blocks, Check, X, Loader2, ShieldCheck, Calendar, Hotel
+    Blocks, Check, X, Loader2, ShieldCheck
 } from 'lucide-react';
 
 const iconMap = {
-    Kanban, Receipt, Mail, MessageCircle, Phone, Ticket, BarChart3, Calendar, Hotel
+    Kanban, Receipt, Mail, MessageCircle, Phone, Ticket, BarChart3
 };
 
 export default function ModuleSettingsPage() {

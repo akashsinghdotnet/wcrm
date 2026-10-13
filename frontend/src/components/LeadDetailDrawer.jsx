@@ -29,6 +29,7 @@ const TYPE_META = {
 };
 
 export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
+    const [currentStatus, setCurrentStatus] = useState(lead?.status || 'new');
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [noteType, setNoteType] = useState('note');
@@ -40,10 +41,11 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
 
     useEffect(() => {
         if (lead?.id) {
+            setCurrentStatus(lead.status);
             fetchActivities();
             fetchCallLogs();
         }
-    }, [lead?.id]);
+    }, [lead?.id, lead?.status]);
 
     const fetchCallLogs = async () => {
         try {
@@ -119,8 +121,8 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                     <div>
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white">{lead.name}</h2>
                         <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-                            Added {new Date(lead.createdAt).toLocaleDateString('en-IN', {
-                                day: 'numeric', month: 'short', year: 'numeric',
+                            Added {new Date(lead.createdAt).toLocaleString('en-IN', {
+                                day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
                             })}
                         </p>
                     </div>
@@ -148,27 +150,14 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                                             className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer"
                                             title="Call from browser"
                                         >
-                                            <Phone size={12} />
-                                            Call
+                                            <PhoneCall size={12} /> Call
                                         </button>
                                         <button
-                                            onClick={async () => {
-                                                try {
-                                                    const checkRes = await api.get('/whatsapp/check-config');
-                                                    if (checkRes.data?.configured) {
-                                                        setShowWhatsAppChat(true);
-                                                    } else {
-                                                        toast.error('Connect your WhatsApp API first');
-                                                    }
-                                                } catch {
-                                                    toast.error('Connect your WhatsApp API first');
-                                                }
-                                            }}
-                                            className="flex items-center gap-1.5 px-2.5 py-1 bg-green-600 hover:bg-green-500 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer"
-                                            title="Chat on WhatsApp"
+                                            onClick={() => setShowWhatsAppChat(true)}
+                                            className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer"
+                                            title="Open WhatsApp chat"
                                         >
-                                            <MessageCircle size={12} />
-                                            WhatsApp
+                                            <MessageCircle size={12} /> WhatsApp
                                         </button>
                                     </div>
                                 </div>
@@ -176,13 +165,43 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                             {lead.email && (
                                 <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-slate-300">
                                     <Mail size={14} className="text-gray-400 dark:text-slate-500" />
-                                    <span>{lead.email}</span>
+                                    <a href={`mailto:${lead.email}`} className="text-indigo-400 hover:underline">{lead.email}</a>
                                 </div>
                             )}
-                            {(lead.city || lead.state) && (
+                            {lead.companyName && (
                                 <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-slate-300">
-                                    <MapPin size={14} className="text-gray-400 dark:text-slate-500" />
-                                    <span>{[lead.city, lead.state].filter(Boolean).join(', ')}</span>
+                                    <User size={14} className="text-gray-400 dark:text-slate-500" />
+                                    <span>
+                                        {lead.designation ? `${lead.designation} at ` : ''}
+                                        <strong className="text-gray-900 dark:text-white font-medium">{lead.companyName}</strong>
+                                    </span>
+                                </div>
+                            )}
+                            {!lead.companyName && lead.designation && (
+                                <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-slate-300">
+                                    <User size={14} className="text-gray-400 dark:text-slate-500" />
+                                    <span>{lead.designation}</span>
+                                </div>
+                            )}
+                            {lead.website && (
+                                <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-slate-300">
+                                    <Send size={14} className="text-gray-400 dark:text-slate-500" />
+                                    <a
+                                        href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-indigo-600 dark:text-indigo-400 hover:underline"
+                                    >
+                                        {lead.website}
+                                    </a>
+                                </div>
+                            )}
+                            {(lead.address || lead.city || lead.state) && (
+                                <div className="flex items-start gap-3 text-sm text-gray-600 dark:text-slate-300">
+                                    <MapPin size={14} className="text-gray-400 dark:text-slate-500 mt-1 flex-shrink-0" />
+                                    <span>
+                                        {[lead.address, lead.city, lead.state].filter(Boolean).join(', ')}
+                                    </span>
                                 </div>
                             )}
                             <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-slate-300">
@@ -194,11 +213,32 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
 
                     {/* Status & Assignment */}
                     <div className="space-y-3">
-                        <h3 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Details</h3>
+                        <h3 className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Details & Status</h3>
                         <div className="flex items-center gap-3 flex-wrap">
-                            <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${statusColors[lead.status] || 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300'}`}>
-                                {lead.status?.replace('_', ' ')}
-                            </span>
+                            <select
+                                value={currentStatus}
+                                onChange={async (e) => {
+                                    const newStatus = e.target.value;
+                                    const oldStatus = currentStatus;
+                                    setCurrentStatus(newStatus);
+                                    try {
+                                        await api.patch(`/leads/${lead.id}`, { status: newStatus });
+                                        toast.success(`Status updated to ${newStatus.replace('_', ' ')}`);
+                                        if (onUpdate) onUpdate();
+                                        fetchActivities();
+                                    } catch (err) {
+                                        setCurrentStatus(oldStatus);
+                                        toast.error(err.response?.data?.message || 'Failed to update status');
+                                    }
+                                }}
+                                className={`px-3 py-1.5 rounded-full text-xs font-semibold border focus:outline-none cursor-pointer ${statusColors[currentStatus] || 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300'}`}
+                            >
+                                <option value="new" className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">New</option>
+                                <option value="contacted" className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">Contacted</option>
+                                <option value="follow_up" className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">Follow Up</option>
+                                <option value="converted" className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">Converted</option>
+                                <option value="lost" className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">Lost</option>
+                            </select>
                             {lead.assignedUser && (
                                 <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded-full border border-gray-300 dark:border-slate-700">
                                     <User size={12} />
@@ -298,7 +338,7 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                                         {log.recordingUrl && (
                                             <div className="pt-1">
                                                 <audio controls className="w-full h-8" style={{ filter: 'invert(1) hue-rotate(180deg)' }}>
-                                                    <source src={`${import.meta.env.VITE_API_URL || 'https://api.magnetcrm.com/api'}/calling/recording/${log.id}?token=${localStorage.getItem('magnetcrm_token')}`} type="audio/mpeg" />
+                                                    <source src={`${import.meta.env.VITE_API_URL || 'https://api.wcrm.si/api'}/calling/recording/${log.id}?token=${localStorage.getItem('wcrm_token')}`} type="audio/mpeg" />
                                                 </audio>
                                             </div>
                                         )}

@@ -304,7 +304,7 @@ export default function BillingPage() {
                 <div className="bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-slate-700/50 rounded-2xl overflow-hidden mb-6">
                     <div className="p-4 border-b border-gray-300 dark:border-slate-700/50">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Subscription Purchase History</h3>
-                        <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Your MagnetCRM subscription invoices</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Your Wcrm subscription invoices</p>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full">

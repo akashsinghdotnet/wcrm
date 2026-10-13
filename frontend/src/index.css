@@ -2,6 +2,29 @@
 
 @custom-variant dark (.dark &);
 
+@theme {
+  --color-whatsapp: #25D366;
+  --color-whatsapp-teal: #128C7E;
+  --color-whatsapp-dark: #075E54;
+  --color-whatsapp-darker: #054c44;
+  --color-whatsapp-light: #dcf8c6;
+  --color-whatsapp-bg-dark: #111B21;
+  --color-whatsapp-card-dark: #202C33;
+
+  /* WhatsApp official green/teal brand hierarchy mapped to theme tokens */
+  --color-indigo-50: #f0fdf4;
+  --color-indigo-100: #dcfce7;
+  --color-indigo-200: #bbf7d0;
+  --color-indigo-300: #86efac;
+  --color-indigo-400: #25D366;
+  --color-indigo-500: #00A884;
+  --color-indigo-600: #128C7E;
+  --color-indigo-700: #075E54;
+  --color-indigo-800: #054c44;
+  --color-indigo-900: #043832;
+  --color-indigo-950: #022622;
+}
+
 @keyframes slide-in {
     from {
         transform: translateX(100%);

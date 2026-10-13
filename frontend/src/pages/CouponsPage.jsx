@@ -3,26 +3,39 @@ import api from '../services/api';
 import toast from 'react-hot-toast';
 import {
     Tag, Plus, Trash2, Edit3, Save, X, Search, ToggleLeft, ToggleRight,
-    Percent, IndianRupee, Calendar, Users, Copy, Check, Gift, AlertTriangle, Repeat, Loader2
+    Percent, IndianRupee, Calendar, Users, Copy, Check, Gift, AlertTriangle, Repeat, Loader2, Link as LinkIcon, ShieldCheck
 } from 'lucide-react';
 
 const emptyForm = {
-    code: '', type: 'percentage', value: '', maxUses: '', expiresAt: '', description: '', isActive: true, billingCycle: 'both',
+    code: '',
+    type: 'percentage',
+    value: '',
+    maxUses: '',
+    expiresAt: '',
+    description: '',
+    isActive: true,
+    billingCycle: 'both',
+    isFirstCycleOnly: true,
+    maxUsesPerClient: 1,
+    applicablePlanId: '',
 };
 
 export default function CouponsPage() {
     const [coupons, setCoupons] = useState([]);
+    const [plans, setPlans] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [form, setForm] = useState(emptyForm);
     const [search, setSearch] = useState('');
     const [copiedCode, setCopiedCode] = useState(null);
+    const [copiedLink, setCopiedLink] = useState(null);
     const [deleteId, setDeleteId] = useState(null);
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         fetchCoupons();
+        fetchPlans();
     }, []);
 
     const fetchCoupons = async () => {
@@ -34,6 +47,13 @@ export default function CouponsPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchPlans = async () => {
+        try {
+            const res = await api.get('/plans');
+            setPlans(res.data || []);
+        } catch { }
     };
 
     const openCreate = () => {
@@ -53,6 +73,9 @@ export default function CouponsPage() {
             description: coupon.description || '',
             isActive: coupon.isActive,
             billingCycle: coupon.billingCycle || 'both',
+            isFirstCycleOnly: coupon.isFirstCycleOnly !== undefined ? coupon.isFirstCycleOnly : true,
+            maxUsesPerClient: coupon.maxUsesPerClient || 1,
+            applicablePlanId: coupon.applicablePlanId || '',
         });
         setShowModal(true);
     };
@@ -73,6 +96,9 @@ export default function CouponsPage() {
                 description: form.description,
                 isActive: form.isActive,
                 billingCycle: form.billingCycle,
+                isFirstCycleOnly: Boolean(form.isFirstCycleOnly),
+                maxUsesPerClient: form.maxUsesPerClient ? Number(form.maxUsesPerClient) : 1,
+                applicablePlanId: form.applicablePlanId || null,
             };
 
             if (editingId) {
@@ -114,8 +140,23 @@ export default function CouponsPage() {
     const copyCode = (code) => {
         navigator.clipboard.writeText(code);
         setCopiedCode(code);
-        toast.success('Code copied');
+        toast.success('Code copied to clipboard');
         setTimeout(() => setCopiedCode(null), 2000);
+    };
+
+    const copyShareableLink = (coupon) => {
+        let planSlug = 'pro';
+        if (coupon.applicablePlanId) {
+            const planObj = plans.find(p => p.id === coupon.applicablePlanId);
+            if (planObj) {
+                planSlug = planObj.slug || planObj.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+            }
+        }
+        const shareableUrl = `${window.location.origin}/checkout/${planSlug}?coupon=${encodeURIComponent(coupon.code)}`;
+        navigator.clipboard.writeText(shareableUrl);
+        setCopiedLink(coupon.id);
+        toast.success('Shareable checkout link copied!');
+        setTimeout(() => setCopiedLink(null), 2500);
     };
 
     const filtered = coupons.filter(c =>
@@ -124,7 +165,6 @@ export default function CouponsPage() {
     );
 
     const activeCoupons = coupons.filter(c => c.isActive).length;
-
     const isExpired = (expiresAt) => expiresAt && new Date(expiresAt) < new Date();
 
     if (loading) {
@@ -179,6 +219,7 @@ export default function CouponsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {filtered.map(coupon => {
                         const expired = isExpired(coupon.expiresAt);
+                        const matchedPlan = plans.find(p => p.id === coupon.applicablePlanId);
                         return (
                             <div key={coupon.id}
                                 className={`bg-white dark:bg-slate-900 border rounded-2xl overflow-hidden transition-all ${coupon.isActive && !expired ? 'border-gray-200 dark:border-slate-800 hover:border-gray-300 dark:border-slate-700' : 'border-gray-200 dark:border-slate-800/50 opacity-60'}`}>
@@ -188,7 +229,7 @@ export default function CouponsPage() {
                                     <div className="flex items-start justify-between mb-3">
                                         <div className="flex items-center gap-2">
                                             <span className="font-mono font-bold text-lg text-gray-900 dark:text-white tracking-wider">{coupon.code}</span>
-                                            <button onClick={() => copyCode(coupon.code)} className="text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:text-white transition-colors cursor-pointer">
+                                            <button onClick={() => copyCode(coupon.code)} className="text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:text-white transition-colors cursor-pointer" title="Copy Code">
                                                 {copiedCode === coupon.code ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                                             </button>
                                         </div>
@@ -199,14 +240,26 @@ export default function CouponsPage() {
                                         </button>
                                     </div>
 
-                                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-semibold mb-3 ${coupon.type === 'percentage'
-                                        ? 'bg-purple-500/10 text-purple-300 border border-purple-500/20'
-                                        : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
-                                        }`}>
-                                        {coupon.type === 'percentage'
-                                            ? <><Percent className="w-3.5 h-3.5" /> {coupon.value}% OFF</>
-                                            : <><IndianRupee className="w-3.5 h-3.5" /> ₹{Number(coupon.value).toLocaleString('en-IN')} OFF</>
-                                        }
+                                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-semibold ${coupon.type === 'percentage'
+                                            ? 'bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/20'
+                                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/20'
+                                            }`}>
+                                            {coupon.type === 'percentage'
+                                                ? <><Percent className="w-3.5 h-3.5" /> {coupon.value}% OFF</>
+                                                : <><IndianRupee className="w-3.5 h-3.5" /> ₹{Number(coupon.value).toLocaleString('en-IN')} OFF</>
+                                            }
+                                        </div>
+                                        {matchedPlan && (
+                                            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                                {matchedPlan.name}
+                                            </span>
+                                        )}
+                                        {coupon.isFirstCycleOnly && (
+                                            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                                First Cycle Only
+                                            </span>
+                                        )}
                                     </div>
 
                                     {coupon.description && (
@@ -221,7 +274,13 @@ export default function CouponsPage() {
                                         {coupon.maxUses && (
                                             <span className="flex items-center gap-1">
                                                 <Users className="w-3 h-3" />
-                                                {coupon.usedCount || 0}/{coupon.maxUses} used
+                                                {coupon.usedCount || 0}/{coupon.maxUses} total
+                                            </span>
+                                        )}
+                                        {coupon.maxUsesPerClient && (
+                                            <span className="flex items-center gap-1">
+                                                <ShieldCheck className="w-3 h-3" />
+                                                Max {coupon.maxUsesPerClient}/client
                                             </span>
                                         )}
                                         {coupon.expiresAt && (
@@ -238,15 +297,23 @@ export default function CouponsPage() {
                                         </div>
                                     )}
 
-                                    <div className="flex items-center gap-2 pt-3 border-t border-gray-200 dark:border-slate-800">
-                                        <button onClick={() => openEdit(coupon)}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-lg text-xs font-medium transition-colors cursor-pointer">
-                                            <Edit3 className="w-3 h-3" /> Edit
+                                    <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-slate-800 gap-2">
+                                        <button onClick={() => copyShareableLink(coupon)}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                                            title="Copy Shareable Checkout URL">
+                                            {copiedLink === coupon.id ? <Check className="w-3 h-3 text-emerald-500" /> : <LinkIcon className="w-3 h-3" />}
+                                            {copiedLink === coupon.id ? 'Link Copied!' : 'Copy Shareable Link'}
                                         </button>
-                                        <button onClick={() => setDeleteId(coupon.id)}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-xs font-medium transition-colors cursor-pointer">
-                                            <Trash2 className="w-3 h-3" /> Delete
-                                        </button>
+                                        <div className="flex items-center gap-1.5">
+                                            <button onClick={() => openEdit(coupon)}
+                                                className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-lg text-xs font-medium transition-colors cursor-pointer">
+                                                <Edit3 className="w-3 h-3" /> Edit
+                                            </button>
+                                            <button onClick={() => setDeleteId(coupon.id)}
+                                                className="flex items-center gap-1 px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400 rounded-lg text-xs font-medium transition-colors cursor-pointer">
+                                                <Trash2 className="w-3 h-3" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -304,7 +371,7 @@ export default function CouponsPage() {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Max Uses (optional)</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Total Max Uses (optional)</label>
                                     <input
                                         type="number"
                                         min="1"
@@ -315,27 +382,54 @@ export default function CouponsPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Expiry Date (optional)</label>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Max Uses Per Client</label>
                                     <input
-                                        type="date"
-                                        value={form.expiresAt}
-                                        onChange={e => setForm({ ...form, expiresAt: e.target.value })}
-                                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                                        type="number"
+                                        min="1"
+                                        value={form.maxUsesPerClient}
+                                        onChange={e => setForm({ ...form, maxUsesPerClient: e.target.value })}
+                                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                                        placeholder="1"
                                     />
                                 </div>
                             </div>
 
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Applicable Plan</label>
+                                    <select
+                                        value={form.applicablePlanId}
+                                        onChange={e => setForm({ ...form, applicablePlanId: e.target.value })}
+                                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                                    >
+                                        <option value="">All Subscription Plans</option>
+                                        {plans.map(p => (
+                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Billing Cycle</label>
+                                    <select
+                                        value={form.billingCycle}
+                                        onChange={e => setForm({ ...form, billingCycle: e.target.value })}
+                                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                                    >
+                                        <option value="both">Both (Monthly & Yearly)</option>
+                                        <option value="monthly">Monthly Only</option>
+                                        <option value="yearly">Yearly Only</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div>
-                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Applicable Billing Cycle</label>
-                                <select
-                                    value={form.billingCycle}
-                                    onChange={e => setForm({ ...form, billingCycle: e.target.value })}
+                                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Expiry Date (optional)</label>
+                                <input
+                                    type="date"
+                                    value={form.expiresAt}
+                                    onChange={e => setForm({ ...form, expiresAt: e.target.value })}
                                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                                >
-                                    <option value="both">Both (Monthly & Yearly)</option>
-                                    <option value="monthly">Monthly Only</option>
-                                    <option value="yearly">Yearly Only</option>
-                                </select>
+                                />
                             </div>
 
                             <div>
@@ -348,9 +442,21 @@ export default function CouponsPage() {
                                 />
                             </div>
 
-                            <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-slate-800/50 rounded-xl">
-                                <span className="text-sm text-gray-600 dark:text-slate-300">Active</span>
-                                <button onClick={() => setForm({ ...form, isActive: !form.isActive })} className="cursor-pointer">
+                            <div className="flex items-center justify-between p-3.5 bg-gray-100 dark:bg-slate-800/50 rounded-xl">
+                                <div>
+                                    <span className="text-sm font-medium text-gray-900 dark:text-white block">First Cycle Only</span>
+                                    <span className="text-xs text-gray-500 dark:text-slate-400">Do not re-apply discount on automated recurring renewals</span>
+                                </div>
+                                <button type="button" onClick={() => setForm({ ...form, isFirstCycleOnly: !form.isFirstCycleOnly })} className="cursor-pointer">
+                                    {form.isFirstCycleOnly
+                                        ? <ToggleRight className="w-7 h-7 text-emerald-400" />
+                                        : <ToggleLeft className="w-7 h-7 text-slate-600" />}
+                                </button>
+                            </div>
+
+                            <div className="flex items-center justify-between p-3.5 bg-gray-100 dark:bg-slate-800/50 rounded-xl">
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">Active Status</span>
+                                <button type="button" onClick={() => setForm({ ...form, isActive: !form.isActive })} className="cursor-pointer">
                                     {form.isActive
                                         ? <ToggleRight className="w-7 h-7 text-emerald-400" />
                                         : <ToggleLeft className="w-7 h-7 text-slate-600" />}
@@ -391,3 +497,4 @@ export default function CouponsPage() {
         </div>
     );
 }
+

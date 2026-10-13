@@ -43,6 +43,22 @@ export class CreateLeadDto {
 
     @IsOptional()
     @IsString()
+    designation?: string;
+
+    @IsOptional()
+    @IsString()
+    companyName?: string;
+
+    @IsOptional()
+    @IsString()
+    website?: string;
+
+    @IsOptional()
+    @IsString()
+    address?: string;
+
+    @IsOptional()
+    @IsString()
     city?: string;
 
     @IsOptional()

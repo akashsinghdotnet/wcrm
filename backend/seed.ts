@@ -12,13 +12,13 @@ async function bootstrap() {
     console.log('Seeding data...');
 
     // Create Company
-    let company = await companiesService.findByName('Magnet HQ');
+    let company = await companiesService.findByName('Wcrm HQ');
     if (!company) {
         company = await companiesService.create({
-            companyName: 'Magnet HQ',
-            email: 'contact@magnethq.com',
-            phone: '9876543210', // India default
-            address: 'Mumbai, India',
+            companyName: 'Wcrm HQ',
+            email: 'contact@wcrm.si',
+            phone: '9876543210',
+            address: 'Ljubljana, Slovenia',
         });
         console.log('Company created:', company.id);
     } else {
@@ -26,7 +26,7 @@ async function bootstrap() {
     }
 
     // Create Super Admin
-    const adminEmail = 'admin@magnethq.com';
+    const adminEmail = 'admin@wcrm.si';
     let admin = await usersService.findOne(adminEmail);
     if (!admin) {
         admin = await usersService.create({

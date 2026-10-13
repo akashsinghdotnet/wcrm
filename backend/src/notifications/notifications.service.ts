@@ -48,7 +48,7 @@ export class NotificationsService {
         source: string;
     }): string {
         return (
-            `🧲 *New Lead — MagnetCRM*\n\n` +
+            `💬 *New Lead — Wcrm*\n\n` +
             `👤 Name: ${lead.name}\n` +
             `📞 Phone: ${lead.phone || 'N/A'}\n` +
             `📧 Email: ${lead.email || 'N/A'}\n` +

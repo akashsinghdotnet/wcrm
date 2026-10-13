@@ -11,8 +11,6 @@ export const ALL_MODULES = [
     { key: 'WHATSAPP', label: 'WhatsApp', description: 'WhatsApp messaging, chats, and broadcast campaigns', icon: 'message-circle' },
     { key: 'CALLING', label: 'Calling', description: 'Phone calling integration with Twilio', icon: 'phone' },
     { key: 'REPORTS', label: 'Reports & Analytics', description: 'Advanced reports, dashboards, and analytics', icon: 'bar-chart' },
-    { key: 'APPOINTMENTS', label: 'Appointments & Booking', description: 'Calendar integration, meeting types, and public booking pages', icon: 'calendar' },
-    { key: 'EVENTS', label: 'Event Booking', description: 'Create and manage events, ticket types, and event bookings', icon: 'calendar-days' },
 ];
 
 @Injectable()

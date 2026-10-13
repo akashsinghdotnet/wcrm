@@ -32,6 +32,9 @@ export class CouponsController {
             description: body.description || null,
             isActive: body.isActive !== false,
             billingCycle: body.billingCycle || 'both',
+            isFirstCycleOnly: body.isFirstCycleOnly !== false,
+            maxUsesPerClient: body.maxUsesPerClient ? Number(body.maxUsesPerClient) : 1,
+            applicablePlanId: body.applicablePlanId || null,
         });
     }
 
@@ -60,7 +63,7 @@ export class CouponsController {
 
     @Post('validate')
     @Public()
-    async validate(@Body() body: { code: string; billingCycle?: string }) {
-        return this.couponsService.validate(body.code, body.billingCycle);
+    async validate(@Body() body: { code: string; billingCycle?: string; planId?: string; companyId?: string; isRenewal?: boolean }) {
+        return this.couponsService.validate(body.code, body.billingCycle, body.planId, body.companyId, body.isRenewal);
     }
 }

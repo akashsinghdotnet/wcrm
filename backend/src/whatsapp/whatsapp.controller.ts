@@ -15,8 +15,13 @@ export class WhatsAppController {
     @Get('config')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN)
-    getConfig(@Query('companyId') companyId: string) {
-        return this.whatsappService.getConfig(companyId);
+    async getConfig(@Query('companyId') companyId: string, @Request() req) {
+        const targetCompanyId = companyId || req.user.companyId;
+        const config = await this.whatsappService.getConfig(targetCompanyId);
+        if (!config) return null;
+        // Never expose sensitive Meta App Secret or system secrets to frontend
+        const { metaAppSecret, ...safeConfig } = config as any;
+        return safeConfig;
     }
 
     @Get('check-config')
@@ -33,6 +38,44 @@ export class WhatsAppController {
     @Roles(UserRole.ADMIN)
     saveConfig(@Body() dto: SaveWhatsAppConfigDto) {
         return this.whatsappService.saveConfig(dto);
+    }
+
+    @Post('embedded-signup')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
+    handleEmbeddedSignup(@Body() body: any, @Request() req) {
+        if (process.env.DEPLOYMENT_MODE === 'self_hosted') {
+            throw new BadRequestException('1-Click Meta Embedded Signup is only supported in Cloud Edition.');
+        }
+        return this.whatsappService.handleEmbeddedSignup(req.user.companyId, body);
+    }
+
+    @Post('meta-app-credentials')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
+    saveMetaAppCredentials(@Body() body: any, @Request() req) {
+        return this.whatsappService.saveMetaAppCredentials(req.user.companyId, body);
+    }
+
+    @Get('available-numbers')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
+    fetchAvailablePhoneNumbers(@Query('token') token: string, @Query('wabaId') wabaId: string, @Request() req) {
+        return this.whatsappService.fetchAvailablePhoneNumbers(req.user.companyId, token, wabaId);
+    }
+
+    @Post('select-number')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
+    selectPhoneNumber(@Body() body: { phoneNumberId: string; wabaId?: string; accessToken?: string }, @Request() req) {
+        return this.whatsappService.selectPhoneNumber(req.user.companyId, body);
+    }
+
+    @Post('disconnect')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
+    disconnect(@Request() req) {
+        return this.whatsappService.disconnectWhatsApp(req.user.companyId);
     }
 
     @Post('send')
@@ -116,12 +159,28 @@ export class WhatsAppController {
         res.send(buffer);
     }
 
-    // Fetch approved templates from Meta
+    // Fetch all templates from Meta
     @Get('templates')
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER)
     fetchTemplates(@Request() req) {
         return this.whatsappService.fetchTemplates(req.user.companyId);
+    }
+
+    // Submit new template directly to Meta Graph API for approval
+    @Post('templates/create')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER)
+    createTemplate(@Body() body: any, @Request() req) {
+        return this.whatsappService.createAndSubmitTemplate(req.user.companyId, body);
+    }
+
+    // Delete template from Meta and local DB
+    @Delete('templates/:name')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN)
+    deleteTemplate(@Param('name') name: string, @Request() req) {
+        return this.whatsappService.deleteTemplate(req.user.companyId, name);
     }
 
     // Save auto-reply settings
@@ -144,8 +203,8 @@ export class WhatsAppController {
         @Query('hub.verify_token') token: string,
         @Query('hub.challenge') challenge: string,
     ) {
-        const VERIFY_TOKEN = 'magnet-crm';
-        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+        const validTokens = [process.env.META_WEBHOOK_VERIFY_TOKEN, 'wcrm'].filter(Boolean);
+        if (mode === 'subscribe' && validTokens.includes(token)) {
             // Return the challenge exactly as-is (Meta expects the raw string echoed back)
             return challenge;
         }

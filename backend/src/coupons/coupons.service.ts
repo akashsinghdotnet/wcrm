@@ -52,9 +52,16 @@ export class CouponsService {
      * Public endpoint: Validate a coupon code
      * Called from the checkout page (no auth required)
      */
-    async validate(code: string, billingCycle?: string): Promise<Coupon> {
+    async validate(
+        code: string,
+        billingCycle?: string,
+        planId?: string,
+        companyId?: string,
+        isRenewal?: boolean,
+    ): Promise<Coupon> {
+        if (!code) throw new BadRequestException('Coupon code is required');
         const coupon = await this.couponRepo.findOne({
-            where: { code: code.toUpperCase(), isActive: true },
+            where: { code: code.trim().toUpperCase(), isActive: true },
         });
 
         if (!coupon) throw new BadRequestException('Invalid or expired coupon code');
@@ -66,12 +73,22 @@ export class CouponsService {
 
         // Check usage limit
         if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
-            throw new BadRequestException('This coupon has reached its usage limit');
+            throw new BadRequestException('This coupon has reached its total usage limit');
         }
 
         // Check billing cycle
         if (billingCycle && coupon.billingCycle !== 'both' && coupon.billingCycle !== billingCycle) {
             throw new BadRequestException(`This coupon is only valid for ${coupon.billingCycle} billing`);
+        }
+
+        // Check plan restriction
+        if (planId && coupon.applicablePlanId && coupon.applicablePlanId !== planId) {
+            throw new BadRequestException('This coupon is not valid for the selected plan');
+        }
+
+        // Check first cycle / renewal restriction
+        if (isRenewal && coupon.isFirstCycleOnly) {
+            throw new BadRequestException('This coupon code is valid for first-time subscriptions only and cannot be applied to renewals');
         }
 
         return coupon;

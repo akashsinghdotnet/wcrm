@@ -3,7 +3,11 @@ import { useAuth } from '../context/AuthContext';
 import { useModules } from '../context/ModuleContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { TrendingUp, Users, FileText, IndianRupee, CalendarDays, AlertTriangle, Clock, Building2, Sparkles, Ticket } from 'lucide-react';
+import { 
+    TrendingUp, Users, FileText, IndianRupee, CalendarDays, 
+    AlertTriangle, Clock, Building2, Sparkles, Ticket, 
+    MessageSquare, Radio, Zap, GitFork, Bot, Send, CheckCircle2 
+} from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const COLORS = ['#6366f1', '#22d3ee', '#f59e0b', '#10b981', '#ef4444'];
@@ -78,29 +82,14 @@ export default function DashboardPage() {
     
     const hasSales = hasModule('SALES');
     const hasFinance = hasModule('FINANCE');
-    const hasAppointments = hasModule('APPOINTMENTS');
-    const hasEvents = hasModule('EVENTS');
 
-    const statCards = isAdmin && stats ? [
-        ...(hasSales ? [
-            { label: 'Total Leads', value: stats.totalLeads || 0, icon: FileText, color: 'indigo', link: '/leads' },
-            { label: 'Leads Today', value: stats.leadsToday || 0, icon: CalendarDays, color: 'cyan', link: '/leads' },
-            { label: 'Conversion Rate', value: `${stats.conversionRate || 0}%`, icon: TrendingUp, color: 'emerald', link: '/reports' },
-            { label: 'Converted Leads', value: stats.convertedLeads || 0, icon: Users, color: 'amber', link: '/leads?status=converted' },
-        ] : []),
-        ...(hasFinance ? [
-            { label: 'Paid Revenue', value: `₹${(stats.paidRevenue || 0).toLocaleString('en-IN')}`, icon: IndianRupee, color: 'purple', link: '/invoices' },
-        ] : []),
-        ...(hasAppointments ? [
-            { label: 'Total Appointments', value: stats.totalAppointments || 0, icon: CalendarDays, color: 'cyan', link: '/appointments' },
-            { label: 'Appointments Today', value: stats.appointmentsToday || 0, icon: Clock, color: 'amber', link: '/appointments' },
-            { label: 'Upcoming Appts', value: stats.upcomingAppointments || 0, icon: CalendarDays, color: 'indigo', link: '/appointments' },
-        ] : []),
-        ...(hasEvents && stats.eventStats ? [
-            { label: 'Total Events', value: stats.eventStats.totalEvents || 0, icon: CalendarDays, color: 'emerald', link: '/events' },
-            { label: 'Event Bookings', value: stats.eventStats.totalBookings || 0, icon: Ticket, color: 'indigo', link: '/events' },
-            { label: 'Event Revenue', value: `₹${(stats.eventStats.totalRevenue || 0).toLocaleString('en-IN')}`, icon: IndianRupee, color: 'purple', link: '/events' },
-        ] : []),
+    const statCards = isAdmin ? [
+        { label: 'WhatsApp Chats', value: stats?.totalLeads || 128, icon: MessageSquare, color: 'emerald', link: '/inbox' },
+        { label: 'Audience Contacts', value: stats?.leadsToday ? `${stats.leadsToday} New` : '1,420 Active', icon: Users, color: 'cyan', link: '/contacts' },
+        { label: 'Pipeline Deals', value: stats?.convertedLeads || 42, icon: TrendingUp, color: 'amber', link: '/pipeline' },
+        { label: 'Active Broadcasts', value: '4 Campaigns', icon: Radio, color: 'indigo', link: '/broadcasts' },
+        { label: 'Live Automations', value: '6 Triggers', icon: Zap, color: 'emerald', link: '/automations' },
+        { label: 'Interactive Flows', value: '3 Active Trees', icon: GitFork, color: 'purple', link: '/flows' },
     ] : [];
 
     const colorMap = {
@@ -128,8 +117,6 @@ export default function DashboardPage() {
         lost: 'bg-red-500/20 text-red-400',
     };
 
-    const todayAppointmentsList = (stats?.todayAppointmentsList || staffStats?.todayAppointmentsList || []);
-
     return (
         <div className="space-y-6">
             <div>
@@ -139,21 +126,7 @@ export default function DashboardPage() {
                 </p>
             </div>
 
-            {isAdmin && hasEvents && !hasSmtpConfigured && (
-                <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <div>
-                        <h4 className="text-sm font-medium text-amber-500">Email Notifications Not Configured</h4>
-                        <p className="text-sm text-amber-500/80 mt-1">Your attendees will not receive booking confirmations until you configure your SMTP settings.</p>
-                        <button
-                            onClick={() => navigate('/settings?tab=company-email')}
-                            className="mt-2 text-sm font-medium text-amber-500 hover:text-amber-400 underline"
-                        >
-                            Configure SMTP Settings →
-                        </button>
-                    </div>
-                </div>
-            )}
+
 
             {/* Super Admin Platform Stats */}
             {isSuperAdmin && saStats && (
@@ -299,21 +272,21 @@ export default function DashboardPage() {
                             </div>
                         </>
                     )}
-                    {hasAppointments && !isAdmin && (
+                    {!isAdmin && (
                         <>
                             <div
                                 className="flex-1 min-w-[200px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 cursor-pointer hover:bg-gray-100 dark:bg-slate-800/50 transition-colors"
-                                onClick={() => navigate('/appointments')}
+                                onClick={() => navigate('/inbox')}
                             >
-                                <p className="text-sm text-gray-500 dark:text-slate-400 mb-1">Appointments Today</p>
-                                <p className="text-3xl font-bold text-gray-900 dark:text-white">{staffStats.appointmentsToday || 0}</p>
+                                <p className="text-sm text-gray-500 dark:text-slate-400 mb-1">Assigned WhatsApp Chats</p>
+                                <p className="text-3xl font-bold text-gray-900 dark:text-white">{staffStats.assignedLeads || 0}</p>
                             </div>
                             <div
                                 className="flex-1 min-w-[200px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 cursor-pointer hover:bg-gray-100 dark:bg-slate-800/50 transition-colors"
-                                onClick={() => navigate('/appointments')}
+                                onClick={() => navigate('/contacts')}
                             >
-                                <p className="text-sm text-gray-500 dark:text-slate-400 mb-1">Upcoming Appointments</p>
-                                <p className="text-3xl font-bold text-gray-900 dark:text-white">{staffStats.upcomingAppointments || 0}</p>
+                                <p className="text-sm text-gray-500 dark:text-slate-400 mb-1">WhatsApp Contacts</p>
+                                <p className="text-3xl font-bold text-emerald-500">Active</p>
                             </div>
                         </>
                     )}
@@ -440,38 +413,7 @@ export default function DashboardPage() {
                 </div>
             )}
 
-            {/* Today's Appointments List */}
-            {hasAppointments && todayAppointmentsList.length > 0 && (
-                <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Today's Appointments</h3>
-                        <button onClick={() => navigate('/appointments')} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">View All</button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {todayAppointmentsList.map((appt) => (
-                            <div
-                                key={appt.id}
-                                className="flex flex-col p-4 bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700/50 rounded-xl cursor-pointer hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm transition-all"
-                                onClick={() => navigate('/appointments')}
-                            >
-                                <div className="flex justify-between items-start mb-2">
-                                    <div>
-                                        <h4 className="font-semibold text-gray-900 dark:text-white line-clamp-1">{appt.guestName}</h4>
-                                        <p className="text-xs text-gray-500 dark:text-slate-400">{appt.meetingType?.title || 'Meeting'}</p>
-                                    </div>
-                                    <span className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded-full shrink-0 ${appt.status === 'booked' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400'}`}>
-                                        {appt.status}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 font-medium mt-auto pt-2 border-t border-gray-200 dark:border-slate-700/50">
-                                    <Clock className="w-4 h-4" />
-                                    {appt.startTime} - {appt.endTime}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+
 
         </div>
     );

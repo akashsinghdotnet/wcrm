@@ -1,9 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, ManyToMany, JoinTable, Index } from 'typeorm';
 import { Company } from '../../companies/company.entity';
 import { WhatsAppList } from './whatsapp-list.entity';
 import { WhatsAppTag } from './whatsapp-tag.entity';
 
 @Entity('whatsapp_contacts')
+@Index('uq_company_phone', ['companyId', 'phone'], { unique: true })
 export class WhatsAppContact {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -18,7 +19,7 @@ export class WhatsAppContact {
     @Column()
     name: string;
 
-    @Column({ unique: true })
+    @Column()
     phone: string;
 
     @Column({ nullable: true })

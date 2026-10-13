@@ -75,6 +75,18 @@ export class Lead {
     notes: string;
 
     @Column({ nullable: true })
+    designation: string;
+
+    @Column({ nullable: true })
+    companyName: string;
+
+    @Column({ nullable: true })
+    website: string;
+
+    @Column({ type: 'text', nullable: true })
+    address: string;
+
+    @Column({ nullable: true })
     city: string;
 
     @Column({ nullable: true })

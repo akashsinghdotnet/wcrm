@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Plus, CheckCircle, XCircle, Clock, ExternalLink } from 'lucide-react';
+import { FileText, Plus, CheckCircle, XCircle, Clock, RefreshCw, ShieldCheck } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -12,7 +12,7 @@ export default function WhatsAppTemplatesPage() {
         name: '',
         content: '',
         category: 'marketing',
-        language: 'en',
+        language: 'en_US',
         variables: [],
     });
 
@@ -23,8 +23,8 @@ export default function WhatsAppTemplatesPage() {
     const loadTemplates = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/whatsapp-crm/templates');
-            setTemplates(res.data);
+            const res = await api.get('/whatsapp/templates');
+            setTemplates(res.data || []);
         } catch (err) {
             toast.error('Failed to load templates');
         } finally {
@@ -34,21 +34,30 @@ export default function WhatsAppTemplatesPage() {
 
     const handleCreateTemplate = async (e) => {
         e.preventDefault();
+        const cleanName = form.name.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        if (!cleanName) return toast.error('Template name is required');
+        if (!form.content.trim()) return toast.error('Template content is required');
+
         try {
-            await api.post('/whatsapp-crm/templates', form);
-            toast.success('Template created. Submit to Meta for approval.');
+            const res = await api.post('/whatsapp/templates/create', {
+                name: cleanName,
+                bodyText: form.content,
+                category: form.category.toUpperCase(),
+                language: form.language,
+            });
+            toast.success(res.data?.message || 'Template submitted directly to Meta for review!');
             setShowModal(false);
-            setForm({ name: '', content: '', category: 'marketing', language: 'en', variables: [] });
+            setForm({ name: '', content: '', category: 'marketing', language: 'en_US', variables: [] });
             loadTemplates();
         } catch (err) {
-            toast.error('Failed to create template');
+            toast.error(err.response?.data?.message || 'Failed to submit template to Meta');
         }
     };
 
     const getStatusBadge = (status) => {
         const badges = {
-            pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', icon: Clock, label: 'Pending Approval' },
-            approved: { bg: 'bg-green-500/20', text: 'text-green-400', icon: CheckCircle, label: 'Approved' },
+            pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', icon: Clock, label: 'Pending Meta Review' },
+            approved: { bg: 'bg-green-500/20', text: 'text-green-400', icon: CheckCircle, label: 'Approved by Meta' },
             rejected: { bg: 'bg-red-500/20', text: 'text-red-400', icon: XCircle, label: 'Rejected' },
         };
 
@@ -72,32 +81,32 @@ export default function WhatsAppTemplatesPage() {
                             <FileText className="w-8 h-8 text-green-400" />
                             Message Templates
                         </h1>
-                        <p className="text-gray-500 dark:text-slate-400 mt-1">Manage Meta-approved message templates for broadcasts</p>
+                        <p className="text-gray-500 dark:text-slate-400 mt-1">Manage Meta-approved message templates for broadcasts and outbound</p>
                     </div>
-                    <button
-                        onClick={() => setShowModal(true)}
-                        className="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 flex items-center gap-2"
-                    >
-                        <Plus className="w-5 h-5" />
-                        New Template
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={loadTemplates}
+                            className="px-4 py-3 bg-slate-800 text-slate-300 border border-slate-700 rounded-xl hover:bg-slate-700 flex items-center gap-2 text-sm"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                            Sync Status
+                        </button>
+                        <button
+                            onClick={() => setShowModal(true)}
+                            className="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 flex items-center gap-2 text-sm font-semibold shadow-md"
+                        >
+                            <Plus className="w-5 h-5" />
+                            New Template
+                        </button>
+                    </div>
                 </div>
 
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex items-start gap-3">
-                    <ExternalLink className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 flex items-start gap-3">
+                    <ShieldCheck className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
                     <div>
-                        <h3 className="text-blue-400 font-medium mb-1">Template Approval Required</h3>
-                        <p className="text-sm text-blue-300/80">
-                            All broadcast templates must be approved by Meta before use.{' '}
-                            <a
-                                href="https://business.facebook.com/wa/manage/message-templates/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="underline"
-                            >
-                                Submit templates for approval
-                            </a>{' '}
-                            in your WhatsApp Business Manager.
+                        <h3 className="text-emerald-400 font-medium mb-1">Direct Meta Graph API Sync</h3>
+                        <p className="text-sm text-emerald-300/80">
+                            Templates created here are automatically sent to Meta for automated approval without visiting Meta Business Manager. Once approved, you can use them immediately for outbound broadcasts.
                         </p>
                     </div>
                 </div>

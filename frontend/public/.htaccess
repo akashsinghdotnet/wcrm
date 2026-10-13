@@ -3,6 +3,7 @@
   Header always unset X-Frame-Options
   Header always set Content-Security-Policy "frame-ancestors *"
   Header always set X-Frame-Options "ALLOWALL"
+  Header always set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet"
 </IfModule>
 
 # For OpenLiteSpeed / LiteSpeed

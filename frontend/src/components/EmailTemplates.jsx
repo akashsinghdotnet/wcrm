@@ -192,16 +192,16 @@ export default function EmailTemplates() {
                         {/* Gmail-style Header */}
                         <div className="px-6 py-4 flex justify-between items-center bg-white dark:bg-slate-900 shadow-sm z-10 relative">
                             <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-lg">
-                                    M
+                                <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-lg">
+                                    W
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-normal text-gray-900 dark:text-white mb-1">
                                         {selectedTemplate.subject}
                                     </h3>
                                     <div className="flex items-center gap-2 text-sm">
-                                        <span className="font-bold text-gray-900 dark:text-white">Magnet CRM</span>
-                                        <span className="text-gray-500">&lt;noreply@magnetcrm.com&gt;</span>
+                                        <span className="font-bold text-gray-900 dark:text-white">Wcrm</span>
+                                        <span className="text-gray-500">&lt;noreply@wcrm.com&gt;</span>
                                     </div>
                                     <div className="text-xs text-gray-500 mt-0.5">
                                         to me ▾

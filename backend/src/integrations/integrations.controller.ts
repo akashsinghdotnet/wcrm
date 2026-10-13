@@ -130,7 +130,7 @@ export class IntegrationsController {
     @Roles(UserRole.ADMIN)
     getMetaOauthUrl(@Request() req) {
         const clientId = (process.env.META_CENTRAL_APP_ID || '').replace(/[\"\\']/g, '').trim();
-        const redirectUri = encodeURIComponent('https://api.magnetcrm.com/api/integrations/meta/callback');
+        const redirectUri = encodeURIComponent(process.env.META_REDIRECT_URI || 'https://api.wcrm.si/api/integrations/meta/callback');
         const state = req.user.companyId; // Pass client's company ID in state
         
         const configId = (process.env.META_CENTRAL_CONFIG_ID || '').replace(/[\"\\']/g, '').trim();
@@ -168,7 +168,7 @@ export class IntegrationsController {
                 <body>
                     <div style="text-align: center; margin-top: 50px; font-family: sans-serif;">
                         <h2>Authentication Successful!</h2>
-                        <p>Connecting to Magnet CRM... You can close this window now.</p>
+                        <p>Connecting to Wcrm... You can close this window now.</p>
                     </div>
                     <script>
                         if (window.opener) {

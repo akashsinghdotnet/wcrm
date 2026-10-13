@@ -86,7 +86,7 @@ export class ClientsService {
     async search(companyId: string, query: string): Promise<Client[]> {
         return this.clientsRepository.createQueryBuilder('client')
             .where('client.companyId = :companyId', { companyId })
-            .andWhere('(client.clientName ILIKE :q OR client.email ILIKE :q OR client.phone ILIKE :q)', { q: `%${query}%` })
+            .andWhere('(client.clientName LIKE :q OR client.email LIKE :q OR client.phone LIKE :q)', { q: `%${query}%` })
             .limit(10)
             .getMany();
     }

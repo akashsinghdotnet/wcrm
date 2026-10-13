@@ -32,6 +32,8 @@ export default function TeamSettings() {
     const adminLimitReached = plan && adminCount >= plan.adminLimit;
     const staffLimitReached = plan && staffCount >= plan.employeeLimit;
 
+    const [loginLogs, setLoginLogs] = useState([]);
+
     useEffect(() => {
         if (isSuperAdmin) {
             // For Super Admin view, only load other super admins, ignore companies
@@ -39,7 +41,19 @@ export default function TeamSettings() {
         } else if (selectedCompanyId) {
             loadUsers(selectedCompanyId);
         }
+        if (['admin', 'super_admin', 'superadmin_admin'].includes(user.role)) {
+            loadLoginLogs();
+        }
     }, [isSuperAdmin, selectedCompanyId]);
+
+    const loadLoginLogs = async () => {
+        try {
+            const res = await api.get('/auth/login-logs');
+            setLoginLogs(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     const loadSuperAdmins = async () => {
         setLoading(true);
@@ -280,6 +294,61 @@ export default function TeamSettings() {
                 )
             }
 
+            {/* Login Activity Audit Log Section (Admin Only) */}
+            {['admin', 'super_admin', 'superadmin_admin'].includes(user.role) && (
+                <div className="mt-8 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <ShieldCheck className="w-5 h-5 text-indigo-400" />
+                        Team Login Activity Audit Log
+                    </h3>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-gray-200 dark:border-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                                    <th className="pb-3">User</th>
+                                    <th className="pb-3">Role</th>
+                                    <th className="pb-3">Login Date & Time</th>
+                                    <th className="pb-3">IP Address</th>
+                                    <th className="pb-3">Location</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200 dark:divide-slate-800 text-sm">
+                                {loginLogs.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="5" className="py-6 text-center text-gray-400 dark:text-slate-500">
+                                            No login activity recorded yet.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    loginLogs.map((log) => (
+                                        <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50">
+                                            <td className="py-3 font-medium text-gray-900 dark:text-white">
+                                                {log.userName}
+                                                <span className="block text-xs text-gray-400 dark:text-slate-500 font-normal">{log.userEmail}</span>
+                                            </td>
+                                            <td className="py-3">
+                                                <span className="px-2 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-400 capitalize">
+                                                    {log.userRole}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 text-gray-600 dark:text-slate-300 text-xs">
+                                                {new Date(log.loginAt).toLocaleString()}
+                                            </td>
+                                            <td className="py-3 font-mono text-xs text-gray-600 dark:text-slate-300">
+                                                {log.ipAddress}
+                                            </td>
+                                            <td className="py-3 text-xs text-gray-500 dark:text-slate-400">
+                                                {log.location}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
             {/* Modal */}
             {
                 showModal && (
@@ -327,7 +396,7 @@ export default function TeamSettings() {
                                         value={form.email}
                                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                                         className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        placeholder={isSuperAdmin && form.role === 'super_admin' ? "admin@magnethq.com" : "staff@magnethq.com"}
+                                        placeholder={isSuperAdmin && form.role === 'super_admin' ? "admin@wcrm.si" : "staff@wcrm.si"}
                                     />
                                 </div>
                                 <div>

@@ -6,9 +6,13 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Global API prefix — all routes become /api/... except widget
-  app.setGlobalPrefix('api', {
-    exclude: ['widget/booking.js', 'widget/event-booking.js', 'widget/hotel-booking.js'],
+  // Global API prefix — all routes become /api/...
+  app.setGlobalPrefix('api');
+
+  // Global SEO Noindex header middleware for app.wcrm.si
+  app.use((req: any, res: any, next: any) => {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+    next();
   });
 
   // Validate all incoming request bodies using DTO decorators
@@ -33,8 +37,11 @@ async function bootstrap() {
 
   const allowedOrigins = [
     ...new Set([
-      'https://app.magnetcrm.com',
+      'https://app.wcrm.si',
+      'https://wcrm.si',
       'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:5175',
       ...envOrigins,
     ]),
   ];
@@ -64,6 +71,6 @@ async function bootstrap() {
   server.headersTimeout = 66000;
 
   await app.listen(process.env.PORT ?? 3000);
-  console.log(`MagnetCRM API running on http://localhost:${process.env.PORT ?? 3000}/api`);
+  console.log(`Wcrm API running on http://localhost:${process.env.PORT ?? 3000}/api`);
 }
 bootstrap();

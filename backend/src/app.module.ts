@@ -22,9 +22,6 @@ import { AnnouncementsModule } from './announcements/announcements.module';
 import { CallingModule } from './calling/calling.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { ModulesModule } from './modules/modules.module';
-import { AppointmentsModule } from './appointments/appointments.module';
-// import { HotelsModule } from './hotels/hotels.module'; // Disabled — replaced by Events module
-import { EventsModule } from './events/events.module';
 import { CompanySettingsModule } from './company-settings/company-settings.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -44,7 +41,7 @@ import { ScheduleModule } from '@nestjs/schedule';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true, // Auto-create tables (disable in production)
+        synchronize: configService.get<string>('DB_SYNCHRONIZE') !== 'false', // Auto-create tables (disable in production)
         logging: true,
         extra: {
           max: 40, // max connection pool size
@@ -73,9 +70,6 @@ import { ScheduleModule } from '@nestjs/schedule';
     CallingModule,
     CouponsModule,
     ModulesModule,
-    AppointmentsModule,
-    EventsModule,
-    // HotelsModule, // Disabled — replaced by Events module
     CompanySettingsModule,
   ],
   controllers: [AppController],

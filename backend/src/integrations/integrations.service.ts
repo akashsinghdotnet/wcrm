@@ -500,7 +500,7 @@ export class IntegrationsService {
      * Verify Meta webhook — called by Meta when setting up the webhook.
      */
     verifyMetaWebhook(mode: string, challenge: string, verifyToken: string): string | null {
-        const expectedToken = process.env.META_WEBHOOK_VERIFY_TOKEN || 'magnet-crm';
+        const expectedToken = process.env.META_WEBHOOK_VERIFY_TOKEN || 'wcrm';
         if (mode === 'subscribe' && verifyToken === expectedToken) {
             this.logger.log('Meta Lead Ads webhook verified successfully');
             return challenge;
@@ -703,7 +703,7 @@ export class IntegrationsService {
     async exchangeMetaCodeAndGetPages(code: string) {
         const appId = (process.env.META_CENTRAL_APP_ID || '').replace(/[\"\\']/g, '').trim();
         const appSecret = (process.env.META_CENTRAL_APP_SECRET || '').replace(/[\"\\']/g, '').trim();
-        const redirectUri = 'https://api.magnetcrm.com/api/integrations/meta/callback';
+        const redirectUri = process.env.META_REDIRECT_URI || 'https://api.wcrm.si/api/integrations/meta/callback';
 
         if (!appId || !appSecret) {
             throw new Error('Central Facebook App credentials (META_CENTRAL_APP_ID, META_CENTRAL_APP_SECRET) are not configured on the server.');
@@ -760,7 +760,7 @@ export class IntegrationsService {
     }
 
     /**
-     * Subscribe selected Facebook Page to Magnet CRM webhook
+     * Subscribe selected Facebook Page to Wcrm webhook
      * and save page credentials in integration config.
      */
     async subscribeMetaPage(data: {

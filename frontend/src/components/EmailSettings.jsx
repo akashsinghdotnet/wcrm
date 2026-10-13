@@ -9,7 +9,7 @@ export default function EmailSettings() {
         port: 587,
         user: '',
         pass: '',
-        fromName: 'Magnet CRM',
+        fromName: 'Wcrm',
         fromEmail: '',
         isSecure: false,
     });
@@ -143,7 +143,7 @@ export default function EmailSettings() {
                                 value={config.fromName}
                                 onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
                                 className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                placeholder="Magnet CRM"
+                                placeholder="Wcrm"
                             />
                         </div>
                         <div>

@@ -186,7 +186,7 @@ export default function WhatsAppChatsPage() {
                             {filtered.map((conv) => (
                                 <button
                                     key={conv.lead.id}
-                                    onClick={() => navigate(`/whatsapp-chats/${conv.lead.id}`)}
+                                    onClick={() => navigate(`/inbox/${conv.lead.id}`)}
                                     className="w-full flex items-center gap-4 px-5 py-4 hover:bg-gray-100 dark:bg-slate-800/50 transition-colors text-left cursor-pointer"
                                 >
                                     {/* Avatar */}

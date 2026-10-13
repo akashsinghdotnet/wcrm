@@ -11,7 +11,7 @@ async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
   const usersRepository = app.get<Repository<User>>(getRepositoryToken(User));
 
-  const emails = ['superadmin@magnetcrm.com', 'companyadmin@magnetcrm.com'];
+  const emails = ['superadmin@wcrm.si', 'companyadmin@wcrm.si'];
   const newPassword = 'password123';
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 

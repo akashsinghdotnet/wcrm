@@ -20,4 +20,7 @@ export class WebhookWebsiteDto {
     @IsOptional()
     @IsString()
     message?: string;
+
+    @IsOptional()
+    testConnection?: any;
 }

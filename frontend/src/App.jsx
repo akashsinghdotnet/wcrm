@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from './context/AuthContext';
 import { ModuleProvider } from './context/ModuleContext';
-import { ConfigProvider } from './context/ConfigContext';
+import { useConfig } from './context/ConfigContext';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
@@ -32,20 +32,23 @@ import EmailHistoryPage from './pages/EmailHistoryPage';
 import MarketingPage from './pages/MarketingPage';
 import WhatsAppChatsPage from './pages/WhatsAppChatsPage';
 import WhatsAppChatPage from './pages/WhatsAppChatPage';
+import WhatsAppDirectChatPage from './pages/WhatsAppDirectChatPage';
+import WhatsAppContactsPage from './pages/WhatsAppContactsPage';
+import WhatsAppBroadcastPage from './pages/WhatsAppBroadcastPage';
+import NotificationsPage from './pages/NotificationsPage';
+import AutomationsPage from './pages/AutomationsPage';
+import FlowsPage from './pages/FlowsPage';
+import AiAgentsPage from './pages/AiAgentsPage';
 import TicketsPage from './pages/TicketsPage';
 import TicketDetailsPage from './pages/TicketDetailsPage';
 import AnnouncementsAdminPage from './pages/AnnouncementsAdminPage';
 import AnnouncementsViewPage from './pages/AnnouncementsViewPage';
 import ModuleSettingsPage from './pages/ModuleSettingsPage';
-import AppointmentsPage from './pages/AppointmentsPage';
-import PublicBookingPage from './pages/PublicBookingPage';
-import WhatsAppDirectChatPage from './pages/WhatsAppDirectChatPage';
-import EventsPage from './pages/EventsPage';
-import EventBookingsPage from './pages/EventBookingsPage';
-import PublicEventBookingPage from './pages/PublicEventBookingPage';
 
 export default function App() {
   const { user, loading } = useAuth();
+  const { config } = useConfig() || {};
+  const isSelfHosted = config?.deployment_mode === 'self_hosted';
 
   if (loading) {
     return (
@@ -56,8 +59,7 @@ export default function App() {
   }
 
   return (
-    <ConfigProvider>
-      <ModuleProvider>
+    <ModuleProvider>
       <Toaster
         position="top-right"
         toastOptions={{
@@ -76,7 +78,15 @@ export default function App() {
         />
         <Route
           path="/army"
-          element={user ? <Navigate to="/" replace /> : <LoginPage type="admin" />}
+          element={
+            isSelfHosted ? (
+              <Navigate to="/login" replace />
+            ) : user ? (
+              <Navigate to="/" replace />
+            ) : (
+              <LoginPage type="admin" />
+            )
+          }
         />
         <Route
           path="/forgot-password"
@@ -97,17 +107,17 @@ export default function App() {
         >
           <Route index element={<DashboardPage />} />
           <Route path="clients" element={
-            <ProtectedRoute roles={['admin', 'staff']}>
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
               <ClientsPage />
             </ProtectedRoute>
           } />
           <Route path="leads" element={
-            <ProtectedRoute roles={['admin', 'staff']} module="SALES">
+            <ProtectedRoute roles={['admin', 'manager', 'staff']} module="SALES">
               <LeadsPage />
             </ProtectedRoute>
           } />
           <Route path="pipeline" element={
-            <ProtectedRoute roles={['admin', 'staff']} module="SALES">
+            <ProtectedRoute roles={['admin', 'manager', 'staff']} module="SALES">
               <PipelinePage />
             </ProtectedRoute>
           } />
@@ -137,7 +147,7 @@ export default function App() {
             </ProtectedRoute>
           } />
           <Route path="reports" element={
-            <ProtectedRoute roles={['admin']} module="REPORTS">
+            <ProtectedRoute roles={['admin', 'manager']} module="REPORTS">
               <ReportsPage />
             </ProtectedRoute>
           } />
@@ -179,18 +189,69 @@ export default function App() {
               <IntegrationsPage />
             </ProtectedRoute>
           } />
+          {/* Core Wcrm Routes */}
+          <Route path="inbox" element={
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+              <WhatsAppChatsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="inbox/:leadId" element={
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+              <WhatsAppChatPage />
+            </ProtectedRoute>
+          } />
+          <Route path="notifications" element={
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+              <NotificationsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="contacts" element={
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+              <WhatsAppContactsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="whatsapp-contacts" element={
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+              <WhatsAppContactsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="broadcasts" element={
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+              <WhatsAppBroadcastPage />
+            </ProtectedRoute>
+          } />
+          <Route path="whatsapp-broadcast" element={
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+              <WhatsAppBroadcastPage />
+            </ProtectedRoute>
+          } />
+          <Route path="automations" element={
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+              <AutomationsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="flows" element={
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+              <FlowsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="ai-agents" element={
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+              <AiAgentsPage />
+            </ProtectedRoute>
+          } />
           <Route path="whatsapp-chats" element={
-            <ProtectedRoute roles={['admin', 'manager', 'staff']} module="WHATSAPP">
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
               <WhatsAppChatsPage />
             </ProtectedRoute>
           } />
           <Route path="whatsapp-chats/:leadId" element={
-            <ProtectedRoute roles={['admin', 'manager', 'staff']} module="WHATSAPP">
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
               <WhatsAppChatPage />
             </ProtectedRoute>
           } />
           <Route path="whatsapp-direct/:phone" element={
-            <ProtectedRoute roles={['admin', 'manager', 'staff']} module="WHATSAPP">
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
               <WhatsAppDirectChatPage />
             </ProtectedRoute>
           } />
@@ -233,7 +294,7 @@ export default function App() {
           <Route
             path="marketing"
             element={
-              <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin']} module="MARKETING">
+              <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin', 'manager']} module="MARKETING">
                 <MarketingPage />
               </ProtectedRoute>
             }
@@ -254,37 +315,10 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="appointments"
-            element={
-              <ProtectedRoute roles={['admin', 'staff']} module="APPOINTMENTS">
-                <AppointmentsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="events"
-            element={
-              <ProtectedRoute roles={['admin', 'staff', 'manager']} module="EVENTS">
-                <EventsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="event-bookings"
-            element={
-              <ProtectedRoute roles={['admin', 'staff', 'manager']} module="EVENTS">
-                <EventBookingsPage />
-              </ProtectedRoute>
-            }
-          />
         </Route>
-        <Route path="/event/:slug" element={<PublicEventBookingPage />} />
-        <Route path="/book/:bookingSlug/:slug" element={<PublicBookingPage />} />
         <Route path="/checkout/:planSlug" element={<CheckoutPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </ModuleProvider>
-    </ConfigProvider>
   );
 }

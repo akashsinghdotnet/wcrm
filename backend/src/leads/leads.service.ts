@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, LessThanOrEqual, MoreThanOrEqual, In } from 'typeorm';
 import { Lead, LeadSource, LeadStatus } from './lead.entity';
@@ -10,9 +10,11 @@ import { FilterLeadsDto } from './dto/filter-leads.dto';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UsersService } from '../users/users.service';
 import { WhatsAppService } from '../whatsapp/whatsapp.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class LeadsService {
+    private readonly logger = new Logger(LeadsService.name);
     // Tracks the last assigned index per company for round-robin
     private roundRobinIndex: Map<string, number> = new Map();
 
@@ -26,11 +28,48 @@ export class LeadsService {
         private usersService: UsersService,
         @Inject(forwardRef(() => WhatsAppService))
         private whatsAppService: WhatsAppService,
+        @Inject(forwardRef(() => EmailService))
+        private emailService: EmailService,
     ) { }
 
+    async notifyAssignee(lead: Lead) {
+        if (!lead || !lead.assignedTo) return;
+        try {
+            const assignee = await this.usersService.findById(lead.assignedTo);
+            if (assignee && assignee.email) {
+                const assigneeName = `${assignee.firstName || ''} ${assignee.lastName || ''}`.trim() || assignee.name || assignee.email;
+                await this.emailService.sendLeadAssignmentEmail(
+                    assignee.email,
+                    assigneeName,
+                    lead,
+                    lead.companyId,
+                ).catch((err) => {
+                    this.logger.error(`Error sending lead assignment email: ${err.message}`);
+                });
+            }
+        } catch (err) {
+            this.logger.error(`Failed to notify assignee for lead ${lead.id}: ${err.message}`);
+        }
+    }
+
     async create(createLeadDto: CreateLeadDto, options?: { skipAutoReply?: boolean }): Promise<Lead> {
+        // Auto-assign lead via round-robin if assignedTo is not explicitly passed
+        if (!createLeadDto.assignedTo && createLeadDto.companyId) {
+            try {
+                const nextAssignee = await this.getNextAssignee(createLeadDto.companyId, createLeadDto.source);
+                if (nextAssignee) {
+                    createLeadDto.assignedTo = nextAssignee;
+                }
+            } catch { }
+        }
+
         const lead = this.leadsRepository.create(createLeadDto);
         const savedLead = await this.leadsRepository.save(lead);
+
+        // Notify assigned user via email asynchronously
+        if (savedLead.assignedTo) {
+            this.notifyAssignee(savedLead).catch(() => { });
+        }
 
         // Trigger WhatsApp auto-reply asynchronously (fire and forget)
         // Skip if the lead was created FROM an inbound WhatsApp message to prevent reply loops
@@ -131,9 +170,9 @@ export class LeadsService {
     async update(id: string, updateLeadDto: UpdateLeadDto, userId?: string): Promise<Lead> {
         const lead = await this.findOne(id);
 
-        // Validate follow-up date is required when status is follow_up
+        // Set default follow-up date (24h from now) when status is changed to follow_up without followUpDate
         if (updateLeadDto.status === LeadStatus.FOLLOW_UP && !updateLeadDto.followUpDate && !lead.followUpDate) {
-            throw new BadRequestException('Please choose follow-up date and time to set status to Follow Up');
+            updateLeadDto.followUpDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
         }
 
         // Prevent clearing follow-up date when lead status is already follow_up
@@ -180,7 +219,12 @@ export class LeadsService {
         if (Object.keys(updateLeadDto).length > 0) {
             await this.leadsRepository.update(id, updateLeadDto);
         }
-        return this.findOne(id);
+
+        const updatedLead = await this.findOne(id);
+        if (updateLeadDto.assignedTo && updateLeadDto.assignedTo !== lead.assignedTo) {
+            this.notifyAssignee(updatedLead).catch(() => { });
+        }
+        return updatedLead;
     }
 
     async remove(id: string): Promise<Lead> {
@@ -237,6 +281,13 @@ export class LeadsService {
         }
 
         await this.leadsRepository.update({ id: In(ids) }, updateDto);
+
+        // Notify new assignees if assignedTo changed in bulk
+        if (updateDto.assignedTo) {
+            for (const id of ids) {
+                this.findOne(id).then(l => this.notifyAssignee(l)).catch(() => { });
+            }
+        }
     }
 
     async bulkDelete(ids: string[]): Promise<void> {
@@ -245,38 +296,35 @@ export class LeadsService {
 
     /**
      * Round-robin auto-assignment with source-based rule override.
-     * If a rule exists for the given source, assign to that user.
+     * If source-based rules exist for the given source, rotate round-robin among those assigned users.
      * Otherwise, fall back to round-robin across active staff.
      */
     async getNextAssignee(companyId: string, source?: string): Promise<string | null> {
         // Check source-based assignment rules first
         if (source) {
-            const rule = await this.assignmentRuleRepo.findOne({
+            const sourceRules = await this.assignmentRuleRepo.find({
                 where: { companyId, source: source as LeadSource, isActive: true },
             });
-            if (rule) {
-                return rule.assignedTo;
+            if (sourceRules.length > 0) {
+                const key = `${companyId}:${source}`;
+                const currentIndex = this.roundRobinIndex.get(key) || 0;
+                const nextIndex = currentIndex % sourceRules.length;
+                this.roundRobinIndex.set(key, nextIndex + 1);
+                return sourceRules[nextIndex].assignedTo;
             }
         }
 
-        // Get all active source rules to exclude those employees from round-robin
-        const activeRules = await this.assignmentRuleRepo.find({
-            where: { companyId, isActive: true },
-        });
-        const excludedUserIds = new Set(activeRules.map(r => r.assignedTo));
-
-        // Fall back to round-robin, excluding employees with source-specific rules
+        // Fall back to general round-robin across active staff
         const staff = await this.usersService.findActiveStaff(companyId);
-        const availableStaff = staff.filter(s => !excludedUserIds.has(s.id));
-        if (availableStaff.length === 0) {
+        if (staff.length === 0) {
             return null;
         }
 
         const currentIndex = this.roundRobinIndex.get(companyId) || 0;
-        const nextIndex = currentIndex % availableStaff.length;
+        const nextIndex = currentIndex % staff.length;
         this.roundRobinIndex.set(companyId, nextIndex + 1);
 
-        return availableStaff[nextIndex].id;
+        return staff[nextIndex].id;
     }
 
     // ------- Assignment Rule CRUD -------
@@ -290,12 +338,11 @@ export class LeadsService {
     }
 
     async createAssignmentRule(companyId: string, source: string, assignedTo: string): Promise<LeadAssignmentRule> {
-        // Upsert: one rule per source per company
+        // Find existing rule for specific source and assignee combination
         let rule = await this.assignmentRuleRepo.findOne({
-            where: { companyId, source: source as LeadSource },
+            where: { companyId, source: source as LeadSource, assignedTo },
         });
         if (rule) {
-            rule.assignedTo = assignedTo;
             rule.isActive = true;
         } else {
             rule = this.assignmentRuleRepo.create({
@@ -312,6 +359,11 @@ export class LeadsService {
         const rule = await this.assignmentRuleRepo.findOne({ where: { id } });
         if (!rule) throw new NotFoundException('Assignment rule not found');
         await this.assignmentRuleRepo.remove(rule);
+    }
+
+    async verifyCompanyExists(companyId: string): Promise<boolean> {
+        const result = await this.leadsRepository.manager.query('SELECT id FROM companies WHERE id = ? LIMIT 1', [companyId]);
+        return Array.isArray(result) && result.length > 0;
     }
 
     async findByPhoneOrEmail(companyId: string, phone?: string, email?: string): Promise<Lead | null> {
@@ -486,7 +538,11 @@ export class LeadsService {
 
         const nameIdx = findColumnIndex(['name', 'full name', 'fullname', 'lead name', 'lead_name']);
         const phoneIdx = findColumnIndex(['phone', 'phone_number', 'phone number', 'mobile', 'mobile_number', 'mobile number', 'contact', 'contact_number', 'contact number', 'tel', 'telephone']);
-        const emailIdx = findColumnIndex(['email', 'email_address', 'email address', 'mail']);
+        const emailIdx = findColumnIndex(['email', 'email_address', 'email address', 'mail', 'email id', 'email_id']);
+        const designationIdx = findColumnIndex(['designation', 'job_title', 'job title', 'job_position', 'job position', 'title', 'role', 'position']);
+        const companyNameIdx = findColumnIndex(['company_name', 'company name', 'company', 'organization', 'organization_name', 'organization name', 'org', 'business_name', 'business name']);
+        const websiteIdx = findColumnIndex(['website', 'url', 'web', 'site', 'company_website', 'company website', 'domain']);
+        const addressIdx = findColumnIndex(['address', 'company_address', 'company address', 'street', 'street_address', 'street address', 'location_address']);
         const sourceIdx = findColumnIndex(['source', 'lead_source', 'lead source']);
         const statusIdx = findColumnIndex(['status', 'lead_status', 'lead status']);
         const notesIdx = findColumnIndex(['notes', 'note', 'remark', 'remarks', 'comment', 'comments', 'description']);
@@ -518,6 +574,10 @@ export class LeadsService {
                     name,
                     phone,
                     email: emailIdx >= 0 ? fields[emailIdx] || undefined : undefined,
+                    designation: designationIdx >= 0 ? fields[designationIdx] || undefined : undefined,
+                    companyName: companyNameIdx >= 0 ? fields[companyNameIdx] || undefined : undefined,
+                    website: websiteIdx >= 0 ? fields[websiteIdx] || undefined : undefined,
+                    address: addressIdx >= 0 ? fields[addressIdx] || undefined : undefined,
                     source: sourceIdx >= 0 ? (fields[sourceIdx] as any) || 'manual' : 'manual',
                     status: statusIdx >= 0 ? (fields[statusIdx] as any) || 'new' : 'new',
                     notes: notesIdx >= 0 ? fields[notesIdx] || undefined : undefined,
@@ -667,7 +727,7 @@ export class LeadsService {
         return this.leadsRepository.createQueryBuilder('lead')
             .leftJoinAndSelect('lead.assignedUser', 'assignedUser')
             .where('lead.companyId = :companyId', { companyId })
-            .andWhere('(lead.name ILIKE :q OR lead.email ILIKE :q OR lead.phone ILIKE :q)', { q: `%${query}%` })
+            .andWhere('(lead.name LIKE :q OR lead.email LIKE :q OR lead.phone LIKE :q)', { q: `%${query}%` })
             .limit(10)
             .getMany();
     }

@@ -36,7 +36,7 @@ export class MarketingService {
         settings.smtpPassword = dto.smtpPassword; // Simplify: in real app, encrypt this
         settings.smtpSecure = dto.smtpSecure || false;
         settings.fromEmail = dto.fromEmail;
-        settings.fromName = dto.fromName || (companyId ? 'Your Company' : 'MagnetCRM');
+        settings.fromName = dto.fromName || (companyId ? 'Your Company' : 'Wcrm');
 
         return this.marketingSettingsRepo.save(settings);
     }

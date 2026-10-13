@@ -7,12 +7,14 @@ import { Activity } from './activity.entity';
 import { LeadAssignmentRule } from './lead-assignment-rule.entity';
 import { UsersModule } from '../users/users.module';
 import { WhatsAppModule } from '../whatsapp/whatsapp.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Lead, Activity, LeadAssignmentRule]),
         UsersModule, // For round-robin assignment via UsersService
         forwardRef(() => WhatsAppModule),
+        forwardRef(() => EmailModule),
     ],
     controllers: [LeadsController],
     providers: [LeadsService],

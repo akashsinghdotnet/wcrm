@@ -28,7 +28,7 @@ export class DashboardController {
     }
 
     @Get('reports')
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER)
     getReports(@Request() req, @Query('from') from?: string, @Query('to') to?: string) {
         return this.dashboardService.getReports(req.user.companyId, from, to);
     }

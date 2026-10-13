@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { User, Lock, Building2, Shield, Eye, EyeOff, Mail, Users, IndianRupee, FileText, MessageCircle, Plug, Phone, GitBranch, Calendar, CreditCard, X } from 'lucide-react';
+import { User, Lock, Building2, Shield, Eye, EyeOff, Mail, Users, IndianRupee, FileText, MessageCircle, Plug, Phone, GitBranch, CreditCard, X, Sparkles } from 'lucide-react';
 import { useModules } from '../context/ModuleContext';
 import EmailSettings from '../components/EmailSettings';
 import TeamSettings from '../components/TeamSettings';
@@ -15,11 +15,13 @@ import CallingSettings from '../components/CallingSettings';
 import LeadAssignmentSettings from '../components/LeadAssignmentSettings';
 import EmailTemplates from '../components/EmailTemplates';
 import IntegrationsPage from './IntegrationsPage';
-import AppointmentSettings from '../components/AppointmentSettings';
 import CompanyPaymentSettings from '../components/CompanyPaymentSettings';
+import CommunitySettingsCard from '../components/CommunitySettingsCard';
 
 export default function SettingsPage() {
     const { user, loading } = useAuth();
+    const { config } = useConfig();
+    const isSelfHosted = config?.deployment_mode === 'self_hosted';
     const { hasModule } = useModules();
     const location = useLocation();
     const navigate = useNavigate();
@@ -196,16 +198,13 @@ export default function SettingsPage() {
                 {[
                     { id: 'general', label: 'General', icon: User },
                     { id: 'security', label: 'Security', icon: Lock },
-                    ...(user.role === 'admin' ? [{ id: 'billing', label: 'Subscription & Invoices', icon: IndianRupee }] : []),
-                    ...(['admin', 'super_admin', 'superadmin_admin'].includes(user.role) && hasModule('FINANCE') ? [{ id: 'invoice-settings', label: 'Invoice Settings', icon: FileText }] : []),
+                    ...(user.role === 'admin' && !isSelfHosted ? [{ id: 'billing', label: 'Subscription & Invoices', icon: IndianRupee }] : []),
+                    ...(isSelfHosted ? [{ id: 'community', label: 'Community & Cloud', icon: Sparkles }] : []),
+                    ...(user.role === 'super_admin' ? [{ id: 'invoice-settings', label: 'Invoice Settings', icon: FileText }] : []),
                     ...(['admin', 'manager'].includes(user.role) ? [{ id: 'team', label: 'Team', icon: Users }] : []),
-                    ...(user.role === 'admin' ? [{ id: 'company-email', label: 'Email SMTP', icon: Mail }] : []),
-                    ...(user.role === 'admin' && (hasModule('SALES') || hasModule('MARKETING') || hasModule('WHATSAPP')) ? [{ id: 'integrations', label: 'Integrations', icon: Plug }] : []),
-                    ...(user.role === 'admin' && hasModule('WHATSAPP') ? [{ id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle }] : []),
-                    ...(user.role === 'admin' && hasModule('SALES') ? [{ id: 'lead-assignment', label: 'Lead Assignment', icon: GitBranch }] : []),
-                    ...(user.role === 'admin' && hasModule('CALLING') ? [{ id: 'calling', label: 'Calling', icon: Phone }] : []),
-                    ...(user.role === 'admin' && hasModule('APPOINTMENTS') ? [{ id: 'appointments', label: 'Appointments', icon: Calendar }] : []),
-                    ...(user.role === 'admin' && hasModule('EVENTS') ? [{ id: 'payments', label: 'Payment Settings', icon: CreditCard }] : []),
+                    ...(user.role === 'admin' ? [{ id: 'whatsapp', label: 'WhatsApp Integration', icon: MessageCircle }] : []),
+                    ...(['admin', 'manager'].includes(user.role) && hasModule('SALES') ? [{ id: 'lead-assignment', label: 'Lead Assignment', icon: GitBranch }] : []),
+                    ...(user.role === 'admin' ? [{ id: 'calling', label: 'Calling', icon: Phone }] : []),
                     ...(user.role === 'super_admin' ? [
                         { id: 'email', label: 'Email Settings', icon: Mail },
                         { id: 'email-templates', label: 'Email Templates', icon: FileText }
@@ -528,8 +527,12 @@ export default function SettingsPage() {
                     <EmailTemplates />
                 )}
 
-                {activeTab === 'billing' && user.role === 'admin' && (
+                {activeTab === 'billing' && user.role === 'admin' && !isSelfHosted && (
                     <BillingSettings />
+                )}
+
+                {activeTab === 'community' && isSelfHosted && (
+                    <CommunitySettingsCard config={config} />
                 )}
 
                 {activeTab === 'invoice-settings' && ['admin', 'super_admin', 'superadmin_admin'].includes(user.role) && (
@@ -544,16 +547,12 @@ export default function SettingsPage() {
                     <WhatsAppSettings />
                 )}
 
-                {activeTab === 'lead-assignment' && user.role === 'admin' && (
+                {activeTab === 'lead-assignment' && ['admin', 'manager'].includes(user.role) && (
                     <LeadAssignmentSettings />
                 )}
 
                 {activeTab === 'calling' && user.role === 'admin' && (
                     <CallingSettings />
-                )}
-
-                {activeTab === 'appointments' && user.role === 'admin' && (
-                    <AppointmentSettings />
                 )}
 
                 {activeTab === 'payments' && user.role === 'admin' && (
@@ -813,7 +812,7 @@ function GeneralSystemSettings() {
     const [loginLogoLightUrl, setLoginLogoLightUrl] = useState('');
     const [loginLogoWidth, setLoginLogoWidth] = useState('150');
     const [loginShowText, setLoginShowText] = useState(true);
-    const [loginText, setLoginText] = useState('MagnetCRM');
+    const [loginText, setLoginText] = useState('Wcrm');
     const [loginLogoLink, setLoginLogoLink] = useState('');
 
     // Sidebar Settings
@@ -821,7 +820,7 @@ function GeneralSystemSettings() {
     const [sidebarLogoLightUrl, setSidebarLogoLightUrl] = useState('');
     const [sidebarLogoWidth, setSidebarLogoWidth] = useState('40');
     const [sidebarShowText, setSidebarShowText] = useState(true);
-    const [sidebarText, setSidebarText] = useState('MagnetCRM');
+    const [sidebarText, setSidebarText] = useState('Wcrm');
     const [sidebarPaddingY, setSidebarPaddingY] = useState('24'); // Default 24px (p-6)
     const [sidebarLogoLink, setSidebarLogoLink] = useState('');
 

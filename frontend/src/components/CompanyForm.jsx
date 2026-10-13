@@ -1,9 +1,56 @@
 import { CreditCard } from 'lucide-react';
+import { useEffect } from 'react';
+
+const COUNTRIES = [
+    { code: '+1', flag: '🇺🇸', name: 'US/CA' },
+    { code: '+44', flag: '🇬🇧', name: 'UK' },
+    { code: '+91', flag: '🇮🇳', name: 'IN' },
+    { code: '+61', flag: '🇦🇺', name: 'AU' },
+    { code: '+81', flag: '🇯🇵', name: 'JP' },
+    { code: '+49', flag: '🇩🇪', name: 'DE' },
+    { code: '+33', flag: '🇫🇷', name: 'FR' },
+    { code: '+39', flag: '🇮🇹', name: 'IT' },
+    { code: '+34', flag: '🇪🇸', name: 'ES' },
+    { code: '+55', flag: '🇧🇷', name: 'BR' },
+    { code: '+52', flag: '🇲🇽', name: 'MX' },
+    { code: '+27', flag: '🇿🇦', name: 'ZA' },
+    { code: '+971', flag: '🇦🇪', name: 'AE' },
+    { code: '+65', flag: '🇸🇬', name: 'SG' },
+    { code: '+60', flag: '🇲🇾', name: 'MY' },
+    { code: '+62', flag: '🇮🇩', name: 'ID' },
+    { code: '+63', flag: '🇵🇭', name: 'PH' },
+    { code: '+64', flag: '🇳🇿', name: 'NZ' },
+    { code: '+86', flag: '🇨🇳', name: 'CN' },
+    { code: '+82', flag: '🇰🇷', name: 'KR' },
+];
 
 export default function CompanyForm({ form, setForm, plans, onSubmit, isEdit, onCancel }) {
     console.log('=== CompanyForm rendering ===');
     console.log('Form object:', form);
     console.log('Email value:', form?.email, 'Phone value:', form?.phone, 'Address value:', form?.address);
+
+    useEffect(() => {
+        if (!isEdit && !form.renewalDate) {
+            const now = new Date();
+            if (form.subscriptionPeriod === 'monthly') {
+                now.setMonth(now.getMonth() + 1);
+            } else if (form.subscriptionPeriod === 'yearly') {
+                now.setFullYear(now.getFullYear() + 1);
+            }
+            setForm(prev => ({ ...prev, renewalDate: now.toISOString().split('T')[0] }));
+        }
+    }, [isEdit]);
+
+    const handlePeriodChange = (e) => {
+        const period = e.target.value;
+        const now = new Date();
+        if (period === 'monthly') {
+            now.setMonth(now.getMonth() + 1);
+        } else if (period === 'yearly') {
+            now.setFullYear(now.getFullYear() + 1);
+        }
+        setForm({ ...form, subscriptionPeriod: period, renewalDate: now.toISOString().split('T')[0] });
+    };
 
     return (
         <form onSubmit={onSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
@@ -16,8 +63,8 @@ export default function CompanyForm({ form, setForm, plans, onSubmit, isEdit, on
                     placeholder="Acme Agency"
                 />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="min-w-0">
                     <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Email</label>
                     <input
                         type="email" value={form.email || ''}
@@ -26,14 +73,27 @@ export default function CompanyForm({ form, setForm, plans, onSubmit, isEdit, on
                         placeholder="contact@acme.com"
                     />
                 </div>
-                <div>
+                <div className="min-w-0">
                     <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Phone</label>
-                    <input
-                        type="tel" value={form.phone || ''}
-                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        placeholder="+91..."
-                    />
+                    <div className="flex gap-2 w-full">
+                        <select
+                            value={form.countryCode || '+91'}
+                            onChange={(e) => setForm({ ...form, countryCode: e.target.value })}
+                            className="w-[100px] shrink-0 px-2 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            {COUNTRIES.map(c => (
+                                <option key={c.code} value={c.code}>
+                                    {c.flag} {c.code}
+                                </option>
+                            ))}
+                        </select>
+                        <input
+                            type="tel" value={form.phone || ''}
+                            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                            className="flex-1 min-w-0 w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            placeholder="9999999999"
+                        />
+                    </div>
                 </div>
             </div>
             <div>
@@ -94,7 +154,7 @@ export default function CompanyForm({ form, setForm, plans, onSubmit, isEdit, on
                         <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Billing Period</label>
                         <select
                             value={form.subscriptionPeriod || 'monthly'}
-                            onChange={(e) => setForm({ ...form, subscriptionPeriod: e.target.value })}
+                            onChange={handlePeriodChange}
                             className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                             <option value="monthly">Monthly</option>

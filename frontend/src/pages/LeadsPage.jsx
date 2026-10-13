@@ -30,6 +30,10 @@ const emptyForm = {
     name: '',
     phone: '',
     email: '',
+    designation: '',
+    companyName: '',
+    website: '',
+    address: '',
     source: 'manual',
     status: 'new',
     assignedTo: '',
@@ -183,6 +187,10 @@ export default function LeadsPage() {
             name: lead.name,
             phone: lead.phone || '',
             email: lead.email || '',
+            designation: lead.designation || '',
+            companyName: lead.companyName || '',
+            website: lead.website || '',
+            address: lead.address || '',
             source: lead.source || 'manual',
             status: lead.status,
             assignedTo: assignedUserId,
@@ -516,6 +524,11 @@ export default function LeadsPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <p className="text-sm font-medium text-gray-900 dark:text-white">{lead.name}</p>
+                                        {(lead.companyName || lead.designation) && (
+                                            <p className="text-xs text-gray-500 dark:text-slate-400 font-medium mt-0.5">
+                                                {[lead.designation, lead.companyName].filter(Boolean).join(' at ')}
+                                            </p>
+                                        )}
                                         {(lead.city || lead.state) && (
                                             <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">
                                                 {[lead.city, lead.state].filter(Boolean).join(', ')}
@@ -534,10 +547,31 @@ export default function LeadsPage() {
                                             {lead.source?.replace('_', ' ')}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${statusColors[lead.status] || 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300'}`}>
-                                            {lead.status?.replace('_', ' ')}
-                                        </span>
+                                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                                        <select
+                                            value={lead.status}
+                                            onClick={(e) => e.stopPropagation()}
+                                            onChange={async (e) => {
+                                                const newStatus = e.target.value;
+                                                const prevStatus = lead.status;
+                                                setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: newStatus } : l));
+                                                try {
+                                                    await api.patch(`/leads/${lead.id}`, { status: newStatus });
+                                                    toast.success(`Status updated to ${newStatus.replace('_', ' ')}`);
+                                                    loadData();
+                                                } catch (err) {
+                                                    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: prevStatus } : l));
+                                                    toast.error(err.response?.data?.message || 'Failed to update status');
+                                                }
+                                            }}
+                                            className={`px-2.5 py-1 text-xs font-medium rounded-full border border-transparent focus:outline-none cursor-pointer ${statusColors[lead.status] || 'bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300'}`}
+                                        >
+                                            <option value="new" className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">New</option>
+                                            <option value="contacted" className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">Contacted</option>
+                                            <option value="follow_up" className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">Follow Up</option>
+                                            <option value="converted" className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">Converted</option>
+                                            <option value="lost" className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white">Lost</option>
+                                        </select>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
                                         {lead.assignedUser?.email?.split('@')[0] || '—'}
@@ -551,8 +585,10 @@ export default function LeadsPage() {
                                             <span className="text-gray-400 dark:text-slate-500">—</span>
                                         )}
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
-                                        {new Date(lead.createdAt).toLocaleDateString('en-IN')}
+                                    <td className="px-6 py-4 text-xs text-gray-500 dark:text-slate-400 whitespace-nowrap">
+                                        {new Date(lead.createdAt).toLocaleString('en-IN', {
+                                            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
+                                        })}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
@@ -737,6 +773,46 @@ export default function LeadsPage() {
                                             onChange={(e) => setForm({ ...form, email: e.target.value })}
                                             className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                             placeholder="lead@example.com"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Designation</label>
+                                        <input
+                                            value={form.designation}
+                                            onChange={(e) => setForm({ ...form, designation: e.target.value })}
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            placeholder="Manager / Director"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Company Name</label>
+                                        <input
+                                            value={form.companyName}
+                                            onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            placeholder="Acme Corp"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Website</label>
+                                        <input
+                                            value={form.website}
+                                            onChange={(e) => setForm({ ...form, website: e.target.value })}
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            placeholder="https://example.com"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Address</label>
+                                        <input
+                                            value={form.address}
+                                            onChange={(e) => setForm({ ...form, address: e.target.value })}
+                                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            placeholder="Street address / office"
                                         />
                                     </div>
                                 </div>

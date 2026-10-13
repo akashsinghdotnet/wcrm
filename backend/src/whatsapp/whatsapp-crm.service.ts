@@ -123,7 +123,7 @@ export class WhatsAppCRMService {
         if (filters?.optedIn !== undefined) query.andWhere('contact.isOptedIn = :optedIn', { optedIn: filters.optedIn });
         if (filters?.search) {
             query.andWhere(
-                '(contact.name ILIKE :search OR contact.phone ILIKE :search OR contact.email ILIKE :search)',
+                '(contact.name LIKE :search OR contact.phone LIKE :search OR contact.email LIKE :search)',
                 { search: `%${filters.search}%` }
             );
         }
@@ -319,9 +319,54 @@ export class WhatsAppCRMService {
     // ==================== TEMPLATE MANAGEMENT ====================
 
     async createTemplate(companyId: string, dto: CreateTemplateDto): Promise<WhatsAppTemplate> {
+        const cleanName = dto.name.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        const config = await this.configRepo.findOne({ where: { companyId } });
+        
+        let metaId: string | undefined = undefined;
+        let initialStatus = TemplateStatus.PENDING;
+
+        if (config?.businessAccountId && config?.accessToken) {
+            try {
+                const payload = {
+                    name: cleanName,
+                    category: (dto.category || 'marketing').toUpperCase(),
+                    language: dto.language || 'en_US',
+                    components: [
+                        { type: 'BODY', text: dto.content }
+                    ]
+                };
+
+                const res = await fetch(`https://graph.facebook.com/v21.0/${config.businessAccountId}/message_templates`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${config.accessToken}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    metaId = data.id;
+                    const s = (data.status || 'PENDING').toLowerCase();
+                    if (s === 'approved') initialStatus = TemplateStatus.APPROVED;
+                    else if (s === 'rejected') initialStatus = TemplateStatus.REJECTED;
+                    this.logger.log(`[WhatsApp CRM] Template submitted to Meta successfully: ${data.id}`);
+                } else {
+                    this.logger.warn(`[WhatsApp CRM] Meta template submission warning: ${JSON.stringify(data)}`);
+                    throw new BadRequestException(data.error?.message || 'Meta rejected template');
+                }
+            } catch (err: any) {
+                if (err instanceof BadRequestException) throw err;
+                this.logger.warn(`Could not submit to Meta API: ${err.message}`);
+            }
+        }
+
         const template = this.templateRepo.create({
             ...dto,
+            name: cleanName,
             companyId,
+            status: initialStatus,
+            metaTemplateId: metaId,
         });
 
         return this.templateRepo.save(template);
@@ -333,7 +378,7 @@ export class WhatsAppCRMService {
             const config = await this.configRepo.findOne({ where: { companyId } });
             if (config?.businessAccountId && config?.accessToken) {
                 const response = await fetch(
-                    `https://graph.facebook.com/v21.0/${config.businessAccountId}/message_templates?status=APPROVED&limit=100`,
+                    `https://graph.facebook.com/v21.0/${config.businessAccountId}/message_templates?limit=100`,
                     { headers: { 'Authorization': `Bearer ${config.accessToken}` } }
                 );
                 if (response.ok) {
@@ -341,11 +386,12 @@ export class WhatsAppCRMService {
                     const metaTemplates = (data.data || []).map((t: any) => {
                         const bodyComp = (t.components || []).find((c: any) => c.type === 'BODY');
                         const bodyText = bodyComp?.text || t.name;
+                        const status = (t.status || 'approved').toLowerCase();
                         return {
                             id: t.id || t.name,
                             name: t.name,
                             content: bodyText,
-                            status: 'approved',
+                            status: status,
                             category: t.category?.toLowerCase() || 'marketing',
                             language: t.language,
                             variables: (bodyText.match(/\{\{\d+\}\}/g) || []).map((_: any, i: number) => `var${i + 1}`),

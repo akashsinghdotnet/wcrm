@@ -32,6 +32,15 @@ export class Coupon {
     @Column({ default: 'both' })
     billingCycle: string; // 'both' | 'monthly' | 'yearly'
 
+    @Column({ default: true })
+    isFirstCycleOnly: boolean;
+
+    @Column({ default: 1 })
+    maxUsesPerClient: number;
+
+    @Column({ nullable: true })
+    applicablePlanId: string;
+
     @CreateDateColumn()
     createdAt: Date;
 

@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, HttpCode, HttpStatus, Query, Logger, ValidationPipe, Res } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, Query, Logger, ValidationPipe, Res, BadRequestException } from '@nestjs/common';
 import type { Response as HttpResponse } from 'express';
 import { LeadsService } from '../leads/leads.service';
 import { LeadSource, LeadStatus } from '../leads/lead.entity';
@@ -13,7 +13,7 @@ import { WebhookWebsiteDto } from './dto/webhook-website.dto';
 /**
  * Public webhook endpoints (no JWT required).
  * External services like Meta Ads, Google Ads, JustDial, and website forms
- * call these URLs to push new leads into MagnetCRM.
+ * call these URLs to push new leads into Wcrm.
  */
 @Controller('webhooks')
 export class WebhooksController {
@@ -47,8 +47,8 @@ export class WebhooksController {
         @Query('hub.challenge') challenge: string,
         @Res() res: HttpResponse,
     ) {
-        const VERIFY_TOKEN = 'magnet-crm';
-        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+        const validTokens = [process.env.META_WEBHOOK_VERIFY_TOKEN, 'wcrm'].filter(Boolean);
+        if (mode === 'subscribe' && validTokens.includes(token)) {
             this.logger.log('Meta webhook verification successful');
             return res.status(HttpStatus.OK).send(challenge);
         }
@@ -334,20 +334,38 @@ export class WebhooksController {
     @Post('website')
     @HttpCode(HttpStatus.CREATED)
     async handleWebsite(@Body() dto: WebhookWebsiteDto) {
-        const assignedTo = await this.leadsService.getNextAssignee(dto.companyId, 'website');
+        const companyId = dto.companyId ? dto.companyId.replace(/^.*companyId=/i, '').trim() : '';
 
-        const lead = await this.leadsService.create({
-            companyId: dto.companyId,
-            name: dto.name,
-            phone: dto.phone,
-            email: dto.email,
-            source: LeadSource.WEBSITE,
-            status: LeadStatus.NEW,
-            assignedTo: assignedTo || undefined,
-            notes: dto.message || undefined,
-        });
+        // If this is a test connection request from WordPress plugin, verify without creating a lead
+        if (dto.name === 'WordPress Plugin Test Lead' || dto.message?.includes('Test Connection') || (dto as any).testConnection) {
+            const companyExists = await this.leadsService.verifyCompanyExists(companyId);
+            if (!companyExists) {
+                throw new BadRequestException('Invalid Company ID: Company not found in Wcrm.');
+            }
+            return { success: true, message: 'Connection verified successfully without creating a test lead.' };
+        }
 
-        this.notifyNewLead(lead, 'Website');
-        return { success: true, leadId: lead.id, assignedTo };
+        const assignedTo = await this.leadsService.getNextAssignee(companyId, 'website');
+
+        try {
+            const lead = await this.leadsService.create({
+                companyId,
+                name: dto.name,
+                phone: dto.phone,
+                email: dto.email,
+                source: LeadSource.WEBSITE,
+                status: LeadStatus.NEW,
+                assignedTo: assignedTo || undefined,
+                notes: dto.message || undefined,
+            });
+
+            this.notifyNewLead(lead, 'Website');
+            return { success: true, leadId: lead.id, assignedTo };
+        } catch (err: any) {
+            if (err.message && (err.message.includes('foreign key constraint') || err.message.includes('ER_NO_REFERENCED_ROW'))) {
+                throw new BadRequestException('Invalid Company ID: Company not found in Wcrm.');
+            }
+            throw err;
+        }
     }
 }

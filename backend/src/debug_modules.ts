@@ -12,7 +12,7 @@ async function bootstrap() {
   const companyRepo = app.get<Repository<Company>>(getRepositoryToken(Company));
   const modulesService = app.get(ModulesService);
 
-  const email = 'company_admin_test@magnethq.com';
+  const email = 'company_admin_test@wcrm.si';
   const user = await usersRepo.findOne({ where: { email } });
   
   if (user && user.companyId) {

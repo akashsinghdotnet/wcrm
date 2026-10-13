@@ -169,7 +169,7 @@ export default function LeadAssignmentSettings() {
                         className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                         <option value="">Select Source</option>
-                        {SOURCE_OPTIONS.filter(s => !usedSources.includes(s.value)).map(s => (
+                        {SOURCE_OPTIONS.map(s => (
                             <option key={s.value} value={s.value}>{s.label}</option>
                         ))}
                     </select>

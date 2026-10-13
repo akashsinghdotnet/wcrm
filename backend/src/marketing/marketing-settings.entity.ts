@@ -27,7 +27,7 @@ export class MarketingSettings {
     @Column()
     fromEmail: string;
 
-    @Column({ default: 'MagnetCRM Marketing' })
+    @Column({ default: 'Wcrm Marketing' })
     fromName: string;
 
     @CreateDateColumn()

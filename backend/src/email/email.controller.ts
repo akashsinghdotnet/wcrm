@@ -1,15 +1,46 @@
-import { Controller, Get, Put, Body, UseGuards, Post, Query, Request, Param } from '@nestjs/common';
+import { Controller, Get, Put, Body, UseGuards, Post, Query, Request, Param, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { EmailService } from './email.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { Public } from '../auth/public.decorator';
 import { UserRole } from '../users/user.entity';
 
 @Controller('email')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+@Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER)
 export class EmailController {
     constructor(private readonly emailService: EmailService) { }
+
+    @Get('track/open/:logId')
+    @Public()
+    async trackOpen(@Param('logId') logId: string, @Res() res: Response) {
+        await this.emailService.recordOpen(logId);
+        // Serve 1x1 transparent GIF
+        const transparentGif = Buffer.from(
+            'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+            'base64',
+        );
+        res.set({
+            'Content-Type': 'image/gif',
+            'Content-Length': transparentGif.length.toString(),
+            'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+        });
+        res.send(transparentGif);
+    }
+
+    @Get('track/click/:logId')
+    @Public()
+    async trackClick(@Param('logId') logId: string, @Query('url') url: string, @Res() res: Response) {
+        const redirectUrl = await this.emailService.recordClick(logId, url);
+        res.redirect(302, redirectUrl);
+    }
+
+    @Get('analytics')
+    async getAnalytics(@Request() req) {
+        return this.emailService.getAnalytics(req.user?.companyId);
+    }
 
     @Get('config')
     @Roles(UserRole.SUPER_ADMIN) // Only Super Admin can change system SMTP config
@@ -31,14 +62,12 @@ export class EmailController {
 
     @Get('logs')
     async getLogs(@Request() req) {
-        // user.companyId is null for Super Admin -> returns all (or filter by null if we wanted system only)
-        // For Admin, it returns their company logs
-        return this.emailService.getLogs(req.user.companyId);
+        return this.emailService.getLogs(req.user?.companyId);
     }
 
     @Post('send')
-    async sendManualEmail(@Body() body: { to: string; subject: string; html: string }) {
-        return this.emailService.sendEmail(body.to, body.subject, body.html, 'super_admin');
+    async sendManualEmail(@Body() body: { to: string; subject: string; html: string }, @Request() req) {
+        return this.emailService.sendEmail(body.to, body.subject, body.html, req.user?.userId || 'system', req.user?.companyId);
     }
 
     @Get('templates')

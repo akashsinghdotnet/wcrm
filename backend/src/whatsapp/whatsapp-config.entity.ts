@@ -41,6 +41,24 @@ export class WhatsAppConfig {
     @Column({ nullable: true })
     webJsPhoneNumber: string;
 
+    @Column({ nullable: true })
+    metaAppId: string;
+
+    @Column({ nullable: true })
+    metaAppSecret: string;
+
+    @Column({ nullable: true })
+    metaConfigId: string;
+
+    @Column({ nullable: true })
+    metaWabaName: string;
+
+    @Column({ nullable: true })
+    metaPhoneNumber: string;
+
+    @Column({ default: 'EMBEDDED' })
+    setupMethod: 'EMBEDDED' | 'MANUAL';
+
     @CreateDateColumn()
     createdAt: Date;
 

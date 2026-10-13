@@ -6,11 +6,26 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 
-const StatusBadge = ({ status }) => {
-    if (status === 'sent') {
+const StatusBadge = ({ status, deliveryStatus, openCount, clickCount }) => {
+    const ds = deliveryStatus || status;
+    if (ds === 'clicked' || clickCount > 0) {
+        return (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                <Send size={12} /> Clicked ({clickCount || 1})
+            </span>
+        );
+    }
+    if (ds === 'opened' || openCount > 0) {
         return (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <CheckCircle2 size={12} /> Sent
+                <Eye size={12} /> Opened ({openCount || 1})
+            </span>
+        );
+    }
+    if (status === 'sent') {
+        return (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <CheckCircle2 size={12} /> Delivered
             </span>
         );
     }
@@ -163,14 +178,23 @@ export default function MarketingPage() {
     // File input ref
     const fileInputRef = useRef(null);
 
-    // History State
+    // History & Analytics State
     const [logs, setLogs] = useState([]);
+    const [analytics, setAnalytics] = useState(null);
     const [logsLoading, setLogsLoading] = useState(false);
     const [selectedEmail, setSelectedEmail] = useState(null);
 
+    // Lead Autocomplete State
+    const [leadSuggestions, setLeadSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [suggestionQuery, setSuggestionQuery] = useState('');
+
     useEffect(() => {
         if (activeTab === 'settings') fetchSettings();
-        if (activeTab === 'history') fetchLogs();
+        if (activeTab === 'history') {
+            fetchLogs();
+            fetchAnalytics();
+        }
         if (activeTab === 'compose') {
             // Check for prefilled email from navigation state
             if (location.state?.prefillEmail) {
@@ -188,6 +212,42 @@ export default function MarketingPage() {
             }
         }
     }, [activeTab, location.state, user?.role]);
+
+    const fetchAnalytics = async () => {
+        try {
+            const res = await api.get('/email/analytics');
+            setAnalytics(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleManualRecipientChange = async (value) => {
+        setEmailData(prev => ({ ...prev, manualRecipients: value }));
+        const parts = value.split(',');
+        const currentSearch = parts[parts.length - 1].trim();
+
+        if (currentSearch.length >= 1) {
+            setSuggestionQuery(currentSearch);
+            try {
+                const res = await api.get(`/leads?search=${encodeURIComponent(currentSearch)}&limit=5`);
+                const matches = res.data?.data || res.data || [];
+                setLeadSuggestions(matches.filter(l => l.email));
+                setShowSuggestions(true);
+            } catch (err) {
+                console.error(err);
+            }
+        } else {
+            setShowSuggestions(false);
+        }
+    };
+
+    const selectLeadSuggestion = (leadEmail) => {
+        const parts = emailData.manualRecipients.split(',').map(p => p.trim());
+        parts[parts.length - 1] = leadEmail;
+        setEmailData(prev => ({ ...prev, manualRecipients: parts.filter(Boolean).join(', ') + ', ' }));
+        setShowSuggestions(false);
+    };
 
     const fetchSettings = async () => {
         try {
@@ -360,19 +420,35 @@ export default function MarketingPage() {
                             </div>
                         </div>
 
-                        {/* Manual Recipients Input */}
+                        {/* Manual Recipients Input with Lead Autocomplete */}
                         {emailData.audience === 'MANUAL' && (
-                            <div className="p-4 bg-gray-100 dark:bg-slate-800/50 rounded-xl border border-gray-300 dark:border-slate-700">
+                            <div className="p-4 bg-gray-100 dark:bg-slate-800/50 rounded-xl border border-gray-300 dark:border-slate-700 relative">
                                 <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">
-                                    Recipients (Comma separated)
+                                    Recipients (Type lead name/email for suggestions, comma separated)
                                 </label>
                                 <textarea
                                     rows={3}
                                     value={emailData.manualRecipients}
-                                    onChange={e => setEmailData(prev => ({ ...prev, manualRecipients: e.target.value }))}
+                                    onChange={e => handleManualRecipientChange(e.target.value)}
                                     className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     placeholder="email1@example.com, email2@example.com"
                                 />
+                                {showSuggestions && leadSuggestions.length > 0 && (
+                                    <div className="absolute left-4 right-4 z-20 mt-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                                        <p className="px-3 py-1.5 text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider font-semibold border-b border-gray-100 dark:border-slate-800">Matching Leads</p>
+                                        {leadSuggestions.map((lead) => (
+                                            <button
+                                                key={lead.id}
+                                                type="button"
+                                                onClick={() => selectLeadSuggestion(lead.email)}
+                                                className="w-full text-left px-4 py-2 hover:bg-indigo-500/10 transition-colors flex items-center justify-between text-sm cursor-pointer"
+                                            >
+                                                <span className="font-medium text-gray-900 dark:text-white">{lead.name}</span>
+                                                <span className="text-xs text-indigo-600 dark:text-indigo-400">{lead.email}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -517,66 +593,99 @@ export default function MarketingPage() {
                 </div>
             )}
 
-            {/* History Tab */}
+            {/* History & Analytics Tab */}
             {activeTab === 'history' && (
-                <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
-                                    <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                                    <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Recipient</th>
-                                    <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Subject</th>
-                                    <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
-                                    <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-slate-800">
-                                {logsLoading ? (
-                                    <tr>
-                                        <td colSpan="5" className="p-8 text-center text-gray-400 dark:text-slate-500">Loading logs...</td>
+                <div className="space-y-6">
+                    {/* Analytics Summary Cards */}
+                    {analytics && (
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div className="p-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl">
+                                <span className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Total Sent</span>
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{analytics.totalSent}</p>
+                                <span className="text-xs text-emerald-400">{analytics.delivered} Delivered</span>
+                            </div>
+                            <div className="p-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl">
+                                <span className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Open Rate</span>
+                                <p className="text-2xl font-bold text-emerald-400 mt-1">{analytics.openRate}%</p>
+                                <span className="text-xs text-gray-400 dark:text-slate-500">{analytics.opened} Opened</span>
+                            </div>
+                            <div className="p-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl">
+                                <span className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Click Rate</span>
+                                <p className="text-2xl font-bold text-indigo-400 mt-1">{analytics.clickRate}%</p>
+                                <span className="text-xs text-gray-400 dark:text-slate-500">{analytics.clicked} Clicks</span>
+                            </div>
+                            <div className="p-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl">
+                                <span className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Bounced / Failed</span>
+                                <p className="text-2xl font-bold text-red-400 mt-1">{analytics.failed}</p>
+                                <span className="text-xs text-gray-400 dark:text-slate-500">Errors logged</span>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
+                                        <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                                        <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Recipient</th>
+                                        <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Subject</th>
+                                        <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                                        <th className="p-4 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider text-right">Actions</th>
                                     </tr>
-                                ) : logs.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="5" className="p-8 text-center text-gray-400 dark:text-slate-500">No sent email history found.</td>
-                                    </tr>
-                                ) : (
-                                    logs.map((log) => (
-                                        <tr key={log.id} className="hover:bg-gray-100 dark:bg-slate-800/50 transition-colors">
-                                            <td className="p-4">
-                                                <StatusBadge status={log.status} />
-                                                {log.status === 'failed' && (
-                                                    <div className="mt-1 text-xs text-red-400 max-w-[200px] truncate" title={log.errorMessage}>
-                                                        {log.errorMessage}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="text-sm font-medium text-gray-900 dark:text-white">{log.to}</div>
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="text-sm text-gray-600 dark:text-slate-300">{log.subject}</div>
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
-                                                    <Calendar size={14} />
-                                                    {new Date(log.sentAt).toLocaleString()}
-                                                </div>
-                                            </td>
-                                            <td className="p-4 text-right">
-                                                <button
-                                                    onClick={() => setSelectedEmail(log)}
-                                                    className="p-2 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:bg-slate-700/50 rounded-lg transition-all"
-                                                    title="View Content"
-                                                >
-                                                    <Eye size={16} />
-                                                </button>
-                                            </td>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200 dark:divide-slate-800">
+                                    {logsLoading ? (
+                                        <tr>
+                                            <td colSpan="5" className="p-8 text-center text-gray-400 dark:text-slate-500">Loading logs...</td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                    ) : logs.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="5" className="p-8 text-center text-gray-400 dark:text-slate-500">No sent email history found.</td>
+                                        </tr>
+                                    ) : (
+                                        logs.map((log) => (
+                                            <tr key={log.id} className="hover:bg-gray-100 dark:bg-slate-800/50 transition-colors">
+                                                <td className="p-4">
+                                                    <StatusBadge
+                                                        status={log.status}
+                                                        deliveryStatus={log.deliveryStatus}
+                                                        openCount={log.openCount}
+                                                        clickCount={log.clickCount}
+                                                    />
+                                                    {log.status === 'failed' && (
+                                                        <div className="mt-1 text-xs text-red-400 max-w-[200px] truncate" title={log.errorMessage}>
+                                                            {log.errorMessage}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="text-sm font-medium text-gray-900 dark:text-white">{log.to}</div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="text-sm text-gray-600 dark:text-slate-300">{log.subject}</div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
+                                                        <Calendar size={14} />
+                                                        {new Date(log.sentAt).toLocaleString()}
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-right">
+                                                    <button
+                                                        onClick={() => setSelectedEmail(log)}
+                                                        className="p-2 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:bg-slate-700/50 rounded-lg transition-all"
+                                                        title="View Content"
+                                                    >
+                                                        <Eye size={16} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}

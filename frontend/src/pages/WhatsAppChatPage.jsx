@@ -159,9 +159,11 @@ const LinkPreview = ({ url }) => {
 
 const MessageText = ({ text, isOut, className = "text-[15px] leading-relaxed whitespace-pre-wrap break-words" }) => {
     if (!text) return null;
+    const stringText = typeof text === 'string' ? text : (typeof text === 'object' ? JSON.stringify(text) : String(text || ''));
+    if (!stringText) return null;
     
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const parts = text.split(urlRegex);
+    const parts = stringText.split(urlRegex);
     const urls = [];
     
     const elements = parts.map((part, i) => {
@@ -211,6 +213,12 @@ export default function WhatsAppChatPage() {
     const fileInputRef = useRef(null);
     const leadRef = useRef(null);
 
+    // Lock background page scroll when chat is open (MUST be before any conditional returns)
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = ''; };
+    }, []);
+
     useEffect(() => {
         leadRef.current = lead;
     }, [lead]);
@@ -250,7 +258,7 @@ export default function WhatsAppChatPage() {
             setLead(res.data);
         } catch (err) {
             toast.error('Failed to load lead details');
-            navigate('/whatsapp-chats');
+            navigate('/inbox');
         }
     };
 
@@ -396,12 +404,6 @@ export default function WhatsAppChatPage() {
         );
     }
 
-    // Lock background page scroll when chat is open
-    useEffect(() => {
-        document.body.style.overflow = 'hidden';
-        return () => { document.body.style.overflow = ''; };
-    }, []);
-
     return (
         <div className="flex flex-col bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 overflow-hidden shadow-sm h-[calc(100vh-6rem)] lg:h-[calc(100vh-7rem)]">
             {/* Forward Message Modal */}
@@ -468,7 +470,7 @@ export default function WhatsAppChatPage() {
             {/* Header */}
             <div className="flex items-center gap-4 px-6 py-4 bg-gray-100 dark:bg-slate-800/80 border-b border-gray-200 dark:border-slate-800">
                 <button
-                    onClick={() => navigate('/whatsapp-chats')}
+                    onClick={() => navigate('/inbox')}
                     className="p-2 -ml-2 rounded-lg text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:bg-slate-700 transition-colors"
                 >
                     <ArrowLeft size={20} />

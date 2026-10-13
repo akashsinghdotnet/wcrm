@@ -52,23 +52,23 @@ export class CallingService {
             // Create or update TwiML App for voice
             if (!twimlAppSid) {
                 const app = await client.applications.create({
-                    friendlyName: 'MagnetCRM Browser Calling',
+                    friendlyName: 'Wcrm Browser Calling',
                     voiceMethod: 'POST',
-                    voiceUrl: `${process.env.API_URL || 'https://api.magnetcrm.com'}/api/calling/voice-twiml`,
+                    voiceUrl: `${process.env.API_URL || 'https://api.wcrm.si'}/api/calling/voice-twiml`,
                 });
                 twimlAppSid = app.sid;
                 this.logger.log(`Created TwiML App: ${twimlAppSid}`);
             } else {
                 // Update the voice URL in case API_URL changed
                 await client.applications(twimlAppSid).update({
-                    voiceUrl: `${process.env.API_URL || 'https://api.magnetcrm.com'}/api/calling/voice-twiml`,
+                    voiceUrl: `${process.env.API_URL || 'https://api.wcrm.si'}/api/calling/voice-twiml`,
                 });
             }
 
             // Create API Key for generating access tokens
             if (!apiKeySid) {
                 const key = await client.newKeys.create({
-                    friendlyName: 'MagnetCRM Browser Token Key',
+                    friendlyName: 'Wcrm Browser Token Key',
                 });
                 apiKeySid = key.sid;
                 apiKeySecret = key.secret;
@@ -137,7 +137,7 @@ export class CallingService {
         const VoiceResponse = twilio.twiml.VoiceResponse;
         const response = new VoiceResponse();
 
-        const apiUrl = process.env.API_URL || 'https://api.magnetcrm.com';
+        const apiUrl = process.env.API_URL || 'https://api.wcrm.si';
         const dial = response.dial({
             callerId,
             record: record ? 'record-from-answer-dual' : 'do-not-record',

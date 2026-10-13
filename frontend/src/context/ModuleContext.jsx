@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import { useConfig } from './ConfigContext';
 import api from '../services/api';
 
 const ModuleContext = createContext(null);
@@ -12,12 +13,12 @@ export const MODULE_DEFINITIONS = [
     { key: 'WHATSAPP', label: 'WhatsApp', description: 'WhatsApp messaging, chats, and broadcast campaigns', icon: 'MessageCircle', color: 'from-green-500 to-emerald-500' },
     { key: 'CALLING', label: 'Calling', description: 'Phone calling integration with Twilio', icon: 'Phone', color: 'from-orange-500 to-amber-500' },
     { key: 'REPORTS', label: 'Reports & Analytics', description: 'Advanced reports, dashboards, and analytics', icon: 'BarChart3', color: 'from-indigo-500 to-violet-500' },
-    { key: 'APPOINTMENTS', label: 'Appointments & Booking', description: 'Calendar integration, meeting types, and public booking pages', icon: 'Calendar', color: 'from-sky-500 to-cyan-500' },
-    { key: 'EVENTS', label: 'Event Booking', description: 'Create and manage events, ticket types, and public booking pages with payment collection', icon: 'CalendarDays', color: 'from-violet-500 to-purple-500' },
 ];
 
 export function ModuleProvider({ children }) {
     const { user, loading: authLoading } = useAuth();
+    const { config } = useConfig();
+    const isSelfHosted = config?.deployment_mode === 'self_hosted';
     const [activeModules, setActiveModules] = useState([]);
     const [modulesReady, setModulesReady] = useState(false);
 
@@ -25,6 +26,11 @@ export function ModuleProvider({ children }) {
         if (!user) {
             // Auth hasn't resolved yet — keep loading
             setModulesReady(false);
+            return;
+        }
+        if (isSelfHosted) {
+            setActiveModules(MODULE_DEFINITIONS.map(m => m.key));
+            setModulesReady(true);
             return;
         }
         if (user.activeModules) {
@@ -38,18 +44,20 @@ export function ModuleProvider({ children }) {
                 .catch(() => setActiveModules(MODULE_DEFINITIONS.map(m => m.key)))
                 .finally(() => setModulesReady(true));
         }
-    }, [user]);
+    }, [user, isSelfHosted]);
 
-    // Loading until both auth and modules are resolved
-    const loading = authLoading || !modulesReady;
+    // Loading until both auth and modules are resolved (modules only matter if user is logged in)
+    const loading = authLoading || (Boolean(user) && !modulesReady);
 
     const hasModule = useCallback((moduleKey) => {
         // No user yet — don't show anything
         if (!user) return false;
+        // In self_hosted mode, all CRM modules are unlocked 100%
+        if (isSelfHosted) return true;
         // Super admin always has all modules (they have a role but no companyId)
         if (user.role && !user.companyId) return true;
         return activeModules.includes(moduleKey);
-    }, [activeModules, user]);
+    }, [activeModules, user, isSelfHosted]);
 
     const refreshModules = useCallback(async () => {
         try {

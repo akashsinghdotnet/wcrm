@@ -17,7 +17,7 @@ export class EmailConfig {
     @Column()
     pass: string; // Store encrypted in real app, plain for now as per plan
 
-    @Column({ default: 'Magnet CRM' })
+    @Column({ default: 'Wcrm' })
     fromName: string;
 
     @Column({ nullable: true })

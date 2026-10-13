@@ -7,6 +7,7 @@ export enum IntegrationPlatform {
     INDIAMART = 'indiamart',
     TRADEINDIA = 'tradeindia',
     WEBSITE = 'website',
+    EMAIL_PARSER = 'email_parser',
 }
 
 @Entity('integration_configs')

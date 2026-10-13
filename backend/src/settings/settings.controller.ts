@@ -15,6 +15,11 @@ export class SettingsController {
         return this.settingsService.findAllPublic();
     }
 
+    @Get('community-feed')
+    getCommunityFeed() {
+        return this.settingsService.getCommunityFeed();
+    }
+
     @Patch(':key')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN)

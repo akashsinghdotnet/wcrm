@@ -5,10 +5,11 @@ import { useConfig } from '../context/ConfigContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import {
-    IndianRupee, Globe, Building2, Check, Magnet,
+    IndianRupee, Globe, Building2, Check,
     Shield, Sparkles, Users, CreditCard, Clock, Loader2,
     User, Mail, Phone, MapPin, Lock, Eye, EyeOff, Tag, X
 } from 'lucide-react';
+import { WcrmIcon } from '../components/WcrmLogo';
 
 const INDIAN_STATES = [
     '—', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -98,16 +99,21 @@ export default function CheckoutPage() {
         } catch { }
     };
 
-    const applyCoupon = async () => {
-        if (!couponCode.trim()) return;
+    const applyCoupon = async (overrideCode) => {
+        const codeToUse = typeof overrideCode === 'string' ? overrideCode : couponCode;
+        if (!codeToUse || !codeToUse.trim()) return;
         setCouponLoading(true);
         try {
             const res = await api.post('/coupons/validate', {
-                code: couponCode.trim(),
+                code: codeToUse.trim(),
                 billingCycle: billingPeriod,
+                planId: plan?.id,
+                companyId: user?.companyId,
+                isRenewal: false,
             });
             const found = res.data;
             setAppliedCoupon(found);
+            setCouponCode(codeToUse.trim());
             toast.success(`Coupon applied! ${found.type === 'percentage' ? `${found.value}% off` : `₹${found.value} off`}`);
         } catch (err) {
             toast.error(err.response?.data?.message || 'Invalid or expired coupon code');
@@ -115,6 +121,13 @@ export default function CheckoutPage() {
             setCouponLoading(false);
         }
     };
+
+    useEffect(() => {
+        const paramCoupon = searchParams.get('coupon');
+        if (paramCoupon && plan && !appliedCoupon) {
+            applyCoupon(paramCoupon);
+        }
+    }, [searchParams, plan]);
 
     const removeCoupon = () => {
         setAppliedCoupon(null);
@@ -215,11 +228,11 @@ export default function CheckoutPage() {
             key: orderData.keyId,
             amount: orderData.amount,
             currency: orderData.currency,
-            name: config?.login_text_content || 'Magnet CRM',
+            name: config?.login_text_content || 'Wcrm',
             description: `${plan.name} Plan - ${billingPeriod}`,
             order_id: orderData.orderId,
             prefill: orderData.prefill,
-            theme: { color: '#4F46E5' },
+            theme: { color: '#25D366' },
             handler: async (response) => {
                 // Payment successful — verify on backend
                 try {
@@ -236,7 +249,7 @@ export default function CheckoutPage() {
 
                     if (verifyRes.data.access_token) {
                         login(verifyRes.data.user, verifyRes.data.access_token);
-                        toast.success('Payment successful! Welcome to Magnet CRM.');
+                        toast.success('Payment successful! Welcome to Wcrm.');
                         setTimeout(() => navigate('/'), 1000);
                     }
                 } catch (err) {
@@ -298,7 +311,7 @@ export default function CheckoutPage() {
                         
                         if (verifyRes.data.access_token) {
                             login(verifyRes.data.user, verifyRes.data.access_token);
-                            toast.success('Payment successful! Welcome to Magnet CRM.');
+                            toast.success('Payment successful! Welcome to Wcrm.');
                             setTimeout(() => navigate('/'), 1000);
                         }
                     } catch (err) {
@@ -479,10 +492,10 @@ export default function CheckoutPage() {
                             />
                         ) : (
                             <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                                    <Magnet className="w-4 h-4 text-white" />
+                                <div className="w-8 h-8 bg-gradient-to-tr from-[#075E54] to-[#25D366] rounded-lg flex items-center justify-center shadow-sm shadow-[#25D366]/20">
+                                    <WcrmIcon className="w-4 h-4 text-white" />
                                 </div>
-                                <span className="text-white font-semibold text-sm">{config?.login_text_content || 'MagnetCRM'}</span>
+                                <span className="text-white font-semibold text-sm">{config?.login_text_content || 'Wcrm'}</span>
                             </div>
                         )}
                     </div>

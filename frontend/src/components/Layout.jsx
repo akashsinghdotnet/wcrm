@@ -4,6 +4,8 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import { useModules } from '../context/ModuleContext';
+import { WcrmIcon } from './WcrmLogo';
+import { fetchCommunityFeed, dismissAnnouncement, getDismissedAnnouncements } from '../services/communityFeed';
 
 import {
     LayoutDashboard,
@@ -15,7 +17,6 @@ import {
     LogOut,
     Menu,
     X,
-    Magnet,
     Settings,
     Kanban,
     BarChart3,
@@ -26,23 +27,23 @@ import {
     Mail,
     Receipt,
     MessageCircle,
+    MessageSquare,
     Ticket,
     Megaphone,
     Bell,
     Sun,
     Moon,
     Blocks,
-    Calendar,
-    CalendarDays,
+    Radio,
+    Zap,
+    GitFork,
+    Bot
 } from 'lucide-react';
 
 const navItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/leads', label: 'Leads', icon: FileText, roles: ['admin', 'staff'], module: 'SALES' },
-    { to: '/pipeline', label: 'Pipeline', icon: Kanban, roles: ['admin', 'staff'], module: 'SALES' },
-    { to: '/appointments', label: 'Appointments', icon: Calendar, roles: ['admin', 'staff'], module: 'APPOINTMENTS' },
-    { to: '/events', label: 'Events', icon: CalendarDays, roles: ['admin', 'staff', 'manager'], module: 'EVENTS' },
-    { to: '/event-bookings', label: 'Bookings', icon: Ticket, roles: ['admin', 'staff', 'manager'], module: 'EVENTS' },
+    { to: '/leads', label: 'Leads', icon: FileText, roles: ['admin', 'manager', 'staff'], module: 'SALES' },
+    { to: '/pipeline', label: 'Pipeline', icon: Kanban, roles: ['admin', 'manager', 'staff'], module: 'SALES' },
     { to: '/whatsapp-chats', label: 'WhatsApp', icon: MessageCircle, roles: ['admin', 'manager', 'staff'], module: 'WHATSAPP' },
     {
         to: '/invoices',
@@ -57,13 +58,13 @@ const navItems = [
     { to: '/billing', label: 'Billing', icon: IndianRupee, roles: ['super_admin', 'superadmin_admin'] },
     { to: '/payment-settings', label: 'Payment Settings', icon: CreditCard, roles: ['super_admin'] },
     { to: '/coupons', label: 'Coupons', icon: Gift, roles: ['super_admin', 'superadmin_admin'] },
-    { to: '/reports', label: 'Reports', icon: BarChart3, roles: ['admin'], module: 'REPORTS' },
+    { to: '/reports', label: 'Reports', icon: BarChart3, roles: ['admin', 'manager'], module: 'REPORTS' },
     { to: '/tickets', label: 'Support', icon: Ticket, roles: ['super_admin', 'superadmin_admin', 'admin', 'manager'] },
     { to: '/announcements', label: 'Announcements', icon: Megaphone, roles: ['super_admin', 'superadmin_admin', 'superadmin_staff'] },
     { to: '/settings', label: 'Settings', icon: Settings },
     // Notifications removed as per user request
     // { to: '/notifications', label: 'Notifications', icon: Mail, roles: ['admin'] },
-    { to: '/marketing', label: 'Marketing', icon: Mail, roles: ['super_admin', 'superadmin_admin', 'admin'], module: 'MARKETING' },
+    { to: '/marketing', label: 'Marketing', icon: Mail, roles: ['super_admin', 'superadmin_admin', 'admin', 'manager'], module: 'MARKETING' },
     { to: '/users', label: 'Users', icon: Users, roles: ['super_admin', 'superadmin_admin'] },
 ];
 
@@ -236,16 +237,51 @@ export default function Layout() {
 
     const displayName = user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email;
 
-    const filteredNav = navItems.filter((item) => {
-        if (user?.subscriptionStatus === 'past_due' && !['super_admin', 'superadmin_admin', 'superadmin_staff'].includes(user?.role)) {
-            // Only show Billing if past_due
-            return item.to === '/billing';
+    const isSelfHosted = config?.deployment_mode === 'self_hosted';
+    const isSuperAdmin = !isSelfHosted && ['super_admin', 'superadmin_admin', 'superadmin_staff'].includes(user?.role);
+    const [activePromo, setActivePromo] = useState(null);
+
+    useEffect(() => {
+        if (isSelfHosted) {
+            fetchCommunityFeed(config).then(feed => {
+                const dismissed = getDismissedAnnouncements();
+                const unDismissed = feed?.announcements?.find(a => !dismissed.includes(a.id));
+                if (unDismissed) setActivePromo(unDismissed);
+            }).catch(() => {});
         }
-        if (item.show) return item.show(user) && (!item.module || hasModule(item.module));
-        const roleOk = !item.roles || item.roles.includes(user?.role);
-        const moduleOk = !item.module || hasModule(item.module);
-        return roleOk && moduleOk;
-    });
+    }, [isSelfHosted, config]);
+
+    const handleDismissPromo = () => {
+        if (activePromo?.id) {
+            dismissAnnouncement(activePromo.id);
+            setActivePromo(null);
+        }
+    };
+
+    const filteredNav = isSuperAdmin ? [
+        { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+        { to: '/companies', label: 'Companies', icon: Building2 },
+        { to: '/plans', label: 'Plans', icon: Sparkles },
+        { to: '/billing', label: 'Billing', icon: IndianRupee },
+        { to: '/payment-settings', label: 'Payment Settings', icon: CreditCard },
+        { to: '/coupons', label: 'Coupons', icon: Gift },
+        { to: '/tickets', label: 'Support', icon: Ticket },
+        { to: '/announcements', label: 'Announcements', icon: Megaphone },
+        { to: '/users', label: 'Users', icon: Users },
+        { to: '/settings', label: 'Settings', icon: Settings },
+    ] : [
+        // User panel: EXACT 10 WhatsApp CRM items requested by user
+        { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+        { to: '/inbox', label: 'Inbox', icon: MessageSquare, badge: unreadWhatsApp, match: ['/inbox', '/whatsapp-chats', '/whatsapp-direct'] },
+        { to: '/notifications', label: 'Notifications', icon: Bell, badge: unreadAnnouncements, match: ['/notifications'] },
+        { to: '/contacts', label: 'Contacts', icon: Users, match: ['/contacts', '/whatsapp-contacts'] },
+        { to: '/pipeline', label: 'Pipeline', icon: Kanban, match: ['/pipeline'] },
+        { to: '/broadcasts', label: 'Broadcasts', icon: Radio, match: ['/broadcasts', '/whatsapp-broadcast'] },
+        { to: '/automations', label: 'Automations', icon: Zap, match: ['/automations'] },
+        { to: '/flows', label: 'Flows', icon: GitFork, match: ['/flows'] },
+        { to: '/ai-agents', label: 'AI Agents', icon: Bot, match: ['/ai-agents'] },
+        { to: '/settings', label: 'Settings', icon: Settings, match: ['/settings'] },
+    ];
 
     // Block entire Layout until modules are resolved — prevents sidebar flash
     if (modulesLoading) {
@@ -271,57 +307,53 @@ export default function Layout() {
                 className={`fixed lg:sticky top-0 h-screen inset-y-0 left-0 z-50 w-64 border-r flex flex-col transform transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
                     } ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-200'}`}
             >
-                {/* Logo */}
+                {/* Logo - Locked to h-16 matching top header height so it never exceeds or goes below header line */}
                 <div
-                    className={`px-6 border-b ${isDark ? 'border-slate-800' : 'border-gray-200'}`}
-                    style={{
-                        paddingTop: config?.sidebar_padding_vertical ? `${config.sidebar_padding_vertical}px` : '1.5rem',
-                        paddingBottom: config?.sidebar_padding_vertical ? `${config.sidebar_padding_vertical}px` : '1.5rem'
-                    }}
+                    className={`h-16 flex items-center px-5 border-b overflow-hidden ${isDark ? 'border-slate-800' : 'border-gray-200'}`}
                 >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0 max-h-12 overflow-hidden">
                         {config?.sidebar_logo_link ? (
-                            <a href={config.sidebar_logo_link} target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
+                            <a href={config.sidebar_logo_link} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 flex items-center">
                                 {((isDark ? (config?.sidebar_logo_url || config?.login_logo_url) : (config?.sidebar_logo_light_url || config?.login_logo_light_url || config?.sidebar_logo_url || config?.login_logo_url)) || config?.app_logo) ? (
                                     <img
                                         src={(isDark ? (config?.sidebar_logo_url || config?.login_logo_url) : (config?.sidebar_logo_light_url || config?.login_logo_light_url || config?.sidebar_logo_url || config?.login_logo_url)) || config?.app_logo}
                                         alt="Logo"
-                                        className="object-contain rounded-xl hover:opacity-80 transition-opacity"
-                                        style={{ width: config.sidebar_logo_width ? `${config.sidebar_logo_width}px` : '40px', height: 'auto', maxHeight: '80px' }}
+                                        className="object-contain rounded-lg hover:opacity-80 transition-opacity max-h-10 w-auto"
+                                        style={{ maxWidth: config.sidebar_logo_width ? `${Math.min(config.sidebar_logo_width, 140)}px` : '120px', maxHeight: '40px' }}
                                     />
                                 ) : (
-                                    <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-500 transition-colors">
-                                        <Magnet className="w-5 h-5 text-white" />
+                                    <div className="w-10 h-10 bg-gradient-to-tr from-[#075E54] to-[#25D366] rounded-xl flex items-center justify-center hover:opacity-90 transition-all shadow-md shadow-[#25D366]/20 shrink-0">
+                                        <WcrmIcon className="w-5 h-5 text-white" />
                                     </div>
                                 )}
                             </a>
                         ) : (
-                            <>
+                            <div className="flex-shrink-0 flex items-center">
                                 {((isDark ? (config?.sidebar_logo_url || config?.login_logo_url) : (config?.sidebar_logo_light_url || config?.login_logo_light_url || config?.sidebar_logo_url || config?.login_logo_url)) || config?.app_logo) ? (
                                     <img
                                         src={(isDark ? (config?.sidebar_logo_url || config?.login_logo_url) : (config?.sidebar_logo_light_url || config?.login_logo_light_url || config?.sidebar_logo_url || config?.login_logo_url)) || config?.app_logo}
                                         alt="Logo"
-                                        className="object-contain rounded-xl"
-                                        style={{ width: config.sidebar_logo_width ? `${config.sidebar_logo_width}px` : '40px', height: 'auto', maxHeight: '80px' }}
+                                        className="object-contain rounded-lg max-h-10 w-auto"
+                                        style={{ maxWidth: config.sidebar_logo_width ? `${Math.min(config.sidebar_logo_width, 140)}px` : '120px', maxHeight: '40px' }}
                                     />
                                 ) : (
-                                    <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
-                                        <Magnet className="w-5 h-5 text-white" />
+                                    <div className="w-10 h-10 bg-gradient-to-tr from-[#075E54] to-[#25D366] rounded-xl flex items-center justify-center shadow-md shadow-[#25D366]/20 shrink-0">
+                                        <WcrmIcon className="w-5 h-5 text-white" />
                                     </div>
                                 )}
-                            </>
+                            </div>
                         )}
                         {(config?.sidebar_show_text === undefined || config?.sidebar_show_text === 'true') && (
-                            <div>
-                                <h1 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{config?.sidebar_text_content || 'MagnetCRM'}</h1>
-                                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Marketing Agency CRM</p>
+                            <div className="min-w-0 truncate">
+                                <h1 className={`text-base font-bold tracking-tight truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{config?.sidebar_text_content || 'Wcrm'}</h1>
+                                <p className={`text-[11px] truncate ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>WhatsApp CRM</p>
                             </div>
                         )}
                     </div>
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 p-4 space-y-1">
+                <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
                     {modulesLoading ? (
                         /* Skeleton placeholders while modules load */
                         Array.from({ length: 7 }).map((_, i) => (
@@ -337,18 +369,20 @@ export default function Layout() {
                                 to={item.to}
                                 end={item.to === '/'}
                                 onClick={() => setSidebarOpen(false)}
-                                className={({ isActive }) =>
-                                    `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${isActive
-                                        ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
+                                className={({ isActive }) => {
+                                    const matchesSub = item.match && item.match.some(m => location.pathname.startsWith(m));
+                                    const active = isActive || matchesSub;
+                                    return `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${active
+                                        ? 'bg-emerald-600/15 text-emerald-500 dark:text-emerald-400 border border-emerald-500/30'
                                         : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/60' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                                    }`
-                                }
+                                    }`;
+                                }}
                             >
-                                <item.icon className="w-5 h-5" />
-                                <span className="flex-1">{item.label}</span>
-                                {item.to === '/whatsapp-chats' && unreadWhatsApp > 0 && (
-                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-green-500 text-white rounded-full">
-                                        {unreadWhatsApp > 99 ? '99+' : unreadWhatsApp}
+                                <item.icon className="w-5 h-5 shrink-0" />
+                                <span className="flex-1 truncate">{item.label}</span>
+                                {item.badge > 0 && (
+                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-500 text-white rounded-full">
+                                        {item.badge > 99 ? '99+' : item.badge}
                                     </span>
                                 )}
                             </NavLink>
@@ -375,6 +409,23 @@ export default function Layout() {
                             <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{getRoleLabel(user?.role)}</p>
                         </div>
                     </button>
+                    {isSelfHosted && (
+                        <div className={`mt-3 p-3 rounded-xl border ${isDark ? 'bg-emerald-950/20 border-emerald-800/40' : 'bg-emerald-50 border-emerald-200'}`}>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-[11px] font-bold text-emerald-500 uppercase tracking-wider">Community</span>
+                                <span className="text-[10px] text-gray-400 dark:text-slate-500">v{config?.app_version || '1.0.0'}</span>
+                            </div>
+                            <p className="text-[11px] text-gray-500 dark:text-slate-400 mb-2 leading-tight">Self-hosted WhatsApp CRM.</p>
+                            <a
+                                href={config?.cloud_url || 'https://wcrm.si'}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                            >
+                                <span>☁️ Managed Cloud</span>
+                            </a>
+                        </div>
+                    )}
                     <button
                         onClick={handleLogout}
                         className="mt-2 w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
@@ -387,6 +438,37 @@ export default function Layout() {
 
             {/* Main content */}
             <div className={`flex-1 flex flex-col min-h-screen min-w-0 ${isDark ? '' : 'bg-gray-50'}`}>
+                {/* Community Promotional / Update Announcement Banner */}
+                {isSelfHosted && activePromo && (
+                    <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 text-white px-4 py-2 text-xs flex items-center justify-between shadow-sm z-40">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <span className="bg-white/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[10px] shrink-0">
+                                {activePromo.badge || 'Wcrm Cloud'}
+                            </span>
+                            <span className="font-bold truncate">{activePromo.title}</span>
+                            <span className="hidden md:inline text-white/90 truncate">— {activePromo.message}</span>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0 ml-3">
+                            {activePromo.ctaUrl && (
+                                <a
+                                    href={activePromo.ctaUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="bg-white text-emerald-900 hover:bg-emerald-50 font-bold px-2.5 py-1 rounded-md text-[11px] shadow-sm transition-all"
+                                >
+                                    {activePromo.ctaText || 'Learn More'} &rarr;
+                                </a>
+                            )}
+                            <button
+                                onClick={handleDismissPromo}
+                                className="text-white/70 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
+                                title="Dismiss announcement"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    </div>
+                )}
                 {/* Top bar */}
                 <header className={`h-16 border-b backdrop-blur-sm flex items-center px-4 lg:px-6 sticky top-0 z-30 ${isDark ? 'border-slate-800 bg-slate-900/80' : 'border-gray-200 bg-white/90'}`}>
                     <button

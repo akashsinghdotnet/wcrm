@@ -192,7 +192,7 @@ export default function IntegrationsPage({ embedded = false }) {
 
     // Webhook URLs must point to the backend API, not the frontend
     const apiBase = import.meta.env.VITE_API_URL || '/api';
-    // Extract origin from full API URL (e.g. "https://api.magnetcrm.com/api" → "https://api.magnetcrm.com")
+    // Extract origin from full API URL (e.g. "https://api.wcrm.si/api" → "https://api.wcrm.si")
     const baseUrl = apiBase.replace(/\/api\/?$/, '') || window.location.origin;
 
     useEffect(() => {
@@ -428,9 +428,9 @@ export default function IntegrationsPage({ embedded = false }) {
     };
 
     const getWebsiteCodeSample = () => {
-        return `<!-- Magnet CRM Lead Capture Form — Paste this anywhere in your website -->
-<div id="magnetcrm-form-wrapper">
-  <form id="magnetcrm-lead-form" onsubmit="return submitMagnetCRMForm(event)">
+        return `<!-- Wcrm Lead Capture Form — Paste this anywhere in your website -->
+<div id="wcrm-form-wrapper">
+  <form id="wcrm-lead-form" onsubmit="return submitWcrmForm(event)">
     <h3 style="margin:0 0 16px;font-size:20px;font-weight:600;color:#1e293b;">Get in Touch</h3>
     <div style="margin-bottom:12px;">
       <input type="text" id="mcf-name" name="name" placeholder="Your Name *" required
@@ -458,9 +458,9 @@ export default function IntegrationsPage({ embedded = false }) {
   </form>
 </div>
 <script>
-function submitMagnetCRMForm(e) {
+function submitWcrmForm(e) {
   e.preventDefault();
-  var form = document.getElementById('magnetcrm-lead-form');
+  var form = document.getElementById('wcrm-lead-form');
   var btn = document.getElementById('mcf-submit-btn');
   var status = document.getElementById('mcf-status');
   // Check honeypot
@@ -670,7 +670,7 @@ function submitMagnetCRMForm(e) {
                                                         <span className="text-xs text-gray-400 dark:text-slate-500 font-medium uppercase tracking-wide">Verify Token (for Facebook Webhook setup)</span>
                                                         <button
                                                             onClick={() => {
-                                                                navigator.clipboard.writeText('magnet-crm');
+                                                                navigator.clipboard.writeText('wcrm');
                                                                 toast.success('Verify token copied');
                                                             }}
                                                             className="text-indigo-400 hover:text-indigo-300 transition-colors"
@@ -680,7 +680,7 @@ function submitMagnetCRMForm(e) {
                                                         </button>
                                                     </div>
                                                     <p className="text-xs text-gray-600 dark:text-slate-300 font-mono">
-                                                        magnet-crm
+                                                        wcrm
                                                     </p>
                                                 </div>
                                             )}
@@ -927,7 +927,7 @@ function submitMagnetCRMForm(e) {
 
                                     <div className="text-center py-4 bg-gray-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-gray-300 dark:border-slate-800">
                                         <p className="text-xs text-gray-500 dark:text-slate-400 mb-3 px-4">
-                                            Link Magnet CRM to your Facebook profile to manage page lead forms.
+                                            Link Wcrm to your Facebook profile to manage page lead forms.
                                         </p>
                                         <button
                                             type="button"

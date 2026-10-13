@@ -12,8 +12,11 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterSubscriptionDto } from './dto/register-subscription.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password-reset.dto';
 import { UserRole } from '../users/user.entity';
-import { MoreThan } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, MoreThan } from 'typeorm';
+import { UserLoginLog } from '../users/user-login-log.entity';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 import Razorpay = require('razorpay');
 
 // otplib is ESM-only in v13+, so we use dynamic import
@@ -32,6 +35,8 @@ export class AuthService {
         private settingsService: SettingsService,
         private couponsService: CouponsService,
         private billingService: BillingService,
+        @InjectRepository(UserLoginLog)
+        private userLoginLogRepo: Repository<UserLoginLog>,
     ) { }
 
     private async getRazorpayInstance(): Promise<any> {
@@ -157,7 +162,7 @@ export class AuthService {
                 month: now.toLocaleString('default', { month: 'short', year: 'numeric' }),
                 status: 'paid',
                 items: [{
-                    description: `MagnetCRM ${plan.name} Plan (${dto.billingPeriod}) — Activation ${appliedCouponCode ? `(Coupon: ${appliedCouponCode})` : ''}`,
+                    description: `Wcrm ${plan.name} Plan (${dto.billingPeriod}) — Activation ${appliedCouponCode ? `(Coupon: ${appliedCouponCode})` : ''}`,
                     quantity: 1,
                     rate: originalPrice,
                     amount: originalPrice,
@@ -440,7 +445,7 @@ export class AuthService {
                 month: now.toLocaleString('default', { month: 'short', year: 'numeric' }),
                 status: 'paid',
                 items: [{
-                    description: `MagnetCRM ${plan.name} Plan (${dto.billingPeriod}) — Renewal ${appliedCouponCode ? `(Coupon: ${appliedCouponCode})` : ''}`,
+                    description: `Wcrm ${plan.name} Plan (${dto.billingPeriod}) — Renewal ${appliedCouponCode ? `(Coupon: ${appliedCouponCode})` : ''}`,
                     quantity: 1,
                     rate: originalPrice,
                     amount: originalPrice,
@@ -717,7 +722,7 @@ export class AuthService {
             month: now.toLocaleString('default', { month: 'short', year: 'numeric' }),
             status: 'paid',
             items: [{
-                description: `MagnetCRM ${plan?.name || 'Subscription'} (${company.subscriptionPeriod}) — ${data.isRenewal ? 'Renewal' : 'Activation'} ${appliedCouponCode ? `(Coupon: ${appliedCouponCode})` : ''}`,
+                description: `Wcrm ${plan?.name || 'Subscription'} (${company.subscriptionPeriod}) — ${data.isRenewal ? 'Renewal' : 'Activation'} ${appliedCouponCode ? `(Coupon: ${appliedCouponCode})` : ''}`,
                 quantity: 1,
                 rate: baseAmount,
                 amount: baseAmount,
@@ -871,7 +876,7 @@ export class AuthService {
             month: now.toLocaleString('default', { month: 'short', year: 'numeric' }),
             status: 'paid',
             items: [{
-                description: `MagnetCRM ${plan?.name || 'Subscription'} (${company.subscriptionPeriod}) — ${data.isRenewal ? 'Renewal' : 'Activation'} ${appliedCouponCode ? `(Coupon: ${appliedCouponCode})` : ''}`,
+                description: `Wcrm ${plan?.name || 'Subscription'} (${company.subscriptionPeriod}) — ${data.isRenewal ? 'Renewal' : 'Activation'} ${appliedCouponCode ? `(Coupon: ${appliedCouponCode})` : ''}`,
                 quantity: 1,
                 rate: baseAmount,
                 amount: baseAmount,
@@ -927,11 +932,124 @@ export class AuthService {
         return null;
     }
 
-    async login(loginDto: LoginDto) {
+    async resolveIpLocation(ip: string): Promise<string> {
+        const cleanIp = (ip || '').toString().trim().replace(/^.*:/, '');
+        if (
+            !cleanIp ||
+            cleanIp === '127.0.0.1' ||
+            cleanIp === 'localhost' ||
+            cleanIp === '::1' ||
+            cleanIp.startsWith('10.') ||
+            cleanIp.startsWith('192.168.') ||
+            cleanIp.startsWith('172.16.') ||
+            cleanIp.startsWith('172.17.') ||
+            cleanIp.startsWith('172.18.') ||
+            cleanIp.startsWith('172.19.') ||
+            cleanIp.startsWith('172.20.') ||
+            cleanIp.startsWith('172.21.') ||
+            cleanIp.startsWith('172.22.') ||
+            cleanIp.startsWith('172.23.') ||
+            cleanIp.startsWith('172.24.') ||
+            cleanIp.startsWith('172.25.') ||
+            cleanIp.startsWith('172.26.') ||
+            cleanIp.startsWith('172.27.') ||
+            cleanIp.startsWith('172.28.') ||
+            cleanIp.startsWith('172.29.') ||
+            cleanIp.startsWith('172.30.') ||
+            cleanIp.startsWith('172.31.')
+        ) {
+            return 'Local Network';
+        }
+
+        try {
+            const res = await axios.get(`http://ip-api.com/json/${cleanIp}?fields=status,country,regionName,city`, { timeout: 3500 });
+            if (res.data && res.data.status === 'success') {
+                const parts = [res.data.city, res.data.regionName, res.data.country].filter(Boolean);
+                if (parts.length > 0) {
+                    return parts.join(', ');
+                }
+            }
+        } catch {
+            try {
+                const res2 = await axios.get(`https://ipapi.co/${cleanIp}/json/`, { timeout: 3500 });
+                if (res2.data && res2.data.city) {
+                    const parts = [res2.data.city, res2.data.region, res2.data.country_name].filter(Boolean);
+                    if (parts.length > 0) return parts.join(', ');
+                }
+            } catch { }
+        }
+        return `IP: ${cleanIp}`;
+    }
+
+    async recordLoginLog(user: any, ipAddress?: string, userAgent?: string) {
+        try {
+            const rawIp = (ipAddress || '').toString().trim();
+            const cleanIp = rawIp.replace(/^.*:/, '') || '127.0.0.1';
+            const location = await this.resolveIpLocation(cleanIp);
+            const log = this.userLoginLogRepo.create({
+                userId: user.id,
+                userName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+                userEmail: user.email,
+                userRole: user.role,
+                companyId: user.companyId || null,
+                ipAddress: cleanIp,
+                location: location,
+                userAgent: userAgent || '',
+            });
+            await this.userLoginLogRepo.save(log);
+        } catch (err) {
+            this.logger.error(`Error saving user login log: ${err.message}`);
+        }
+    }
+
+    async getLoginLogs(companyId?: string) {
+        const where: any = {};
+        if (companyId) {
+            where.companyId = companyId;
+        }
+        const logs = await this.userLoginLogRepo.find({
+            where,
+            order: { loginAt: 'DESC' },
+            take: 100,
+        });
+
+        // Resolve location for any existing records that only stored IP
+        await Promise.all(
+            logs.map(async (log) => {
+                if (!log.location || log.location.startsWith('IP: ') || log.location === 'Local Network') {
+                    if (log.ipAddress && log.ipAddress !== '127.0.0.1' && log.ipAddress !== 'localhost') {
+                        const geo = await this.resolveIpLocation(log.ipAddress);
+                        if (geo && !geo.startsWith('IP: ')) {
+                            log.location = geo;
+                            await this.userLoginLogRepo.update(log.id, { location: geo }).catch(() => { });
+                        }
+                    }
+                }
+            })
+        );
+
+        return logs;
+    }
+
+    async login(loginDto: LoginDto, ipAddress?: string, userAgent?: string) {
         const user = await this.validateUser(loginDto.email, loginDto.password);
         if (!user) {
             throw new UnauthorizedException('Invalid credentials');
         }
+
+        const isSelfHosted = process.env.DEPLOYMENT_MODE === 'self_hosted';
+        const isSuperAdminRole = [
+            UserRole.SUPER_ADMIN,
+            UserRole.SUPERADMIN_ADMIN,
+            UserRole.SUPERADMIN_STAFF,
+        ].includes(user.role) || (!user.companyId && user.role === UserRole.ADMIN);
+
+        if (isSelfHosted && isSuperAdminRole) {
+            throw new ForbiddenException('Super-Admin portal and accounts are disabled in Community Edition.');
+        }
+
+        // Record Login Audit Log
+        await this.recordLoginLog(user, ipAddress, userAgent);
 
         // Block login for companies with pending_payment status
         let companyStatus = 'active';
@@ -996,6 +1114,17 @@ export class AuthService {
             throw new UnauthorizedException('User not found');
         }
 
+        const isSelfHosted = process.env.DEPLOYMENT_MODE === 'self_hosted';
+        const isSuperAdminRole = [
+            UserRole.SUPER_ADMIN,
+            UserRole.SUPERADMIN_ADMIN,
+            UserRole.SUPERADMIN_STAFF,
+        ].includes(user.role) || (!user.companyId && user.role === UserRole.ADMIN);
+
+        if (isSelfHosted && isSuperAdminRole) {
+            throw new ForbiddenException('Super-Admin portal and accounts are disabled in Community Edition.');
+        }
+
         if (!user.isTwoFactorEnabled || !user.twoFactorSecret) {
             throw new BadRequestException('2FA is not enabled for this user');
         }
@@ -1027,7 +1156,7 @@ export class AuthService {
 
         const { generateSecret } = await import('otplib');
         const secret = generateSecret();
-        const issuer = 'Magnet CRM';
+        const issuer = 'Wcrm';
         const account = user.email;
         const otpauthUrl = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(account)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
 

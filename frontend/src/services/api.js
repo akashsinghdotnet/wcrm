@@ -9,7 +9,7 @@ const api = axios.create({
 
 // Attach JWT token to every request
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('magnetcrm_token');
+    const token = localStorage.getItem('wcrm_token');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -21,12 +21,10 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            const savedUser = JSON.parse(localStorage.getItem('magnetcrm_user') || '{}');
-            const loginPath = savedUser?.role === 'super_admin' ? '/army' : '/login';
-            localStorage.removeItem('magnetcrm_token');
-            localStorage.removeItem('magnetcrm_user');
+            localStorage.removeItem('wcrm_token');
+            localStorage.removeItem('wcrm_user');
             if (window.location.pathname !== '/login' && window.location.pathname !== '/army' && !window.location.pathname.startsWith('/checkout')) {
-                window.location.href = loginPath;
+                window.location.href = '/login';
             }
         }
         return Promise.reject(error);

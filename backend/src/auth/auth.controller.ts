@@ -23,14 +23,23 @@ export class AuthController {
     ) { }
 
     @Post('login')
-    async login(@Body() loginDto: LoginDto) {
-        const result = await this.authService.login(loginDto) as any;
+    async login(@Body() loginDto: LoginDto, @Request() req) {
+        const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || req.ip;
+        const userAgent = req.headers['user-agent'] || '';
+        const result = await this.authService.login(loginDto, ip?.toString(), userAgent) as any;
         if (result.requires2FA || !result.user?.companyId) {
             return result;
         }
         const activeModules = await this.modulesService.getActiveModules(result.user.companyId);
         result.user.activeModules = activeModules;
         return result;
+    }
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN)
+    @Get('login-logs')
+    async getLoginLogs(@Request() req) {
+        return this.authService.getLoginLogs(req.user?.companyId);
     }
 
     @UseGuards(JwtAuthGuard, RolesGuard)
@@ -48,6 +57,17 @@ export class AuthController {
             const user = await this.authService.getUserById(req.user.userId);
             if (!user) {
                 throw new UnauthorizedException('User not found');
+            }
+
+            const isSelfHosted = process.env.DEPLOYMENT_MODE === 'self_hosted';
+            const isSuperAdminRole = [
+                UserRole.SUPER_ADMIN,
+                UserRole.SUPERADMIN_ADMIN,
+                UserRole.SUPERADMIN_STAFF,
+            ].includes(user.role) || (!user.companyId && user.role === UserRole.ADMIN);
+
+            if (isSelfHosted && isSuperAdminRole) {
+                throw new UnauthorizedException('Super-Admin access is disabled in Community Edition.');
             }
             
             let companyStatus = 'active';

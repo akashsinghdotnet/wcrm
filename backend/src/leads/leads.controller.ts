@@ -29,7 +29,7 @@ export class LeadsController {
     // ---- CSV endpoints (MUST be before :id) ----
 
     @Get('export')
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER)
     async exportCsv(@Request() req, @Res() res: Response) {
         const csv = await this.leadsService.exportCsv(req.user.companyId);
         res.set({
@@ -40,7 +40,7 @@ export class LeadsController {
     }
 
     @Post('import')
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER)
     importCsv(@Body() body: { csvText: string }, @Request() req) {
         return this.leadsService.importFromCsv(body.csvText, req.user.companyId);
     }
@@ -48,19 +48,19 @@ export class LeadsController {
     // ---- Assignment Rule endpoints (MUST be before :id) ----
 
     @Get('assignment-rules')
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER)
     getAssignmentRules(@Request() req) {
         return this.leadsService.getAssignmentRules(req.user.companyId);
     }
 
     @Post('assignment-rules')
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER)
     createAssignmentRule(@Request() req, @Body() body: { source: string; assignedTo: string }) {
         return this.leadsService.createAssignmentRule(req.user.companyId, body.source, body.assignedTo);
     }
 
     @Delete('assignment-rules/:ruleId')
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER)
     deleteAssignmentRule(@Param('ruleId') ruleId: string) {
         return this.leadsService.deleteAssignmentRule(ruleId);
     }
@@ -74,7 +74,7 @@ export class LeadsController {
     }
 
     @Delete('bulk')
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER)
     async bulkDelete(@Body() body: { ids: string[] }) {
         return this.leadsService.bulkDelete(body.ids);
     }
@@ -90,7 +90,7 @@ export class LeadsController {
     }
 
     @Delete(':id')
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.MANAGER)
     remove(@Param('id') id: string) {
         return this.leadsService.remove(id);
     }

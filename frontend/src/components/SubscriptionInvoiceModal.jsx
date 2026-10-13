@@ -46,7 +46,7 @@ export default function SubscriptionInvoiceModal({ invoice, company, onClose }) 
                 <div className="flex-1 overflow-y-auto bg-white text-slate-900 print:overflow-visible">
                     <InvoicePreviewTemplate 
                         form={settings || {}} 
-                        user={{ company: { companyName: 'MagnetCRM', email: 'billing@magnetcrm.com' } }} 
+                        user={{ company: { companyName: 'Wcrm', email: 'billing@wcrm.com' } }} 
                         invoice={{...invoice, company: company}} 
                     />
                 </div>

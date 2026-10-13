@@ -53,7 +53,7 @@ export class CompaniesController {
                             month: now.toLocaleString('default', { month: 'short', year: 'numeric' }),
                             status: company.subscriptionStatus === 'active' ? 'paid' : 'pending',
                             items: [{
-                                description: `MagnetCRM ${company.plan.name} Plan (${company.subscriptionPeriod})`,
+                                description: `Wcrm ${company.plan.name} Plan (${company.subscriptionPeriod})`,
                                 quantity: 1,
                                 rate: price,
                                 amount: price,
@@ -133,7 +133,7 @@ export class CompaniesController {
                         month: now.toLocaleString('default', { month: 'short', year: 'numeric' }),
                         status: 'paid',
                         items: [{
-                            description: `MagnetCRM ${company.plan.name} Plan (${company.subscriptionPeriod}) — Activation`,
+                            description: `Wcrm ${company.plan.name} Plan (${company.subscriptionPeriod}) — Activation`,
                             quantity: 1,
                             rate: price,
                             amount: price,

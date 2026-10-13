@@ -7,8 +7,10 @@ import { EmailModule } from '../email/email.module';
 
 import { UsersController } from './users.controller';
 
+import { UserLoginLog } from './user-login-log.entity';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Company]), EmailModule],
+  imports: [TypeOrmModule.forFeature([User, Company, UserLoginLog]), EmailModule],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService, TypeOrmModule],

@@ -14,13 +14,13 @@ All WhatsApp operations now log detailed information with `[WhatsApp]` and `[Wha
 
 ```bash
 # SSH into the API server
-ssh magnetcrmak@104.223.38.95
+ssh root@your-server-ip
 
 # View real-time logs
-pm2 logs magnet-backend --lines 100
+pm2 logs wcrm-backend --lines 100
 
 # Or check recent logs
-pm2 logs magnet-backend --lines 500 | grep -i whatsapp
+pm2 logs wcrm-backend --lines 500 | grep -i whatsapp
 ```
 
 **What to look for in logs:**
@@ -49,11 +49,11 @@ We've added a special debugging endpoint to test your WhatsApp configuration.
 
 **How to use:**
 
-1. Log into MagnetCRM as Admin
+1. Log into Wcrm as Admin
 2. Get your company ID from the browser console or URL
 3. Open this URL in your browser:
    ```
-   https://api.magnetcrm.com/api/whatsapp/debug/<YOUR_COMPANY_ID>
+   https://api.wcrm.si/api/whatsapp/debug/<YOUR_COMPANY_ID>
    ```
 
 **What the debug endpoint shows:**
@@ -97,11 +97,11 @@ We've added a special debugging endpoint to test your WhatsApp configuration.
 1. **Invalid or Expired Access Token**
    - **Check logs for:** `API error (401)` or `API error (190)`
    - **Solution:** Go to Meta Business Suite → WhatsApp → API Setup → Generate new Permanent Access Token
-   - Update in: MagnetCRM → Settings → Integrations → WhatsApp
+   - Update in: Wcrm → Settings → Integrations → WhatsApp
 
 2. **Wrong Phone Number ID**
    - **Check logs for:** `API error (404)` or "Phone number not found"
-   - **Solution:** Verify Phone Number ID in Meta matches what's in MagnetCRM settings
+   - **Solution:** Verify Phone Number ID in Meta matches what's in Wcrm settings
 
 3. **Phone Number Format Issue**
    - **Check logs for:** `[WhatsApp] Formatted phone: XXXXX`
@@ -121,7 +121,7 @@ We've added a special debugging endpoint to test your WhatsApp configuration.
 ```bash
 # 1. Check if config exists
 curl -H "Authorization: Bearer <YOUR_JWT_TOKEN>" \
-  https://api.magnetcrm.com/api/whatsapp/debug/<COMPANY_ID>
+  https://api.wcrm.si/api/whatsapp/debug/<COMPANY_ID>
 
 # 2. Test Meta API directly
 curl -H "Authorization: Bearer <ACCESS_TOKEN>" \
@@ -141,8 +141,8 @@ pm2 logs | grep "WhatsApp.*API error"
    - **Check logs for:** No `[WhatsApp Webhook] Received webhook payload` logs
    - **Solution:**
      - Go to Meta Business Suite → WhatsApp → Configuration
-     - Set Callback URL: `https://api.magnetcrm.com/api/whatsapp/webhook`
-     - Set Verify Token: `magnet-crm`
+     - Set Callback URL: `https://api.wcrm.si/api/whatsapp/webhook`
+     - Set Verify Token: `wcrm`
      - Subscribe to `messages` webhook field
      - Click "Verify and Save"
 
@@ -160,18 +160,18 @@ pm2 logs | grep "WhatsApp.*API error"
    - **Solution:** Verify auto-created lead appears in Leads page
 
 4. **Webhook Blocked by Firewall**
-   - **Check:** Can Meta reach `https://api.magnetcrm.com/api/whatsapp/webhook`?
+   - **Check:** Can Meta reach `https://api.wcrm.si/api/whatsapp/webhook`?
    - **Test:** Send test webhook from Meta Configuration page
    - **Solution:** Ensure server firewall allows HTTPS traffic from Meta's IPs
 
 **Debugging Steps:**
 ```bash
 # 1. Test webhook is accessible
-curl -X GET "https://api.magnetcrm.com/api/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=magnet-crm&hub.challenge=12345"
+curl -X GET "https://api.wcrm.si/api/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=wcrm&hub.challenge=12345"
 # Should return: 12345
 
 # 2. Send test message and watch logs in real-time
-pm2 logs magnet-backend --lines 0
+pm2 logs wcrm-backend --lines 0
 
 # 3. Check webhook configuration in Meta
 # Meta Business Suite → WhatsApp → Configuration → Webhook
@@ -196,8 +196,8 @@ Before contacting support, verify:
 - [ ] Phone Number ID matches Meta Business Suite
 - [ ] Access Token is Permanent (not temporary)
 - [ ] Access Token not expired (test with debug endpoint)
-- [ ] Webhook URL configured in Meta: `https://api.magnetcrm.com/api/whatsapp/webhook`
-- [ ] Verify Token set in Meta: `magnet-crm`
+- [ ] Webhook URL configured in Meta: `https://api.wcrm.si/api/whatsapp/webhook`
+- [ ] Verify Token set in Meta: `wcrm`
 - [ ] Subscribed to `messages` webhook in Meta
 - [ ] Lead exists with correct phone number (for incoming messages)
 - [ ] Server logs show `[WhatsApp]` activity
@@ -238,7 +238,7 @@ User sends WhatsApp message
   ↓
 Meta receives message
   ↓
-Meta sends webhook to https://api.magnetcrm.com/api/whatsapp/webhook
+Meta sends webhook to https://api.wcrm.si/api/whatsapp/webhook
   ↓
 Backend receives webhook
   ↓

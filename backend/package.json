@@ -36,6 +36,7 @@
     "class-validator": "^0.14.3",
     "imapflow": "^1.2.18",
     "mailparser": "^3.9.6",
+    "mysql2": "^3.23.2",
     "otplib": "^13.3.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

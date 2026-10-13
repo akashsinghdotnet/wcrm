@@ -2,5 +2,10 @@ node_modules/
 dist/
 .env
 .DS_Store
+._*
+.npm-cache/
+.npm-local-cache/
 *.zip
+*.tar.gz
+
 

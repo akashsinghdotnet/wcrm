@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
+import { ConfigProvider } from './context/ConfigContext.jsx'
 import App from './App.jsx'
 import './index.css'
 console.log('main.jsx is running');
@@ -36,9 +37,11 @@ class ErrorBoundary extends React.Component {
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <ConfigProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </ConfigProvider>
     </BrowserRouter>
   </StrictMode>,
 )

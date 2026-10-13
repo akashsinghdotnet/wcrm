@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { WhatsAppConfig } from './whatsapp-config.entity';
 import { WhatsAppMessage, MessageDirection, MessageStatus } from './whatsapp-message.entity';
 import { WhatsAppTemplate, TemplateStatus, TemplateCategory } from './entities/whatsapp-template.entity';
+import { WhatsAppContact } from './entities/whatsapp-contact.entity';
 import { SaveWhatsAppConfigDto } from './dto/save-config.dto';
 import { Lead, LeadSource, LeadStatus } from '../leads/lead.entity';
 import { Activity, ActivityType } from '../leads/activity.entity';
@@ -20,6 +21,8 @@ export class WhatsAppService {
         private messageRepo: Repository<WhatsAppMessage>,
         @InjectRepository(WhatsAppTemplate)
         private templateRepo: Repository<WhatsAppTemplate>,
+        @InjectRepository(WhatsAppContact)
+        private contactRepo: Repository<WhatsAppContact>,
         @InjectRepository(Lead)
         private leadRepo: Repository<Lead>,
         @InjectRepository(Activity)
@@ -35,15 +38,538 @@ export class WhatsAppService {
     async saveConfig(dto: SaveWhatsAppConfigDto): Promise<WhatsAppConfig> {
         let config = await this.configRepo.findOne({ where: { companyId: dto.companyId } });
 
+        let displayPhoneNumber = '';
+        let verifiedName = '';
+        if (dto.phoneNumberId && dto.accessToken) {
+            try {
+                const phoneRes = await fetch(`https://graph.facebook.com/v21.0/${dto.phoneNumberId}`, {
+                    headers: { Authorization: `Bearer ${dto.accessToken}` }
+                });
+                const phoneData = await phoneRes.json();
+                if (phoneData && phoneData.id) {
+                    displayPhoneNumber = phoneData.display_phone_number || phoneData.id;
+                    verifiedName = phoneData.verified_name || '';
+                }
+            } catch (e) {
+                this.logger.warn(`Could not verify phone details in saveConfig: ${e.message}`);
+            }
+        }
+
         if (config) {
             config.phoneNumberId = dto.phoneNumberId;
             config.accessToken = dto.accessToken;
             if (dto.businessAccountId !== undefined) config.businessAccountId = dto.businessAccountId;
+            if (displayPhoneNumber) config.metaPhoneNumber = displayPhoneNumber;
+            if (verifiedName) config.metaWabaName = verifiedName;
+            config.setupMethod = 'MANUAL';
         } else {
-            config = this.configRepo.create(dto);
+            config = this.configRepo.create({
+                ...dto,
+                metaPhoneNumber: displayPhoneNumber,
+                metaWabaName: verifiedName,
+                setupMethod: 'MANUAL',
+            });
         }
 
         return this.configRepo.save(config);
+    }
+
+    async saveMetaAppCredentials(companyId: string, payload: { metaAppId: string; metaAppSecret: string; metaConfigId?: string }) {
+        let config = await this.configRepo.findOne({ where: { companyId } });
+        if (!config) {
+            config = this.configRepo.create({
+                companyId,
+                phoneNumberId: '',
+                accessToken: '',
+                metaAppId: payload.metaAppId,
+                metaAppSecret: payload.metaAppSecret,
+                metaConfigId: payload.metaConfigId || '',
+                setupMethod: 'EMBEDDED'
+            });
+        } else {
+            config.metaAppId = payload.metaAppId;
+            config.metaAppSecret = payload.metaAppSecret;
+            if (payload.metaConfigId !== undefined) config.metaConfigId = payload.metaConfigId;
+        }
+        await this.configRepo.save(config);
+        return { success: true, message: 'Meta Developer App credentials saved successfully to database' };
+    }
+
+    async fetchAvailablePhoneNumbers(companyId: string, queryToken?: string, queryWabaId?: string) {
+        let config = await this.configRepo.findOne({ where: { companyId } });
+        const token = queryToken || config?.accessToken;
+        if (!token) {
+            throw new BadRequestException('No WhatsApp Access Token provided or configured. Please enter a token first.');
+        }
+
+        let wabaId = queryWabaId || config?.businessAccountId;
+        const appId = config?.metaAppId || process.env.META_APP_ID || '2022421845122124';
+        const appSecret = config?.metaAppSecret || process.env.META_APP_SECRET || '0c75246ebf45fb14b5302db1e9b89906';
+
+        const discoveredNumbers: any[] = [];
+        const discoveredWabas: string[] = [];
+
+        if (wabaId && !discoveredWabas.includes(wabaId)) {
+            discoveredWabas.push(wabaId);
+        }
+
+        // 1. Try debug_token to find granular scope target_ids (WABA IDs)
+        try {
+            const debugUrl = `https://graph.facebook.com/v21.0/debug_token?input_token=${token}&access_token=${appId}|${appSecret}`;
+            const debugRes = await fetch(debugUrl);
+            const debugData = await debugRes.json();
+            const scopes = debugData?.data?.granular_scopes || [];
+            for (const s of scopes) {
+                if (s.scope === 'whatsapp_business_management' && Array.isArray(s.target_ids)) {
+                    for (const tid of s.target_ids) {
+                        if (!discoveredWabas.includes(tid)) discoveredWabas.push(tid);
+                    }
+                }
+            }
+        } catch (err) {
+            this.logger.warn(`debug_token failed: ${err.message}`);
+        }
+
+        // 2. Try /me/businesses to discover WABAs
+        try {
+            const bizRes = await fetch(`https://graph.facebook.com/v21.0/me/businesses?access_token=${token}`);
+            const bizData = await bizRes.json();
+            if (bizData?.data && Array.isArray(bizData.data)) {
+                for (const b of bizData.data) {
+                    try {
+                        const cwRes = await fetch(`https://graph.facebook.com/v21.0/${b.id}/client_whatsapp_business_accounts?access_token=${token}`);
+                        const cwData = await cwRes.json();
+                        if (cwData?.data && Array.isArray(cwData.data)) {
+                            for (const w of cwData.data) {
+                                if (!discoveredWabas.includes(w.id)) discoveredWabas.push(w.id);
+                            }
+                        }
+                    } catch (e) {}
+
+                    try {
+                        const owRes = await fetch(`https://graph.facebook.com/v21.0/${b.id}/owned_whatsapp_business_accounts?access_token=${token}`);
+                        const owData = await owRes.json();
+                        if (owData?.data && Array.isArray(owData.data)) {
+                            for (const w of owData.data) {
+                                if (!discoveredWabas.includes(w.id)) discoveredWabas.push(w.id);
+                            }
+                        }
+                    } catch (e) {}
+                }
+            }
+        } catch (err) {
+            this.logger.warn(`/me/businesses check failed: ${err.message}`);
+        }
+
+        // 3. For each discovered WABA, query phone_numbers
+        for (const wid of discoveredWabas) {
+            try {
+                const pRes = await fetch(`https://graph.facebook.com/v21.0/${wid}/phone_numbers?access_token=${token}`);
+                const pData = await pRes.json();
+                if (pData?.data && Array.isArray(pData.data)) {
+                    for (const item of pData.data) {
+                        if (!discoveredNumbers.some(n => n.id === item.id)) {
+                            discoveredNumbers.push({
+                                id: item.id,
+                                displayPhoneNumber: item.display_phone_number || item.id,
+                                verifiedName: item.verified_name || '',
+                                qualityRating: item.quality_rating || 'GREEN',
+                                status: item.code_verification_status || 'VERIFIED',
+                                wabaId: wid,
+                            });
+                        }
+                    }
+                }
+            } catch (err) {
+                this.logger.warn(`Error fetching phone numbers for WABA ${wid}: ${err.message}`);
+            }
+        }
+
+        // 4. If current config has a specific phoneNumberId, also check it directly
+        if (config?.phoneNumberId && !discoveredNumbers.some(n => n.id === config.phoneNumberId)) {
+            try {
+                const directRes = await fetch(`https://graph.facebook.com/v21.0/${config.phoneNumberId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const directData = await directRes.json();
+                if (directData?.id) {
+                    discoveredNumbers.push({
+                        id: directData.id,
+                        displayPhoneNumber: directData.display_phone_number || directData.id,
+                        verifiedName: directData.verified_name || '',
+                        qualityRating: directData.quality_rating || 'GREEN',
+                        status: 'VERIFIED',
+                        wabaId: wabaId || '',
+                    });
+                }
+            } catch (e) {}
+        }
+
+        return {
+            wabas: discoveredWabas,
+            numbers: discoveredNumbers,
+            activePhoneNumberId: config?.phoneNumberId || '',
+            configured: !!(config && config.phoneNumberId && config.accessToken)
+        };
+    }
+
+    async selectPhoneNumber(companyId: string, payload: { phoneNumberId: string; wabaId?: string; accessToken?: string }) {
+        let config = await this.configRepo.findOne({ where: { companyId } });
+        const token = payload.accessToken || config?.accessToken;
+        if (!token) {
+            throw new BadRequestException('Access token is required');
+        }
+
+        let displayPhoneNumber = '';
+        let verifiedName = '';
+        let qualityRating = 'GREEN';
+
+        try {
+            const pRes = await fetch(`https://graph.facebook.com/v21.0/${payload.phoneNumberId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const pData = await pRes.json();
+            if (pData && pData.id) {
+                displayPhoneNumber = pData.display_phone_number || pData.id;
+                verifiedName = pData.verified_name || '';
+                qualityRating = pData.quality_rating || 'GREEN';
+            }
+        } catch (e) {
+            this.logger.warn(`Could not fetch details for selected phone ${payload.phoneNumberId}: ${e.message}`);
+        }
+
+        if (!config) {
+            config = this.configRepo.create({
+                companyId,
+                phoneNumberId: payload.phoneNumberId,
+                accessToken: token,
+                businessAccountId: payload.wabaId || '',
+                metaPhoneNumber: displayPhoneNumber,
+                metaWabaName: verifiedName,
+                setupMethod: 'EMBEDDED',
+                provider: 'META'
+            });
+        } else {
+            config.phoneNumberId = payload.phoneNumberId;
+            config.accessToken = token;
+            if (payload.wabaId) config.businessAccountId = payload.wabaId;
+            if (displayPhoneNumber) config.metaPhoneNumber = displayPhoneNumber;
+            if (verifiedName) config.metaWabaName = verifiedName;
+            config.setupMethod = 'EMBEDDED';
+            config.provider = 'META';
+        }
+
+        const saved = await this.configRepo.save(config);
+
+        // Auto-subscribe WABA if present
+        if (saved.businessAccountId) {
+            try {
+                await fetch(`https://graph.facebook.com/v21.0/${saved.businessAccountId}/subscribed_apps`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            } catch (e) {}
+        }
+
+        // Auto-register phone number on Cloud API
+        if (saved.phoneNumberId) {
+            await this.registerPhoneNumber(saved.phoneNumberId, token);
+        }
+
+        return {
+            success: true,
+            message: 'WhatsApp phone number connected successfully!',
+            config: saved,
+            qualityRating
+        };
+    }
+
+    async registerPhoneNumber(phoneNumberId: string, accessToken: string, pin: string = '123456'): Promise<boolean> {
+        try {
+            this.logger.log(`[WhatsApp] Registering phone number ${phoneNumberId} on Cloud API...`);
+            const res = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/register`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    messaging_product: 'whatsapp',
+                    pin,
+                }),
+            });
+            const data = await res.json();
+            this.logger.log(`[WhatsApp Register] Response: ${JSON.stringify(data)}`);
+            return data.success === true;
+        } catch (err) {
+            this.logger.warn(`[WhatsApp Register] Failed: ${err.message}`);
+            return false;
+        }
+    }
+
+    async handleEmbeddedSignup(companyId: string, payload: {
+        code?: string;
+        accessToken?: string;
+        wabaId?: string;
+        phoneNumberId?: string;
+        appId?: string;
+        appSecret?: string;
+        configId?: string;
+        redirectUri?: string;
+    }) {
+        this.logger.log(`[WhatsApp Embedded Signup] Processing for company ${companyId}`);
+        let token = payload.accessToken;
+        let wabaId = payload.wabaId;
+        let phoneNumberId = payload.phoneNumberId;
+        let verifiedName = '';
+        let displayPhoneNumber = '';
+        let qualityRating = '';
+
+        const appId = payload.appId || process.env.META_APP_ID || '2022421845122124';
+        const appSecret = payload.appSecret || process.env.META_APP_SECRET || '0c75246ebf45fb14b5302db1e9b89906';
+        const redirectUri = payload.redirectUri || 'http://localhost:5173/settings?tab=whatsapp';
+
+        // 1. If authorization code is provided, exchange it with Meta OAuth endpoint
+        if (payload.code && appId && appSecret) {
+            try {
+                this.logger.log(`[WhatsApp Embedded Signup] Exchanging auth code for permanent token...`);
+                const tokenUrl = `https://graph.facebook.com/v21.0/oauth/access_token?client_id=${appId}&client_secret=${appSecret}&redirect_uri=${encodeURIComponent(redirectUri)}&code=${payload.code}`;
+                const tokenRes = await fetch(tokenUrl);
+                const tokenData = await tokenRes.json();
+                if (tokenData.access_token) {
+                    token = tokenData.access_token;
+                    this.logger.log(`[WhatsApp Embedded Signup] Permanent token acquired successfully.`);
+                } else {
+                    const errMsg = tokenData.error?.message || 'Failed to exchange Meta authorization code';
+                    this.logger.error(`[WhatsApp Embedded Signup] Token exchange error: ${errMsg}`);
+                    throw new BadRequestException(errMsg);
+                }
+            } catch (err) {
+                if (err instanceof BadRequestException) throw err;
+                this.logger.error(`[WhatsApp Embedded Signup] Network error exchanging token: ${err.message}`);
+                throw new BadRequestException(err.message || 'Token exchange failed');
+            }
+        }
+
+        let config = await this.configRepo.findOne({ where: { companyId } });
+        if (!token && config?.accessToken) {
+            token = config.accessToken;
+        }
+
+        if (!token) {
+            throw new BadRequestException('Access token or authorization code with App ID & Secret is required');
+        }
+
+        // 2. Discover WABA ID if not provided
+        const availableNumbers: any[] = [];
+        if (!wabaId) {
+            try {
+                const debugUrl = `https://graph.facebook.com/v21.0/debug_token?input_token=${token}&access_token=${appId}|${appSecret}`;
+                const debugRes = await fetch(debugUrl);
+                const debugData = await debugRes.json();
+                const scopes = debugData?.data?.granular_scopes || [];
+                const wabaScope = scopes.find((s: any) => s.scope === 'whatsapp_business_management');
+                if (wabaScope && wabaScope.target_ids && wabaScope.target_ids.length > 0) {
+                    wabaId = wabaScope.target_ids[0];
+                    this.logger.log(`[WhatsApp Embedded Signup] Discovered WABA ID from token scopes: ${wabaId}`);
+                }
+            } catch (err) {
+                this.logger.warn(`Could not debug token for WABA: ${err.message}`);
+            }
+        }
+
+        // 3. Discover registered phone numbers under this WABA
+        if (wabaId) {
+            try {
+                this.logger.log(`[WhatsApp Embedded Signup] Fetching phone numbers for WABA: ${wabaId}`);
+                const phoneRes = await fetch(
+                    `https://graph.facebook.com/v21.0/${wabaId}/phone_numbers?access_token=${token}`
+                );
+                const phoneData = await phoneRes.json();
+                if (phoneData.data && phoneData.data.length > 0) {
+                    for (const num of phoneData.data) {
+                        availableNumbers.push({
+                            id: num.id,
+                            displayPhoneNumber: num.display_phone_number || num.id,
+                            verifiedName: num.verified_name || '',
+                            qualityRating: num.quality_rating || 'GREEN',
+                            status: num.code_verification_status || 'VERIFIED',
+                            wabaId
+                        });
+                    }
+                    if (!phoneNumberId) {
+                        const primary = phoneData.data[0];
+                        phoneNumberId = primary.id;
+                        displayPhoneNumber = primary.display_phone_number || '';
+                        verifiedName = primary.verified_name || '';
+                        qualityRating = primary.quality_rating || '';
+                    }
+                    this.logger.log(`[WhatsApp Embedded Signup] Discovered ${phoneData.data.length} phone(s), primary: ${displayPhoneNumber} (ID: ${phoneNumberId})`);
+                }
+            } catch (err) {
+                this.logger.warn(`[WhatsApp Embedded Signup] Could not auto-fetch phone numbers: ${err.message}`);
+            }
+        }
+
+        // 4. Auto-subscribe WABA to CRM webhook so incoming customer messages flow immediately
+        let webhookSubscribed = false;
+        if (wabaId) {
+            try {
+                this.logger.log(`[WhatsApp Embedded Signup] Auto-subscribing WABA ${wabaId} to webhook...`);
+                const subRes = await fetch(
+                    `https://graph.facebook.com/v21.0/${wabaId}/subscribed_apps`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+                const subData = await subRes.json();
+                webhookSubscribed = subData.success === true;
+                this.logger.log(`[WhatsApp Embedded Signup] Webhook subscription result: ${webhookSubscribed}`);
+            } catch (err) {
+                this.logger.warn(`[WhatsApp Embedded Signup] Auto-subscribe webhook failed: ${err.message}`);
+            }
+        }
+
+        // 5. Save into Database
+        if (config) {
+            if (phoneNumberId) config.phoneNumberId = phoneNumberId;
+            config.accessToken = token;
+            if (wabaId) config.businessAccountId = wabaId;
+            if (payload.appId) config.metaAppId = payload.appId;
+            if (payload.configId) config.metaConfigId = payload.configId;
+            if (verifiedName) config.metaWabaName = verifiedName;
+            if (displayPhoneNumber) config.metaPhoneNumber = displayPhoneNumber;
+            config.setupMethod = 'EMBEDDED';
+            config.provider = 'META';
+        } else {
+            config = this.configRepo.create({
+                companyId,
+                phoneNumberId: phoneNumberId || '',
+                accessToken: token,
+                businessAccountId: wabaId || '',
+                metaAppId: payload.appId || '',
+                metaConfigId: payload.configId || '',
+                metaWabaName: verifiedName || '',
+                metaPhoneNumber: displayPhoneNumber || '',
+                setupMethod: 'EMBEDDED',
+                provider: 'META',
+            });
+        }
+
+        const saved = await this.configRepo.save(config);
+
+        // Auto-register phone number on Cloud API
+        if (saved.phoneNumberId) {
+            await this.registerPhoneNumber(saved.phoneNumberId, token);
+        }
+
+        return {
+            success: true,
+            phoneNumberId: saved.phoneNumberId,
+            businessAccountId: saved.businessAccountId,
+            displayPhoneNumber: saved.metaPhoneNumber || displayPhoneNumber,
+            verifiedName: saved.metaWabaName || verifiedName,
+            qualityRating: qualityRating || 'GREEN',
+            webhookSubscribed,
+            availableNumbers,
+            setupMethod: 'EMBEDDED',
+            message: 'WhatsApp Business API successfully connected via Meta Embedded Signup!'
+        };
+    }
+
+    async disconnectWhatsApp(companyId: string): Promise<boolean> {
+        const config = await this.configRepo.findOne({ where: { companyId } });
+        if (config) {
+            config.phoneNumberId = '';
+            config.accessToken = '';
+            config.businessAccountId = '';
+            config.metaPhoneNumber = '';
+            config.metaWabaName = '';
+            await this.configRepo.save(config);
+            return true;
+        }
+        return false;
+    }
+
+    async ensureWhatsAppContact(companyId: string, rawPhone: string, contactName?: string): Promise<WhatsAppContact> {
+        const formattedPhone = this.formatPhone(rawPhone);
+        const phoneWithPlus = `+${formattedPhone}`;
+        const cleanDigits = formattedPhone.slice(-10);
+
+        let contact = await this.contactRepo
+            .createQueryBuilder('c')
+            .where('c.companyId = :companyId', { companyId })
+            .andWhere("REPLACE(REPLACE(REPLACE(c.phone, '+', ''), '-', ''), ' ', '') LIKE :digits", {
+                digits: `%${cleanDigits}`
+            })
+            .getOne();
+
+        if (!contact) {
+            const displayName = contactName && contactName !== 'Unknown' ? contactName : `WhatsApp User (+${formattedPhone})`;
+            contact = this.contactRepo.create({
+                companyId,
+                name: displayName,
+                phone: phoneWithPlus,
+                isOptedIn: true,
+                optInDate: new Date(),
+                optInSource: 'whatsapp',
+                lastMessageDate: new Date(),
+                lastMessageType: 'sent',
+            });
+            await this.contactRepo.save(contact);
+            this.logger.log(`[WhatsApp] Auto-created WhatsAppContact for ${formattedPhone}: ${contact.id}`);
+        } else {
+            contact.lastMessageDate = new Date();
+            if (contactName && contactName !== 'Unknown' && (contact.name.startsWith('WhatsApp User') || contact.name.startsWith('Contact'))) {
+                contact.name = contactName;
+            }
+            await this.contactRepo.save(contact);
+        }
+
+        return contact;
+    }
+
+    async ensureLeadAndContact(
+        companyId: string,
+        rawPhone: string,
+        contactName?: string,
+    ): Promise<{ lead: Lead; contact: WhatsAppContact }> {
+        const formattedPhone = this.formatPhone(rawPhone);
+        const phoneWithPlus = `+${formattedPhone}`;
+        const cleanDigits = formattedPhone.slice(-10);
+
+        // 1. Find or create Lead (for CRM Leads & Inbox conversations)
+        let lead = await this.leadRepo
+            .createQueryBuilder('lead')
+            .where('lead.companyId = :companyId', { companyId })
+            .andWhere("REPLACE(REPLACE(REPLACE(lead.phone, '+', ''), '-', ''), ' ', '') LIKE :digits", {
+                digits: `%${cleanDigits}`
+            })
+            .getOne();
+
+        if (!lead) {
+            const displayName = contactName && contactName !== 'Unknown' ? contactName : `WhatsApp User (+${formattedPhone})`;
+            lead = await this.leadsService.create({
+                companyId,
+                name: displayName,
+                phone: phoneWithPlus,
+                source: LeadSource.WHATSAPP,
+                status: LeadStatus.NEW,
+            }, { skipAutoReply: true });
+            this.logger.log(`[WhatsApp] Auto-created Lead for ${formattedPhone}: ${lead.id}`);
+        } else if (contactName && contactName !== 'Unknown' && (lead.name.startsWith('WhatsApp User') || lead.name.startsWith('Contact'))) {
+            lead.name = contactName;
+            await this.leadRepo.save(lead);
+        }
+
+        // 2. Find or create WhatsAppContact (for Contacts management & broadcasts)
+        const contact = await this.ensureWhatsAppContact(companyId, rawPhone, contactName || lead.name);
+
+        return { lead, contact };
     }
 
     async sendMessage(
@@ -74,6 +600,17 @@ export class WhatsAppService {
         // Format phone number - ensure it has country code
         const phone = this.formatPhone(to);
         this.logger.log(`[WhatsApp] Formatted phone: ${phone} (original: ${to})`);
+
+        // Auto-create/find lead and contact so this message appears in Inbox and Contacts
+        let actualLeadId = leadId;
+        if (!actualLeadId) {
+            try {
+                const { lead } = await this.ensureLeadAndContact(companyId, phone);
+                actualLeadId = lead.id;
+            } catch (err) {
+                this.logger.warn(`Could not ensure lead/contact for ${phone}: ${err.message}`);
+            }
+        }
 
         // Send via WhatsApp Cloud API
         let whatsappMessageId: string | null = null;
@@ -117,10 +654,43 @@ export class WhatsAppService {
             this.logger.log(`[WhatsApp] API Response Status: ${response.status}, Data: ${JSON.stringify(data)}`);
 
             if (!response.ok) {
-                errorDetail = data.error?.message || JSON.stringify(data);
-                this.logger.error(`[WhatsApp] API error (${response.status}): ${errorDetail}`);
-                this.logger.error(`[WhatsApp] Full error response: ${JSON.stringify(data)}`);
-                status = MessageStatus.FAILED;
+                // Auto-healing for Meta Error 133010: Account not registered on Cloud API
+                if (data.error?.code === 133010 || data.error?.message?.includes('133010') || data.error?.message?.includes('Account not registered')) {
+                    this.logger.log(`[WhatsApp] Encountered error 133010 (Account not registered). Auto-registering phone number ${config.phoneNumberId}...`);
+                    const registered = await this.registerPhoneNumber(config.phoneNumberId, config.accessToken);
+                    if (registered) {
+                        this.logger.log(`[WhatsApp] Auto-registration succeeded! Retrying message send...`);
+                        const retryResponse = await fetch(
+                            `https://graph.facebook.com/v21.0/${config.phoneNumberId}/messages`,
+                            {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${config.accessToken}`,
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(payload),
+                            },
+                        );
+                        const retryData = await retryResponse.json();
+                        if (retryResponse.ok) {
+                            whatsappMessageId = retryData.messages?.[0]?.id || null;
+                            status = MessageStatus.SENT;
+                            this.logger.log(`[WhatsApp] Message successfully sent after auto-registration! ID: ${whatsappMessageId}`);
+                        } else {
+                            errorDetail = retryData.error?.message || JSON.stringify(retryData);
+                            this.logger.error(`[WhatsApp] Retry failed: ${errorDetail}`);
+                            status = MessageStatus.FAILED;
+                        }
+                    } else {
+                        errorDetail = data.error?.message || 'Phone number registration failed on Meta Cloud API';
+                        status = MessageStatus.FAILED;
+                    }
+                } else {
+                    errorDetail = data.error?.message || JSON.stringify(data);
+                    this.logger.error(`[WhatsApp] API error (${response.status}): ${errorDetail}`);
+                    this.logger.error(`[WhatsApp] Full error response: ${JSON.stringify(data)}`);
+                    status = MessageStatus.FAILED;
+                }
             } else {
                 whatsappMessageId = data.messages?.[0]?.id || null;
                 this.logger.log(`[WhatsApp] Message sent successfully! WhatsApp Message ID: ${whatsappMessageId}`);
@@ -135,7 +705,7 @@ export class WhatsAppService {
         // Save message to DB regardless of status
         const msg = this.messageRepo.create({
             companyId,
-            leadId: leadId || undefined,
+            leadId: actualLeadId || undefined,
             direction: MessageDirection.OUTBOUND,
             content: message,
             status,
@@ -148,10 +718,10 @@ export class WhatsAppService {
         await this.messageRepo.save(msg);
 
         // Log activity on lead
-        if (leadId) {
+        if (actualLeadId) {
             try {
                 const activity = this.activityRepo.create({
-                    leadId,
+                    leadId: actualLeadId,
                     userId,
                     type: ActivityType.WHATSAPP,
                     content: status === MessageStatus.FAILED
@@ -262,7 +832,7 @@ export class WhatsAppService {
 
         const conversations = await qb
             .groupBy('msg.leadId')
-            .orderBy('"lastMessageAt"', 'DESC')
+            .orderBy('MAX(msg.createdAt)', 'DESC')
             .getRawMany();
 
         // Fetch lead details and last message for each
@@ -487,6 +1057,14 @@ export class WhatsAppService {
                 continue;
             }
 
+            // Sync to WhatsAppContact for Contacts tab
+            try {
+                const contactName = contacts.find((c: any) => c.wa_id === fromPhone)?.profile?.name || lead.name;
+                await this.ensureWhatsAppContact(companyId, fromPhone, contactName);
+            } catch (cErr) {
+                this.logger.warn(`Could not sync WhatsAppContact for incoming webhook: ${cErr.message}`);
+            }
+
             // Save message — companyId is guaranteed to match the lead's company
             const message = this.messageRepo.create({
                 companyId,
@@ -637,7 +1215,7 @@ export class WhatsAppService {
     }
 
     /**
-     * Fetch approved message templates from Meta Business API.
+     * Fetch all message templates from Meta Business API (approved, pending, rejected).
      */
     async fetchTemplates(companyId: string): Promise<any[]> {
         const config = await this.configRepo.findOne({ where: { companyId } });
@@ -645,12 +1223,12 @@ export class WhatsAppService {
             throw new BadRequestException('WhatsApp Business API is not configured');
         }
         if (!config.businessAccountId) {
-            throw new BadRequestException('Business Account ID is required to fetch templates. Please add it in WhatsApp settings.');
+            throw new BadRequestException('Business Account ID (WABA ID) is required to fetch templates. Please ensure your WhatsApp account is connected.');
         }
 
         try {
             const response = await fetch(
-                `https://graph.facebook.com/v21.0/${config.businessAccountId}/message_templates?status=APPROVED&limit=100`,
+                `https://graph.facebook.com/v21.0/${config.businessAccountId}/message_templates?limit=100`,
                 {
                     headers: { 'Authorization': `Bearer ${config.accessToken}` },
                 },
@@ -663,39 +1241,248 @@ export class WhatsAppService {
                 throw new BadRequestException(data.error?.message || 'Failed to fetch templates from Meta');
             }
 
-            // Return simplified template data
-            return (data.data || []).map((t: any) => ({
-                name: t.name,
-                language: t.language,
-                status: t.status,
-                category: t.category,
-                components: t.components,
-            }));
+            const templates = (data.data || []).map((t: any) => {
+                const bodyComp = (t.components || []).find((c: any) => c.type === 'BODY');
+                const headerComp = (t.components || []).find((c: any) => c.type === 'HEADER');
+                const footerComp = (t.components || []).find((c: any) => c.type === 'FOOTER');
+                const buttonsComp = (t.components || []).find((c: any) => c.type === 'BUTTONS');
+
+                const status = (t.status || 'APPROVED').toLowerCase();
+
+                return {
+                    id: t.id || t.name,
+                    name: t.name,
+                    language: t.language,
+                    status: status,
+                    category: t.category,
+                    bodyText: bodyComp?.text || '',
+                    headerText: headerComp?.text || '',
+                    footerText: footerComp?.text || '',
+                    buttons: buttonsComp?.buttons || [],
+                    components: t.components,
+                    rejectedReason: t.rejected_reason || null,
+                };
+            });
+
+            // Sync with local DB in background
+            this.syncTemplatesToDB(companyId).catch((err) => {
+                this.logger.warn(`Background syncTemplatesToDB error: ${err.message}`);
+            });
+
+            return templates;
         } catch (error) {
             if (error instanceof BadRequestException) throw error;
             this.logger.error(`Failed to fetch templates: ${error.message}`);
-            throw new BadRequestException('Failed to fetch templates from Meta');
+            throw new BadRequestException(error.message || 'Failed to fetch templates from Meta');
         }
     }
 
     /**
-     * Sync approved Meta templates into the local whatsapp_templates DB table.
-     * Called before listing templates so the sidebar always shows current data.
+     * Create and submit a message template directly to Meta Graph API for review.
+     */
+    async createAndSubmitTemplate(
+        companyId: string,
+        dto: {
+            name: string;
+            category: string;
+            language: string;
+            bodyText: string;
+            headerText?: string;
+            footerText?: string;
+            buttons?: { type: string; text: string; url?: string; phone_number?: string }[];
+        },
+    ) {
+        const config = await this.configRepo.findOne({ where: { companyId } });
+        if (!config || !config.accessToken) {
+            throw new BadRequestException('WhatsApp Business API is not connected. Please connect your WhatsApp account first.');
+        }
+
+        const wabaId = config.businessAccountId;
+        if (!wabaId) {
+            throw new BadRequestException('WhatsApp Business Account ID (WABA ID) not found in config. Please reconnect or sync account.');
+        }
+
+        // Meta requires name in lowercase, numbers, underscores only
+        const cleanName = dto.name
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, '_')
+            .replace(/[^a-z0-9_]/g, '');
+
+        if (!cleanName) {
+            throw new BadRequestException('Template name is required and can only contain lowercase letters, numbers, and underscores.');
+        }
+
+        if (!dto.bodyText || !dto.bodyText.trim()) {
+            throw new BadRequestException('Template message body is required.');
+        }
+
+        const category = (dto.category || 'MARKETING').toUpperCase();
+        const language = dto.language || 'en_US';
+
+        // Build Meta Components
+        const components: any[] = [];
+
+        // 1. Header (optional)
+        if (dto.headerText && dto.headerText.trim()) {
+            components.push({
+                type: 'HEADER',
+                format: 'TEXT',
+                text: dto.headerText.trim(),
+            });
+        }
+
+        // 2. Body (required)
+        components.push({
+            type: 'BODY',
+            text: dto.bodyText.trim(),
+        });
+
+        // 3. Footer (optional)
+        if (dto.footerText && dto.footerText.trim()) {
+            components.push({
+                type: 'FOOTER',
+                text: dto.footerText.trim(),
+            });
+        }
+
+        // 4. Buttons (optional)
+        if (dto.buttons && dto.buttons.length > 0) {
+            const formattedButtons = dto.buttons.map(b => {
+                if (b.type === 'URL') {
+                    return { type: 'URL', text: b.text, url: b.url };
+                } else if (b.type === 'PHONE_NUMBER') {
+                    return { type: 'PHONE_NUMBER', text: b.text, phone_number: b.phone_number };
+                }
+                return { type: 'QUICK_REPLY', text: b.text };
+            });
+            components.push({
+                type: 'BUTTONS',
+                buttons: formattedButtons,
+            });
+        }
+
+        const payload = {
+            name: cleanName,
+            category: category,
+            language: language,
+            components: components,
+        };
+
+        this.logger.log(`[WhatsApp Templates] Submitting template "${cleanName}" to Meta WABA ${wabaId}...`);
+
+        const response = await fetch(`https://graph.facebook.com/v21.0/${wabaId}/message_templates`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${config.accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        this.logger.log(`[WhatsApp Templates] Meta response (${response.status}): ${JSON.stringify(data)}`);
+
+        if (!response.ok) {
+            const metaError = data.error?.message || data.error?.error_user_msg || JSON.stringify(data);
+            throw new BadRequestException(`Meta API Error: ${metaError}`);
+        }
+
+        // Extract variables from body text (e.g. {{1}}, {{2}})
+        const variables = (dto.bodyText.match(/\{\{\d+\}\}/g) || []).map((_, i) => `var${i + 1}`);
+
+        // Save or update in local DB
+        const metaStatus = (data.status || 'PENDING').toLowerCase();
+        const mappedStatus = metaStatus === 'approved' ? TemplateStatus.APPROVED :
+                             metaStatus === 'rejected' ? TemplateStatus.REJECTED :
+                             TemplateStatus.PENDING;
+
+        let template = await this.templateRepo.findOne({ where: { companyId, name: cleanName } });
+        if (!template) {
+            template = this.templateRepo.create({
+                companyId,
+                name: cleanName,
+                content: dto.bodyText.trim(),
+                category: (category.toLowerCase() as any) || TemplateCategory.MARKETING,
+                status: mappedStatus,
+                metaTemplateId: data.id || undefined,
+                language: language,
+                variables: variables,
+            });
+        } else {
+            template.content = dto.bodyText.trim();
+            template.category = (category.toLowerCase() as any) || TemplateCategory.MARKETING;
+            template.status = mappedStatus;
+            template.metaTemplateId = data.id || template.metaTemplateId;
+            template.language = language;
+            template.variables = variables;
+        }
+
+        await this.templateRepo.save(template);
+
+        return {
+            success: true,
+            message: `Template "${cleanName}" submitted to Meta for approval! Initial status: ${data.status || 'PENDING'}`,
+            template: {
+                id: template.id,
+                name: cleanName,
+                status: data.status || 'PENDING',
+                category: category,
+                language: language,
+                metaId: data.id,
+            },
+        };
+    }
+
+    /**
+     * Delete a template from Meta and local DB.
+     */
+    async deleteTemplate(companyId: string, templateName: string) {
+        const config = await this.configRepo.findOne({ where: { companyId } });
+        if (!config || !config.accessToken || !config.businessAccountId) {
+            throw new BadRequestException('WhatsApp config missing');
+        }
+
+        // Call Meta DELETE
+        try {
+            const res = await fetch(
+                `https://graph.facebook.com/v21.0/${config.businessAccountId}/message_templates?name=${encodeURIComponent(templateName)}`,
+                {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${config.accessToken}` },
+                }
+            );
+            const data = await res.json();
+            this.logger.log(`Delete template from Meta result: ${JSON.stringify(data)}`);
+        } catch (e) {
+            this.logger.warn(`Could not delete template from Meta: ${e.message}`);
+        }
+
+        // Remove from DB
+        await this.templateRepo.delete({ companyId, name: templateName });
+        return { success: true, message: `Template ${templateName} deleted.` };
+    }
+
+    /**
+     * Sync Meta templates into the local whatsapp_templates DB table.
      */
     async syncTemplatesToDB(companyId: string): Promise<void> {
         try {
             const metaTemplates = await this.fetchTemplates(companyId);
             for (const t of metaTemplates) {
-                // Extract body text from components
-                const bodyComponent = (t.components || []).find((c: any) => c.type === 'BODY');
-                const bodyText = bodyComponent?.text || '';
+                const bodyText = t.bodyText || '';
                 const variables = (bodyText.match(/\{\{\d+\}\}/g) || []).map((_: any, i: number) => `var${i + 1}`);
+
+                const mappedStatus = t.status === 'approved' ? TemplateStatus.APPROVED :
+                                     t.status === 'rejected' ? TemplateStatus.REJECTED :
+                                     TemplateStatus.PENDING;
 
                 const existing = await this.templateRepo.findOne({ where: { companyId, name: t.name } });
                 if (existing) {
                     existing.content = bodyText || existing.content;
                     existing.language = t.language || existing.language;
-                    existing.status = TemplateStatus.APPROVED;
+                    existing.status = mappedStatus;
+                    existing.metaTemplateId = t.id || existing.metaTemplateId;
                     existing.variables = variables.length ? variables : existing.variables;
                     await this.templateRepo.save(existing);
                 } else {
@@ -704,14 +1491,14 @@ export class WhatsAppService {
                         name: t.name,
                         content: bodyText || t.name,
                         language: t.language || 'en',
-                        status: TemplateStatus.APPROVED,
+                        status: mappedStatus,
                         category: (t.category?.toLowerCase() as any) || 'marketing',
+                        metaTemplateId: t.id || undefined,
                         variables,
                     }));
                 }
             }
         } catch (err: any) {
-            // Non-fatal: if Meta API fails or no businessAccountId, just skip sync
             this.logger.warn(`Template sync skipped: ${err.message}`);
         }
     }

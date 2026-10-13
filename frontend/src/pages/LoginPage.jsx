@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
-import { Magnet, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import { WcrmIcon } from '../components/WcrmLogo';
 import toast from 'react-hot-toast';
 
 export default function LoginPage({ type = 'client' }) {
@@ -16,6 +17,14 @@ export default function LoginPage({ type = 'client' }) {
     const { login, verify2FA, logout } = useAuth();
     const { config } = useConfig();
     const navigate = useNavigate();
+
+    const isSelfHosted = config?.deployment_mode === 'self_hosted';
+
+    useEffect(() => {
+        if (isSelfHosted && type === 'admin') {
+            navigate('/login', { replace: true });
+        }
+    }, [isSelfHosted, type, navigate]);
 
     const isClientLogin = type === 'client';
     const pageTitle = isClientLogin ? 'Sign in to your account' : 'Admin Portal';
@@ -38,7 +47,13 @@ export default function LoginPage({ type = 'client' }) {
             // Role Enforcement
             const isSuperadminTeam = result.role === 'super_admin' ||
                 result.role === 'superadmin_admin' ||
-                result.role === 'superadmin_staff';
+                result.role === 'superadmin_staff' ||
+                (!result.companyId && result.role === 'admin');
+
+            if (isSelfHosted && isSuperadminTeam) {
+                logout();
+                throw new Error('Super-Admin portal and accounts are disabled in Community Edition.');
+            }
 
             if (type === 'admin' && !isSuperadminTeam) {
                 logout(); // Logout immediately
@@ -89,7 +104,13 @@ export default function LoginPage({ type = 'client' }) {
             // Role Enforcement
             const isSuperadminTeam = userData.role === 'super_admin' ||
                 userData.role === 'superadmin_admin' ||
-                userData.role === 'superadmin_staff';
+                userData.role === 'superadmin_staff' ||
+                (!userData.companyId && userData.role === 'admin');
+
+            if (isSelfHosted && isSuperadminTeam) {
+                logout();
+                throw new Error('Super-Admin portal and accounts are disabled in Community Edition.');
+            }
 
             if (type === 'admin' && !isSuperadminTeam) {
                 logout();
@@ -105,7 +126,7 @@ export default function LoginPage({ type = 'client' }) {
             navigate('/');
         } catch (err) {
             if (err.message && !err.response) {
-                toast.error('Invalid credentials');
+                toast.error(err.message);
                 return;
             }
             const msg = err.response?.data?.message;
@@ -118,8 +139,8 @@ export default function LoginPage({ type = 'client' }) {
     return (
         <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
             {/* Background gradient effects */}
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl" />
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-500/15 rounded-full blur-3xl" />
 
             <div className="w-full max-w-md relative z-10">
                 {/* Logo */}
@@ -134,8 +155,8 @@ export default function LoginPage({ type = 'client' }) {
                                     style={{ width: config.login_logo_width ? `${config.login_logo_width}px` : '4rem', height: 'auto', maxHeight: '120px' }}
                                 />
                             ) : (
-                                <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-colors">
-                                    <Magnet className="w-8 h-8 text-white" />
+                                <div className="w-16 h-16 bg-gradient-to-tr from-[#075E54] to-[#25D366] rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-[#25D366]/25 hover:opacity-95 transition-all">
+                                    <WcrmIcon className="w-9 h-9 text-white" />
                                 </div>
                             )}
                         </a>
@@ -149,14 +170,14 @@ export default function LoginPage({ type = 'client' }) {
                                     style={{ width: config.login_logo_width ? `${config.login_logo_width}px` : '4rem', height: 'auto', maxHeight: '120px' }}
                                 />
                             ) : (
-                                <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-600/30">
-                                    <Magnet className="w-8 h-8 text-white" />
+                                <div className="w-16 h-16 bg-gradient-to-tr from-[#075E54] to-[#25D366] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#25D366]/25">
+                                    <WcrmIcon className="w-9 h-9 text-white" />
                                 </div>
                             )}
                         </>
                     )}
                     {(config?.login_show_text === undefined || config?.login_show_text === 'true') && (
-                        <h1 className="text-3xl font-bold text-white">{config?.login_text_content || 'MagnetCRM'}</h1>
+                        <h1 className="text-3xl font-bold text-white tracking-tight">{config?.login_text_content || 'Wcrm'}</h1>
                     )}
                     <p className="text-slate-400 mt-2">{requires2FA ? 'Two-Factor Authentication' : pageTitle}</p>
                 </div>
@@ -231,7 +252,7 @@ export default function LoginPage({ type = 'client' }) {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                    placeholder={isClientLogin ? "user@example.com" : "admin@magnethq.com"}
+                                    placeholder={isClientLogin ? "user@example.com" : "admin@wcrm.com"}
                                 />
                             </div>
 

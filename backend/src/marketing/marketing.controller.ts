@@ -27,7 +27,7 @@ export class MarketingController {
     }
 
     @Post('send')
-    @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN, UserRole.ADMIN)
+    @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN, UserRole.ADMIN, UserRole.MANAGER)
     @UseInterceptors(FilesInterceptor('files'))
     async sendEmail(@Request() req, @Body() dto: SendEmailDto, @UploadedFiles() files: Array<any>) {
         return this.marketingService.sendEmail(dto, req.user, files);
