@@ -20,6 +20,7 @@ import CompanyDetailsPage from './pages/CompanyDetailsPage';
 import PlansPage from './pages/PlansPage';
 import IntegrationsPage from './pages/IntegrationsPage';
 import PaymentSettingsPage from './pages/PaymentSettingsPage';
+import CouponsPage from './pages/CouponsPage';
 import CheckoutPage from './pages/CheckoutPage';
 import WhatsAppChatsPage from './pages/WhatsAppChatsPage';
 import WhatsAppChatPage from './pages/WhatsAppChatPage';
