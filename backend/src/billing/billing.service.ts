@@ -4,8 +4,6 @@ import { Repository } from 'typeorm';
 import { Invoice, InvoiceStatus } from './invoice.entity';
 import { InvoiceSettings } from './invoice-settings.entity';
 import { Company } from '../companies/company.entity';
-import { CreateInvoiceDto } from './dto/create-invoice.dto';
-import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 
 @Injectable()
 export class BillingService {
@@ -18,26 +16,7 @@ export class BillingService {
         private companyRepo: Repository<Company>,
     ) { }
 
-    async create(dto: CreateInvoiceDto): Promise<Invoice> {
-        let invoiceNumber = dto.invoiceNumber;
-
-        // Auto-generate invoice number if missing
-        if (!invoiceNumber) {
-            const settings = await this.getSettings(dto.companyId);
-            const prefix = settings?.prefix || 'INV-';
-            const count = await this.invoiceRepo.count({
-                where: { companyId: dto.companyId, isSystem: false }
-            });
-            // Example: INV-0001
-            invoiceNumber = `${prefix}${(count + 1).toString().padStart(4, '0')}`;
-        }
-
-        const invoice = this.invoiceRepo.create({ ...dto, invoiceNumber });
-        return this.invoiceRepo.save(invoice);
-    }
-
     async createSystemInvoice(data: any) {
-        // Generate invoice number if not provided
         let invoiceNumber = data.invoiceNumber;
         if (!invoiceNumber) {
             const count = await this.invoiceRepo.count({
@@ -50,56 +29,23 @@ export class BillingService {
             ...data,
             invoiceNumber,
             isSystem: true,
-            status: data.status || 'pending',
+            status: data.status || 'paid',
             items: data.items || [],
         });
-    }
-
-    findAll(companyId?: string, status?: string, clientId?: string): Promise<Invoice[]> {
-        const qb = this.invoiceRepo.createQueryBuilder('invoice')
-            .leftJoinAndSelect('invoice.client', 'client')
-            .orderBy('invoice.createdAt', 'DESC');
-
-        if (companyId) {
-            qb.andWhere('invoice.companyId = :companyId', { companyId });
-        }
-        if (status) {
-            qb.andWhere('invoice.status = :status', { status });
-        }
-        if (clientId) {
-            qb.andWhere('invoice.clientId = :clientId', { clientId });
-        }
-
-        return qb.getMany();
     }
 
     async findOne(id: string): Promise<Invoice> {
         const invoice = await this.invoiceRepo.findOne({
             where: { id },
-            relations: ['client', 'targetCompany'],
+            relations: ['targetCompany'],
         });
         if (!invoice) throw new NotFoundException('Invoice not found');
         return invoice;
     }
 
-    async update(id: string, dto: UpdateInvoiceDto): Promise<Invoice> {
-        const invoice = await this.findOne(id);
-        Object.assign(invoice, dto);
-        return this.invoiceRepo.save(invoice);
-    }
-
-    async markPaid(id: string): Promise<Invoice> {
-        const invoice = await this.findOne(id);
-        invoice.status = InvoiceStatus.PAID;
-        invoice.paidDate = new Date();
-        return this.invoiceRepo.save(invoice);
-    }
-
     async remove(id: string): Promise<void> {
-        // Check if ID is a valid UUID
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (!uuidRegex.test(id)) {
-            // If not a UUID (e.g. 'sub-xxx'), we can't delete it from DB anyway
             throw new NotFoundException('Invalid invoice ID');
         }
 
@@ -110,48 +56,15 @@ export class BillingService {
     }
 
     async revenueByMonth(companyId: string): Promise<{ month: string; total: number }[]> {
-        const result = await this.invoiceRepo
-            .createQueryBuilder('invoice')
-            .select('invoice.month', 'month')
-            .addSelect('SUM(invoice.amount)', 'total')
-            .where('invoice.companyId = :companyId', { companyId })
-            .andWhere('invoice.status = :status', { status: InvoiceStatus.PAID })
-            .groupBy('invoice.month')
-            .getRawMany();
-
-        return result.map((r) => ({ month: r.month, total: Number(r.total) }));
+        return [];
     }
 
     async totalPending(companyId: string): Promise<number> {
-        const result = await this.invoiceRepo
-            .createQueryBuilder('invoice')
-            .select('SUM(invoice.amount)', 'total')
-            .where('invoice.companyId = :companyId', { companyId })
-            .andWhere('invoice.status = :status', { status: InvoiceStatus.PENDING })
-            .getRawOne();
-
-        return Number(result?.total || 0);
+        return 0;
     }
 
     async billingStats(companyId: string): Promise<{ totalPaid: number; totalPending: number }> {
-        const [paid, pending] = await Promise.all([
-            this.invoiceRepo
-                .createQueryBuilder('invoice')
-                .select('SUM(invoice.amount)', 'total')
-                .where('invoice.companyId = :companyId', { companyId })
-                .andWhere('invoice.status = :status', { status: InvoiceStatus.PAID })
-                .getRawOne(),
-            this.invoiceRepo
-                .createQueryBuilder('invoice')
-                .select('SUM(invoice.amount)', 'total')
-                .where('invoice.companyId = :companyId', { companyId })
-                .andWhere('invoice.status = :status', { status: InvoiceStatus.PENDING })
-                .getRawOne(),
-        ]);
-        return {
-            totalPaid: Number(paid?.total || 0),
-            totalPending: Number(pending?.total || 0),
-        };
+        return { totalPaid: 0, totalPending: 0 };
     }
 
     async getSubscriptionHistory(companyId: string): Promise<any[]> {
@@ -160,7 +73,6 @@ export class BillingService {
     }
 
     async getGlobalBillingHistory(): Promise<any[]> {
-        // Fetch real system invoices
         const systemInvoices = await this.invoiceRepo.find({
             where: { isSystem: true },
             relations: ['targetCompany'],

@@ -6,7 +6,6 @@ import { Company } from '../companies/company.entity';
 
 export const ALL_MODULES = [
     { key: 'SALES', label: 'Sales & Pipeline', description: 'Leads management, pipeline view, and client tracking', icon: 'kanban' },
-    { key: 'FINANCE', label: 'Finance & Invoicing', description: 'Create invoices, manage billing, and track payments', icon: 'receipt' },
     { key: 'MARKETING', label: 'Marketing', description: 'Email campaigns, marketing automation, and outreach', icon: 'mail' },
     { key: 'WHATSAPP', label: 'WhatsApp', description: 'WhatsApp messaging, chats, and broadcast campaigns', icon: 'message-circle' },
     { key: 'CALLING', label: 'Calling', description: 'Phone calling integration with Twilio', icon: 'phone' },

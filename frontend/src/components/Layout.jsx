@@ -25,7 +25,6 @@ import {
     CreditCard,
     Gift,
     Mail,
-    Receipt,
     MessageCircle,
     MessageSquare,
     Ticket,
@@ -45,13 +44,6 @@ const navItems = [
     { to: '/leads', label: 'Leads', icon: FileText, roles: ['admin', 'manager', 'staff'], module: 'SALES' },
     { to: '/pipeline', label: 'Pipeline', icon: Kanban, roles: ['admin', 'manager', 'staff'], module: 'SALES' },
     { to: '/whatsapp-chats', label: 'WhatsApp', icon: MessageCircle, roles: ['admin', 'manager', 'staff'], module: 'WHATSAPP' },
-    {
-        to: '/invoices',
-        label: 'Invoices',
-        icon: Receipt,
-        module: 'FINANCE',
-        show: (user) => ['admin', 'manager'].includes(user?.role) || (user?.role === 'staff' && user?.canCreateInvoices)
-    },
     // Integrations moved under Settings tab for company admin
     { to: '/companies', label: 'Companies', icon: Building2, roles: ['super_admin', 'superadmin_admin', 'superadmin_staff'] },
     { to: '/plans', label: 'Plans', icon: Sparkles, roles: ['super_admin', 'superadmin_admin'] },
@@ -183,7 +175,7 @@ export default function Layout() {
     const notifDropdownRef = useRef(null);
 
     useEffect(() => {
-        if (!user || ['super_admin', 'superadmin_admin', 'superadmin_staff'].includes(user.role)) return;
+        if (!user || isSelfHosted || ['super_admin', 'superadmin_admin', 'superadmin_staff'].includes(user.role)) return;
 
         const fetchAnnouncementCount = async () => {
             try {
@@ -273,7 +265,7 @@ export default function Layout() {
         // User panel: EXACT 10 WhatsApp CRM items requested by user
         { to: '/', label: 'Dashboard', icon: LayoutDashboard },
         { to: '/inbox', label: 'Inbox', icon: MessageSquare, badge: unreadWhatsApp, match: ['/inbox', '/whatsapp-chats', '/whatsapp-direct'] },
-        { to: '/notifications', label: 'Notifications', icon: Bell, badge: unreadAnnouncements, match: ['/notifications'] },
+        { to: '/notifications', label: 'Notifications', icon: Bell, badge: isSelfHosted ? 0 : unreadAnnouncements, match: ['/notifications'] },
         { to: '/contacts', label: 'Contacts', icon: Users, match: ['/contacts', '/whatsapp-contacts'] },
         { to: '/pipeline', label: 'Pipeline', icon: Kanban, match: ['/pipeline'] },
         { to: '/broadcasts', label: 'Broadcasts', icon: Radio, match: ['/broadcasts', '/whatsapp-broadcast'] },
@@ -487,8 +479,8 @@ export default function Layout() {
                         >
                             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                         </button>
-                        {/* Notification bell - only for company users */}
-                        {!['super_admin', 'superadmin_admin', 'superadmin_staff'].includes(user?.role) && (
+                        {/* Notification bell - only for company users in SaaS mode */}
+                        {!isSelfHosted && !['super_admin', 'superadmin_admin', 'superadmin_staff'].includes(user?.role) && (
                             <div className="relative" ref={notifDropdownRef}>
                                 <button
                                     onClick={openNotifDropdown}

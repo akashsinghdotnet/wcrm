@@ -17,10 +17,6 @@ import BillingPage from './pages/BillingPage';
 import SettingsPage from './pages/SettingsPage';
 import PipelinePage from './pages/PipelinePage';
 import ReportsPage from './pages/ReportsPage';
-import InvoicesPage from './pages/InvoicesPage';
-import CreateInvoicePage from './pages/CreateInvoicePage';
-import InvoiceViewPage from './pages/InvoiceViewPage';
-import EditInvoicePage from './pages/EditInvoicePage';
 import CompaniesPage from './pages/CompaniesPage';
 import CompanyDetailsPage from './pages/CompanyDetailsPage';
 import PlansPage from './pages/PlansPage';
@@ -126,26 +122,7 @@ export default function App() {
               <BillingPage />
             </ProtectedRoute>
           } />
-          <Route path="invoices" element={
-            <ProtectedRoute roles={['admin', 'manager', 'staff']} module="FINANCE">
-              <InvoicesPage />
-            </ProtectedRoute>
-          } />
-          <Route path="invoices/new" element={
-            <ProtectedRoute roles={['admin', 'manager', 'staff']} module="FINANCE">
-              <CreateInvoicePage />
-            </ProtectedRoute>
-          } />
-          <Route path="invoices/:id" element={
-            <ProtectedRoute roles={['admin', 'manager', 'staff']} module="FINANCE">
-              <InvoiceViewPage />
-            </ProtectedRoute>
-          } />
-          <Route path="invoices/:id/edit" element={
-            <ProtectedRoute roles={['admin', 'manager', 'staff']} module="FINANCE">
-              <EditInvoicePage />
-            </ProtectedRoute>
-          } />
+
           <Route path="reports" element={
             <ProtectedRoute roles={['admin', 'manager']} module="REPORTS">
               <ReportsPage />
@@ -255,26 +232,30 @@ export default function App() {
               <WhatsAppDirectChatPage />
             </ProtectedRoute>
           } />
-          <Route path="tickets" element={
-            <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin', 'manager']}>
-              <TicketsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="tickets/:id" element={
-            <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin', 'manager']}>
-              <TicketDetailsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="announcements" element={
-            <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'superadmin_staff']}>
-              <AnnouncementsAdminPage />
-            </ProtectedRoute>
-          } />
-          <Route path="company-announcements" element={
-            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
-              <AnnouncementsViewPage />
-            </ProtectedRoute>
-          } />
+          {!isSelfHosted && (
+            <>
+              <Route path="tickets" element={
+                <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin', 'manager']}>
+                  <TicketsPage />
+                </ProtectedRoute>
+              } />
+              <Route path="tickets/:id" element={
+                <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin', 'manager']}>
+                  <TicketDetailsPage />
+                </ProtectedRoute>
+              } />
+              <Route path="announcements" element={
+                <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'superadmin_staff']}>
+                  <AnnouncementsAdminPage />
+                </ProtectedRoute>
+              } />
+              <Route path="company-announcements" element={
+                <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+                  <AnnouncementsViewPage />
+                </ProtectedRoute>
+              } />
+            </>
+          )}
           <Route
             path="payment-settings"
             element={

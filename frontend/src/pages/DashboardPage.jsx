@@ -4,8 +4,8 @@ import { useModules } from '../context/ModuleContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { 
-    TrendingUp, Users, FileText, IndianRupee, CalendarDays, 
-    AlertTriangle, Clock, Building2, Sparkles, Ticket, 
+    TrendingUp, Users, FileText, CalendarDays, 
+    AlertTriangle, Clock, Building2, Sparkles, 
     MessageSquare, Radio, Zap, GitFork, Bot, Send, CheckCircle2 
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -79,9 +79,7 @@ export default function DashboardPage() {
     const isAdmin = user.role === 'admin';
     const isSuperAdmin = user.role === 'super_admin' || user.role === 'superadmin_admin';
     const isCompanyUser = user.role === 'admin' || user.role === 'manager' || user.role === 'staff';
-    
     const hasSales = hasModule('SALES');
-    const hasFinance = hasModule('FINANCE');
 
     const statCards = isAdmin ? [
         { label: 'WhatsApp Chats', value: stats?.totalLeads || 128, icon: MessageSquare, color: 'emerald', link: '/inbox' },
@@ -293,22 +291,9 @@ export default function DashboardPage() {
                 </div>
             )}
 
-            {/* Pending Billing + Follow-Ups in Grid */}
-            {isCompanyUser && (
+            {/* Follow-Ups in Grid */}
+            {isCompanyUser && (followUps.overdue.length > 0 || followUps.today.length > 0) && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* Pending Billing Card */}
-                    {isAdmin && stats && stats.pendingAmount > 0 && hasFinance && (
-                        <div
-                            className="bg-amber-600/10 border border-amber-500/20 rounded-2xl p-5 flex items-center justify-between cursor-pointer hover:bg-amber-600/15 transition-colors"
-                            onClick={() => navigate('/invoices')}
-                        >
-                            <div>
-                                <p className="text-sm text-amber-400">Pending Invoices</p>
-                                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">₹{stats.pendingAmount.toLocaleString('en-IN')}</p>
-                            </div>
-                            <IndianRupee className="w-8 h-8 text-amber-400/30" />
-                        </div>
-                    )}
 
                     {/* Overdue Follow-Ups */}
                     {followUps.overdue.length > 0 && (

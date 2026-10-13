@@ -9,7 +9,6 @@ import { useModules } from '../context/ModuleContext';
 import EmailSettings from '../components/EmailSettings';
 import TeamSettings from '../components/TeamSettings';
 import BillingSettings from '../components/BillingSettings';
-import InvoiceSettings from '../components/InvoiceSettings';
 import WhatsAppSettings from '../components/WhatsAppSettings';
 import CallingSettings from '../components/CallingSettings';
 import LeadAssignmentSettings from '../components/LeadAssignmentSettings';
@@ -200,7 +199,6 @@ export default function SettingsPage() {
                     { id: 'security', label: 'Security', icon: Lock },
                     ...(user.role === 'admin' && !isSelfHosted ? [{ id: 'billing', label: 'Subscription & Invoices', icon: IndianRupee }] : []),
                     ...(isSelfHosted ? [{ id: 'community', label: 'Community & Cloud', icon: Sparkles }] : []),
-                    ...(user.role === 'super_admin' ? [{ id: 'invoice-settings', label: 'Invoice Settings', icon: FileText }] : []),
                     ...(['admin', 'manager'].includes(user.role) ? [{ id: 'team', label: 'Team', icon: Users }] : []),
                     ...(user.role === 'admin' ? [{ id: 'whatsapp', label: 'WhatsApp Integration', icon: MessageCircle }] : []),
                     ...(['admin', 'manager'].includes(user.role) && hasModule('SALES') ? [{ id: 'lead-assignment', label: 'Lead Assignment', icon: GitBranch }] : []),
@@ -533,10 +531,6 @@ export default function SettingsPage() {
 
                 {activeTab === 'community' && isSelfHosted && (
                     <CommunitySettingsCard config={config} />
-                )}
-
-                {activeTab === 'invoice-settings' && ['admin', 'super_admin', 'superadmin_admin'].includes(user.role) && (
-                    <InvoiceSettings />
                 )}
 
                 {activeTab === 'team' && (

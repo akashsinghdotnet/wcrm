@@ -8,7 +8,6 @@ const ModuleContext = createContext(null);
 // All available module definitions
 export const MODULE_DEFINITIONS = [
     { key: 'SALES', label: 'Sales & Pipeline', description: 'Leads management, pipeline view, and client tracking', icon: 'Kanban', color: 'from-blue-500 to-cyan-500' },
-    { key: 'FINANCE', label: 'Finance & Invoicing', description: 'Create invoices, manage billing, and track payments', icon: 'Receipt', color: 'from-emerald-500 to-green-500' },
     { key: 'MARKETING', label: 'Marketing', description: 'Email campaigns, marketing automation, and outreach', icon: 'Mail', color: 'from-purple-500 to-pink-500' },
     { key: 'WHATSAPP', label: 'WhatsApp', description: 'WhatsApp messaging, chats, and broadcast campaigns', icon: 'MessageCircle', color: 'from-green-500 to-emerald-500' },
     { key: 'CALLING', label: 'Calling', description: 'Phone calling integration with Twilio', icon: 'Phone', color: 'from-orange-500 to-amber-500' },
