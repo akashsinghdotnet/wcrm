@@ -18,7 +18,7 @@ export default function TicketsPage() {
     const [expandedAnnouncement, setExpandedAnnouncement] = useState(null);
 
     const isClientUser = ['admin', 'manager'].includes(user?.role);
-    const isSuperAdmin = ['super_admin', 'superadmin_admin'].includes(user?.role);
+    const isAdmin = user?.role === 'admin';
 
     useEffect(() => {
         if (activeTab === 'tickets') {
@@ -146,7 +146,7 @@ export default function TicketsPage() {
                             <thead>
                                 <tr className="bg-gray-100 dark:bg-slate-800/50 border-b border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-300 text-sm">
                                     <th className="p-4 font-medium">Ticket ID</th>
-                                    {isSuperAdmin && <th className="p-4 font-medium">Company</th>}
+                                    {isAdmin && <th className="p-4 font-medium">Company</th>}
                                     <th className="p-4 font-medium">Department</th>
                                     <th className="p-4 font-medium">Subject</th>
                                     <th className="p-4 font-medium">Status</th>
@@ -156,7 +156,7 @@ export default function TicketsPage() {
                             <tbody className="divide-y divide-gray-200 dark:divide-slate-800/50 text-sm">
                                 {tickets.length === 0 ? (
                                     <tr>
-                                        <td colSpan={isSuperAdmin ? 6 : 5} className="p-8 text-center text-gray-400 dark:text-slate-500">
+                                        <td colSpan={isAdmin ? 6 : 5} className="p-8 text-center text-gray-400 dark:text-slate-500">
                                             <TicketIcon className="w-12 h-12 mx-auto mb-3 opacity-20" />
                                             No tickets found.
                                         </td>
@@ -169,7 +169,7 @@ export default function TicketsPage() {
                                             className="hover:bg-gray-100 dark:bg-slate-800/30 transition-colors cursor-pointer text-gray-600 dark:text-slate-300"
                                         >
                                             <td className="p-4 font-mono text-indigo-400">{ticket.ticketNumber}</td>
-                                            {isSuperAdmin && <td className="p-4">{ticket?.company?.companyName || 'N/A'}</td>}
+                                            {isAdmin && <td className="p-4">{ticket?.company?.companyName || 'N/A'}</td>}
                                             <td className="p-4">{ticket.department}</td>
                                             <td className="p-4 font-medium text-gray-900 dark:text-white">{ticket.subject}</td>
                                             <td className="p-4">

@@ -81,7 +81,7 @@ export default function IntegrationsPage({ embedded = false }) {
     const [pagesList, setPagesList] = useState([]);
     const [selectedPageId, setSelectedPageId] = useState('');
 
-    const isSuperAdmin = user?.role === 'super_admin' || user?.role === 'superadmin_admin';
+    const isAdmin = user?.role === 'admin';
 
     // Webhook URLs must point to the backend API, not the frontend
     const apiBase = import.meta.env.VITE_API_URL || '/api';
@@ -95,7 +95,7 @@ export default function IntegrationsPage({ embedded = false }) {
     }, []);
 
     const loadCompanyPlan = async () => {
-        if (!user.companyId || isSuperAdmin) {
+        if (!user.companyId || isAdmin) {
             setAllowedIntegrations(INTEGRATIONS.map(i => i.id));
             return;
         }
@@ -114,7 +114,7 @@ export default function IntegrationsPage({ embedded = false }) {
     const loadEmployees = async () => {
         try {
             const res = await api.get(`/users?companyId=${user.companyId}`);
-            setEmployees(res.data.filter(u => u.isActive && u.role !== 'super_admin'));
+            setEmployees(res.data.filter(u => u.isActive));
         } catch { }
     };
 
@@ -422,10 +422,8 @@ function submitWcrmForm(e) {
                 </h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {INTEGRATIONS.map((integration) => {
-                        const isAllowed = isSuperAdmin || (allowedIntegrations && allowedIntegrations.includes(integration.id));
+                        const isAllowed = isAdmin || (allowedIntegrations && allowedIntegrations.includes(integration.id));
                         
-                        // If not allowed, we can either hide it or show it as locked. Let's hide it if not super admin to keep the UI clean
-                        // If we want to upsell, we could show it grayed out. But hiding is simpler and matches the feature/module behavior.
                         if (!isAllowed) {
                             return null;
                         }

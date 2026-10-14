@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
-import { useConfig } from './ConfigContext';
 
 const AuthContext = createContext(null);
 
@@ -8,13 +7,6 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(localStorage.getItem('wcrm_token'));
     const [loading, setLoading] = useState(true);
-    const { config } = useConfig() || {};
-    const isSelfHosted = config?.deployment_mode === 'self_hosted';
-
-    const isSuperAdminUser = (u) => {
-        if (!u) return false;
-        return ['super_admin', 'superadmin_admin', 'superadmin_staff'].includes(u.role) || (!u.companyId && u.role === 'admin');
-    };
 
     const logout = () => {
         localStorage.removeItem('wcrm_token');
@@ -22,12 +14,6 @@ export function AuthProvider({ children }) {
         setToken(null);
         setUser(null);
     };
-
-    useEffect(() => {
-        if (isSelfHosted && user && isSuperAdminUser(user)) {
-            logout();
-        }
-    }, [isSelfHosted, user]);
 
     useEffect(() => {
         if (token) {
@@ -43,12 +29,6 @@ export function AuthProvider({ children }) {
                         id: meData.userId || meData.id || savedUser.id,
                     };
 
-                    if (isSelfHosted && isSuperAdminUser(resolvedUser)) {
-                        logout();
-                        setLoading(false);
-                        return;
-                    }
-
                     setUser(resolvedUser);
                     setLoading(false);
                 })
@@ -60,7 +40,7 @@ export function AuthProvider({ children }) {
         } else {
             setLoading(false);
         }
-    }, [token, isSelfHosted]);
+    }, [token]);
 
     const login = async (email, password) => {
         const res = await api.post('/auth/login', { email, password });
@@ -69,10 +49,6 @@ export function AuthProvider({ children }) {
             return res.data; // { requires2FA: true, userId }
         }
         const { access_token, user: userData } = res.data;
-        if (isSelfHosted && isSuperAdminUser(userData)) {
-            logout();
-            throw new Error('Super-Admin portal and accounts are disabled in Community Edition.');
-        }
         localStorage.setItem('wcrm_token', access_token);
         localStorage.setItem('wcrm_user', JSON.stringify(userData));
         setToken(access_token);
@@ -83,10 +59,6 @@ export function AuthProvider({ children }) {
     const verify2FA = async (userId, token) => {
         const res = await api.post('/auth/login/verify-2fa', { userId, token });
         const { access_token, user: userData } = res.data;
-        if (isSelfHosted && isSuperAdminUser(userData)) {
-            logout();
-            throw new Error('Super-Admin portal and accounts are disabled in Community Edition.');
-        }
         localStorage.setItem('wcrm_token', access_token);
         localStorage.setItem('wcrm_user', JSON.stringify(userData));
         setToken(access_token);

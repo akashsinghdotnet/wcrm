@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, X, ShieldCheck, ShieldAlert, User, Building2, Pencil, Trash2, Briefcase } from 'lucide-react';
+import { Plus, X, ShieldCheck, User, Pencil, Trash2, Briefcase } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const roleConfig = {
-    super_admin: { label: 'Super Admin', color: 'bg-red-500/20 text-red-400', icon: ShieldAlert },
     admin: { label: 'Admin', color: 'bg-indigo-500/20 text-indigo-400', icon: ShieldCheck },
     manager: { label: 'Manager', color: 'bg-purple-500/20 text-purple-400', icon: Briefcase },
     staff: { label: 'Employee', color: 'bg-slate-600/20 text-gray-500 dark:text-slate-400', icon: User },
@@ -16,35 +15,23 @@ export default function TeamSettings() {
     const { user } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const [users, setUsers] = useState([]);
-    const [companies, setCompanies] = useState([]);
-    const [selectedCompanyId, setSelectedCompanyId] = useState(searchParams.get('companyId') || user.companyId);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [form, setForm] = useState({ email: '', password: '', role: 'staff', canCreateInvoices: false });
 
-    const isSuperAdmin = user.role === 'super_admin';
-    const selectedCompany = companies.find(c => c.id === selectedCompanyId);
-    const plan = selectedCompany?.plan;
-    const activeUsers = users.filter(u => u.isActive);
-    const adminCount = activeUsers.filter(u => u.role === 'admin').length;
-    const staffCount = activeUsers.filter(u => u.role === 'staff' || u.role === 'manager').length;
-    const adminLimitReached = plan && adminCount >= plan.adminLimit;
-    const staffLimitReached = plan && staffCount >= plan.employeeLimit;
+    const isAdmin = user.role === 'admin';
 
     const [loginLogs, setLoginLogs] = useState([]);
 
     useEffect(() => {
-        if (isSuperAdmin) {
-            // For Super Admin view, only load other super admins, ignore companies
-            loadSuperAdmins();
-        } else if (selectedCompanyId) {
-            loadUsers(selectedCompanyId);
+        if (user.companyId) {
+            loadUsers(user.companyId);
         }
-        if (['admin', 'super_admin', 'superadmin_admin'].includes(user.role)) {
+        if (isAdmin) {
             loadLoginLogs();
         }
-    }, [isSuperAdmin, selectedCompanyId]);
+    }, [user.companyId]);
 
     const loadLoginLogs = async () => {
         try {
@@ -52,18 +39,6 @@ export default function TeamSettings() {
             setLoginLogs(res.data);
         } catch (err) {
             console.error(err);
-        }
-    };
-
-    const loadSuperAdmins = async () => {
-        setLoading(true);
-        try {
-            const res = await api.get('/users?role=super_admin');
-            setUsers(res.data);
-        } catch (err) {
-            toast.error('Failed to load super admins');
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -89,36 +64,22 @@ export default function TeamSettings() {
                 // Update logic
                 if (!payload.password) delete payload.password;
                 delete payload.companyId;
-                delete payload.email; // Usually don't allow email change or handle backend unique check
+                delete payload.email;
 
                 await api.patch(`/users/${editingUser.id}`, payload);
                 toast.success('User updated');
             } else {
                 // Create logic
-                if (isSuperAdmin) {
-                    if (payload.role !== 'super_admin') {
-                        // Allow
-                    }
-                    if (payload.role === 'super_admin') {
-                        delete payload.companyId;
-                    }
-                } else {
-                    payload.companyId = selectedCompanyId;
-                }
+                payload.companyId = user.companyId;
 
                 await api.post('/users', payload);
                 toast.success('User created');
             }
 
             setShowModal(false);
-            setForm({ email: '', password: '', role: isSuperAdmin ? 'super_admin' : 'staff', canCreateInvoices: false });
+            setForm({ email: '', password: '', role: 'staff', canCreateInvoices: false });
             setEditingUser(null);
-
-            if (isSuperAdmin) {
-                loadSuperAdmins();
-            } else {
-                loadUsers(selectedCompanyId);
-            }
+            loadUsers(user.companyId);
         } catch (err) {
             toast.error(err.response?.data?.message || `Failed to ${editingUser ? 'update' : 'create'} user`);
         }
@@ -142,11 +103,7 @@ export default function TeamSettings() {
         try {
             await api.delete(`/users/${userId}`);
             toast.success('User deleted');
-            if (isSuperAdmin) {
-                loadSuperAdmins();
-            } else {
-                loadUsers(selectedCompanyId);
-            }
+            loadUsers(user.companyId);
         } catch (err) {
             toast.error('Failed to delete user');
         }
@@ -161,11 +118,7 @@ export default function TeamSettings() {
                 await api.patch(`/users/${userId}`, { isActive: true });
                 toast.success('User activated');
             }
-            if (isSuperAdmin) {
-                loadSuperAdmins();
-            } else {
-                loadUsers(selectedCompanyId);
-            }
+            loadUsers(user.companyId);
         } catch (err) {
             toast.error('Failed to update user');
         }
@@ -184,18 +137,10 @@ export default function TeamSettings() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {isSuperAdmin ? 'Administrators' : 'Users'}
+                        Users
                     </h2>
                     <p className="text-gray-500 dark:text-slate-400 mt-1">
-                        {isSuperAdmin
-                            ? 'Manage system administrators with full access.'
-                            : `${users.length} team members`
-                        }
-                        {!isSuperAdmin && plan && (
-                            <span className="text-xs ml-2 text-gray-400 dark:text-slate-500">
-                                ({adminCount}/{plan.adminLimit} admins · {staffCount}/{plan.employeeLimit} employees)
-                            </span>
-                        )}
+                        {users.length} team members
                     </p>
                 </div>
 
@@ -204,13 +149,13 @@ export default function TeamSettings() {
                         id="add-user-btn"
                         onClick={() => {
                             setEditingUser(null);
-                            setForm({ email: '', password: '', role: isSuperAdmin ? 'super_admin' : 'staff', canCreateInvoices: false });
+                            setForm({ email: '', password: '', role: 'staff', canCreateInvoices: false });
                             setShowModal(true);
                         }}
                         className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-all shadow-lg shadow-indigo-600/25"
                     >
                         <Plus className="w-4 h-4" />
-                        {isSuperAdmin ? 'Add Admin' : 'Add User'}
+                        Add User
                     </button>
                 </div>
             </div>
@@ -274,7 +219,7 @@ export default function TeamSettings() {
                                                         <ShieldCheck className="w-3 h-3" />
                                                         {u.isActive ? 'Active' : 'Inactive'}
                                                     </button>
-                                                    {isSuperAdmin && (
+                                                    {isAdmin && (
                                                         <button
                                                             onClick={() => handleDelete(u.id)}
                                                             className="p-2 text-gray-500 dark:text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
@@ -295,7 +240,7 @@ export default function TeamSettings() {
             }
 
             {/* Login Activity Audit Log Section (Admin Only) */}
-            {['admin', 'super_admin', 'superadmin_admin'].includes(user.role) && (
+            {user.role === 'admin' && (
                 <div className="mt-8 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6">
                     <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                         <ShieldCheck className="w-5 h-5 text-indigo-400" />
@@ -356,7 +301,7 @@ export default function TeamSettings() {
                         <div className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-2xl w-full max-w-md shadow-2xl">
                             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-slate-800">
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                    {editingUser ? 'Edit User' : (isSuperAdmin ? 'New System Admin' : 'New Team Member')}
+                                    {editingUser ? 'Edit User' : 'New Team Member'}
                                 </h3>
                                 <button
                                     onClick={() => setShowModal(false)}
@@ -396,7 +341,7 @@ export default function TeamSettings() {
                                         value={form.email}
                                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                                         className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        placeholder={isSuperAdmin && form.role === 'super_admin' ? "admin@wcrm.si" : "staff@wcrm.si"}
+                                        placeholder="staff@company.com"
                                     />
                                 </div>
                                 <div>
@@ -419,14 +364,13 @@ export default function TeamSettings() {
                                         onChange={(e) => setForm({ ...form, role: e.target.value })}
                                         className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     >
-                                        {isSuperAdmin && <option value="super_admin">Super Admin</option>}
                                         <option value="admin">Admin</option>
                                         <option value="manager">Manager</option>
                                         <option value="staff">Employee</option>
                                     </select>
                                 </div>
 
-                                {form.role === 'staff' && !isSuperAdmin && (
+                                {form.role === 'staff' && (
                                     <div className="flex items-start gap-3 p-3 bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-slate-700 rounded-xl">
                                         <div className="flex items-center h-5 mt-0.5">
                                             <input
@@ -448,26 +392,6 @@ export default function TeamSettings() {
                                     </div>
                                 )}
 
-                                {isSuperAdmin && (
-                                    <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
-                                        <p className="text-xs text-indigo-400 font-medium">
-                                            ℹ️ This user will have full access to all system settings and companies.
-                                        </p>
-                                    </div>
-                                )}
-
-                                {/* Seat limit warning - Only for company users */}
-                                {!isSuperAdmin && plan && (
-                                    (form.role === 'admin' && adminLimitReached) ||
-                                    ((form.role === 'staff' || form.role === 'manager') && staffLimitReached)
-                                ) && (
-                                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-                                            <p className="text-xs text-red-400 font-medium">
-                                                ⚠️ {form.role === 'admin' ? 'Admin' : 'Employee/Manager'} seat limit reached ({form.role === 'admin' ? `${adminCount}/${plan.adminLimit}` : `${staffCount}/${plan.employeeLimit}`}). Upgrade the company's plan to add more.
-                                            </p>
-                                        </div>
-                                    )}
-
                                 <div className="flex gap-3 pt-2">
                                     <button
                                         type="button"
@@ -478,8 +402,7 @@ export default function TeamSettings() {
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={!isSuperAdmin && plan && ((form.role === 'admin' && adminLimitReached) || (form.role === 'staff' && staffLimitReached))}
-                                        className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all font-medium shadow-lg shadow-indigo-600/25 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-indigo-600"
+                                        className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all font-medium shadow-lg shadow-indigo-600/25"
                                     >
                                         {editingUser ? 'Update User' : 'Create User'}
                                     </button>

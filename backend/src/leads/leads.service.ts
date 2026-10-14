@@ -105,12 +105,8 @@ export class LeadsService {
             .skip(skip)
             .take(limit);
 
-        // STRICT ISOLATION: Non-Super Admins can ONLY see their own company's leads
-        if (requestingUser && requestingUser.role !== 'super_admin') {
+        if (requestingUser?.companyId) {
             query.andWhere('lead.companyId = :companyId', { companyId: requestingUser.companyId });
-        } else if (filters.companyId) {
-            // Super Admins can filter by companyId if provided
-            query.andWhere('lead.companyId = :companyId', { companyId: filters.companyId });
         }
 
         if (filters.status) {

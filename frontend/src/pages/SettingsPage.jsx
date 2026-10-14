@@ -179,8 +179,8 @@ export default function SettingsPage() {
     };
 
     const roleLabel = {
-        super_admin: 'Super Admin',
         admin: 'Admin',
+        manager: 'Manager',
         staff: 'Staff',
     };
 
@@ -225,10 +225,6 @@ export default function SettingsPage() {
             <div className="min-h-[400px]">
                 {activeTab === 'general' && (
                     <div className="space-y-6">
-                        {/* General System Settings - Super Admin Only */}
-                        {user.role === 'super_admin' && (
-                            <GeneralSystemSettings />
-                        )}
 
                         <div className={`grid grid-cols-1 ${user.role === 'admin' ? 'lg:grid-cols-2' : ''} gap-6 items-start`}>
                             {/* Profile Section */}

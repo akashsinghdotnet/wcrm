@@ -32,7 +32,7 @@ export default function LeadAssignmentSettings() {
             ]);
             setRules(rulesRes.data);
             setUsers(usersRes.data);
-            setEmployees(usersRes.data.filter(u => u.isActive && u.role !== 'super_admin'));
+            setEmployees(usersRes.data.filter(u => u.isActive));
         } catch {
             toast.error('Failed to load assignment rules');
         } finally {

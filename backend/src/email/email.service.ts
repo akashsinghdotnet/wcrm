@@ -20,10 +20,7 @@ export class EmailService {
     ) { }
 
     private formatRoleName(role: string): string {
-        // Handle special cases for superadmin roles
-        if (role === 'superadmin_admin') return 'Admin';
-        if (role === 'superadmin_staff') return 'Staff';
-        // For other roles, capitalize each word
+        // Capitalize each word (e.g. 'staff' → 'Staff', 'admin' → 'Admin')
         return role.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     }
 

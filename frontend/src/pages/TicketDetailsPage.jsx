@@ -18,7 +18,7 @@ export default function TicketDetailsPage() {
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const messagesEndRef = useRef(null);
 
-    const isSuperAdmin = ['super_admin', 'superadmin_admin', 'superadmin_staff'].includes(user?.role);
+    const isAdmin = user?.role === 'admin';
 
     useEffect(() => {
         loadTicket();
@@ -158,7 +158,7 @@ export default function TicketDetailsPage() {
                     </div>
                 </div>
 
-                {isSuperAdmin && (
+                {isAdmin && (
                     <div className="flex items-center gap-2">
                         <select
                             value={ticket.status}
@@ -200,7 +200,7 @@ export default function TicketDetailsPage() {
 
                     {/* Replies */}
                     {ticket.replies?.map((reply) => {
-                        const isStaff = ['super_admin', 'superadmin_admin', 'superadmin_staff'].includes(reply.user?.role);
+                        const isStaff = reply.user?.role === 'admin';
 
                         return (
                             <div key={reply.id} className={`flex items-start gap-4 ${isStaff ? 'flex-row-reverse' : ''}`}>

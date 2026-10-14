@@ -333,8 +333,8 @@ export default function LeadsPage() {
         input.click();
     };
 
-    const canAssign = user.role === 'super_admin' || user.role === 'admin' || user.role === 'manager';
-    const canDelete = user.role === 'super_admin' || user.role === 'admin'; // Managers can't delete by default unless specified
+    const canAssign = user.role === 'admin' || user.role === 'manager';
+    const canDelete = user.role === 'admin';
 
     if (loading) {
         return (
