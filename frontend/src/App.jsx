@@ -23,8 +23,6 @@ import NotificationsPage from './pages/NotificationsPage';
 import AutomationsPage from './pages/AutomationsPage';
 import FlowsPage from './pages/FlowsPage';
 import AiAgentsPage from './pages/AiAgentsPage';
-import TicketsPage from './pages/TicketsPage';
-import TicketDetailsPage from './pages/TicketDetailsPage';
 import ModuleSettingsPage from './pages/ModuleSettingsPage';
 
 export default function App() {
@@ -166,16 +164,6 @@ export default function App() {
           <Route path="whatsapp-direct/:phone" element={
             <ProtectedRoute roles={['admin', 'manager', 'staff']}>
               <WhatsAppDirectChatPage />
-            </ProtectedRoute>
-          } />
-          <Route path="tickets" element={
-            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
-              <TicketsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="tickets/:id" element={
-            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
-              <TicketDetailsPage />
             </ProtectedRoute>
           } />
           <Route

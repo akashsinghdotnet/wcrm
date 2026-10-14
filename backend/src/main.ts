@@ -60,7 +60,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Increase payload size limits for Base64 ticket attachments
+  // Increase payload size limits for file/media attachments
   app.use(json({ limit: '50mb' }));
   app.use(urlencoded({ extended: true, limit: '50mb' }));
 

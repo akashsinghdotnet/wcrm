@@ -103,8 +103,8 @@ export class WhatsAppService {
         }
 
         let wabaId = queryWabaId || config?.businessAccountId;
-        const appId = config?.metaAppId || process.env.META_APP_ID || '2022421845122124';
-        const appSecret = config?.metaAppSecret || process.env.META_APP_SECRET || '0c75246ebf45fb14b5302db1e9b89906';
+        const appId = config?.metaAppId || process.env.META_APP_ID || '';
+        const appSecret = config?.metaAppSecret || process.env.META_APP_SECRET || '';
 
         const discoveredNumbers: any[] = [];
         const discoveredWabas: string[] = [];
@@ -113,21 +113,23 @@ export class WhatsAppService {
             discoveredWabas.push(wabaId);
         }
 
-        // 1. Try debug_token to find granular scope target_ids (WABA IDs)
-        try {
-            const debugUrl = `https://graph.facebook.com/v21.0/debug_token?input_token=${token}&access_token=${appId}|${appSecret}`;
-            const debugRes = await fetch(debugUrl);
-            const debugData = await debugRes.json();
-            const scopes = debugData?.data?.granular_scopes || [];
-            for (const s of scopes) {
-                if (s.scope === 'whatsapp_business_management' && Array.isArray(s.target_ids)) {
-                    for (const tid of s.target_ids) {
-                        if (!discoveredWabas.includes(tid)) discoveredWabas.push(tid);
+        // 1. Try debug_token to find granular scope target_ids (WABA IDs) if app credentials exist
+        if (appId && appSecret) {
+            try {
+                const debugUrl = `https://graph.facebook.com/v21.0/debug_token?input_token=${token}&access_token=${appId}|${appSecret}`;
+                const debugRes = await fetch(debugUrl);
+                const debugData = await debugRes.json();
+                const scopes = debugData?.data?.granular_scopes || [];
+                for (const s of scopes) {
+                    if (s.scope === 'whatsapp_business_management' && Array.isArray(s.target_ids)) {
+                        for (const tid of s.target_ids) {
+                            if (!discoveredWabas.includes(tid)) discoveredWabas.push(tid);
+                        }
                     }
                 }
+            } catch (err) {
+                this.logger.warn(`debug_token failed: ${err.message}`);
             }
-        } catch (err) {
-            this.logger.warn(`debug_token failed: ${err.message}`);
         }
 
         // 2. Try /me/businesses to discover WABAs
@@ -325,9 +327,9 @@ export class WhatsAppService {
         let displayPhoneNumber = '';
         let qualityRating = '';
 
-        const appId = payload.appId || process.env.META_APP_ID || '2022421845122124';
-        const appSecret = payload.appSecret || process.env.META_APP_SECRET || '0c75246ebf45fb14b5302db1e9b89906';
-        const redirectUri = payload.redirectUri || 'http://localhost:5173/settings?tab=whatsapp';
+        const appId = payload.appId || process.env.META_APP_ID || '';
+        const appSecret = payload.appSecret || process.env.META_APP_SECRET || '';
+        const redirectUri = payload.redirectUri || '';
 
         // 1. If authorization code is provided, exchange it with Meta OAuth endpoint
         if (payload.code && appId && appSecret) {

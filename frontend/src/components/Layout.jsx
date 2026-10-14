@@ -15,7 +15,6 @@ import {
     Settings,
     Kanban,
     MessageSquare,
-    Ticket,
     Bell,
     Sun,
     Moon,
@@ -35,7 +34,6 @@ const navItems = [
     { to: '/automations', label: 'Automations', icon: Zap, match: ['/automations'] },
     { to: '/flows', label: 'Flows', icon: GitFork, match: ['/flows'] },
     { to: '/ai-agents', label: 'AI Agents', icon: Bot, match: ['/ai-agents'] },
-    { to: '/tickets', label: 'Support', icon: Ticket, match: ['/tickets'] },
     { to: '/settings', label: 'Settings', icon: Settings, match: ['/settings'] },
     { to: '/users', label: 'Users', icon: Users, match: ['/users'], roles: ['admin'] },
 ];

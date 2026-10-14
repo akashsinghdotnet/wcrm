@@ -13,7 +13,6 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { SettingsModule } from './settings/settings.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
-import { TicketsModule } from './tickets/tickets.module';
 import { CallingModule } from './calling/calling.module';
 import { ModulesModule } from './modules/modules.module';
 import { CompanySettingsModule } from './company-settings/company-settings.module';
@@ -55,7 +54,6 @@ import { ScheduleModule } from '@nestjs/schedule';
     SettingsModule,
     IntegrationsModule,
     WhatsAppModule,
-    TicketsModule,
     CallingModule,
     ModulesModule,
     CompanySettingsModule,
