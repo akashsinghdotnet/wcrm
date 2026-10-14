@@ -22,7 +22,7 @@ export class SettingsController {
 
     @Patch(':key')
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN)
+    @Roles(UserRole.ADMIN)
     update(@Param('key') key: string, @Body() dto: UpdateSettingDto) {
         return this.settingsService.update(key, dto);
     }

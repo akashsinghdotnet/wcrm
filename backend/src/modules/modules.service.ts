@@ -46,21 +46,7 @@ export class ModulesService {
 
     async getActiveModules(companyId: string): Promise<string[]> {
         const config = await this.getModuleConfig(companyId);
-        let active = config.activeModules || [];
-
-        // Fetch company plan to strictly enforce plan features
-        const company = await this.companyRepo.findOne({
-            where: { id: companyId },
-            relations: ['plan'],
-        });
-
-        if (company && company.plan) {
-            const planFeatures = company.plan.features || [];
-            // Intersect plan features with the company's configured active modules
-            active = active.filter(mod => planFeatures.includes(mod));
-        }
-
-        return active;
+        return config.activeModules || [];
     }
 
     async updateActiveModules(companyId: string, modules: string[]): Promise<ModuleConfig> {

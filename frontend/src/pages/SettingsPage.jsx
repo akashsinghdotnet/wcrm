@@ -8,7 +8,6 @@ import { User, Lock, Building2, Shield, Eye, EyeOff, Mail, Users, IndianRupee, F
 import { useModules } from '../context/ModuleContext';
 import EmailSettings from '../components/EmailSettings';
 import TeamSettings from '../components/TeamSettings';
-import BillingSettings from '../components/BillingSettings';
 import WhatsAppSettings from '../components/WhatsAppSettings';
 import CallingSettings from '../components/CallingSettings';
 import LeadAssignmentSettings from '../components/LeadAssignmentSettings';
@@ -197,13 +196,12 @@ export default function SettingsPage() {
                 {[
                     { id: 'general', label: 'General', icon: User },
                     { id: 'security', label: 'Security', icon: Lock },
-                    ...(user.role === 'admin' && !isSelfHosted ? [{ id: 'billing', label: 'Subscription & Invoices', icon: IndianRupee }] : []),
-                    ...(isSelfHosted ? [{ id: 'community', label: 'Community & Cloud', icon: Sparkles }] : []),
+                    { id: 'community', label: 'Community & Cloud', icon: Sparkles },
                     ...(['admin', 'manager'].includes(user.role) ? [{ id: 'team', label: 'Team', icon: Users }] : []),
                     ...(user.role === 'admin' ? [{ id: 'whatsapp', label: 'WhatsApp Integration', icon: MessageCircle }] : []),
                     ...(['admin', 'manager'].includes(user.role) && hasModule('SALES') ? [{ id: 'lead-assignment', label: 'Lead Assignment', icon: GitBranch }] : []),
                     ...(user.role === 'admin' ? [{ id: 'calling', label: 'Calling', icon: Phone }] : []),
-                    ...(user.role === 'super_admin' ? [
+                    ...(user.role === 'admin' ? [
                         { id: 'email', label: 'Email Settings', icon: Mail },
                         { id: 'email-templates', label: 'Email Templates', icon: FileText }
                     ] : [])
@@ -511,22 +509,17 @@ export default function SettingsPage() {
                     <IntegrationsPage embedded />
                 )}
 
-                {activeTab === 'email' && user.role === 'super_admin' && (
+                {activeTab === 'email' && user.role === 'admin' && (
                     <div>
                         <EmailSettings />
                     </div>
                 )}
 
-
-                {activeTab === 'email-templates' && user.role === 'super_admin' && (
+                {activeTab === 'email-templates' && user.role === 'admin' && (
                     <EmailTemplates />
                 )}
 
-                {activeTab === 'billing' && user.role === 'admin' && !isSelfHosted && (
-                    <BillingSettings />
-                )}
-
-                {activeTab === 'community' && isSelfHosted && (
+                {activeTab === 'community' && (
                     <CommunitySettingsCard config={config} />
                 )}
 

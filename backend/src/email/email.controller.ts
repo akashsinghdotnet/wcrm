@@ -9,7 +9,7 @@ import { UserRole } from '../users/user.entity';
 
 @Controller('email')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER)
+@Roles(UserRole.ADMIN, UserRole.MANAGER)
 export class EmailController {
     constructor(private readonly emailService: EmailService) { }
 
@@ -17,7 +17,6 @@ export class EmailController {
     @Public()
     async trackOpen(@Param('logId') logId: string, @Res() res: Response) {
         await this.emailService.recordOpen(logId);
-        // Serve 1x1 transparent GIF
         const transparentGif = Buffer.from(
             'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
             'base64',
@@ -43,19 +42,19 @@ export class EmailController {
     }
 
     @Get('config')
-    @Roles(UserRole.SUPER_ADMIN) // Only Super Admin can change system SMTP config
+    @Roles(UserRole.ADMIN)
     async getConfig() {
         return this.emailService.getConfig();
     }
 
     @Put('config')
-    @Roles(UserRole.SUPER_ADMIN)
+    @Roles(UserRole.ADMIN)
     async saveConfig(@Body() config: any) {
         return this.emailService.saveConfig(config);
     }
 
     @Post('config/test')
-    @Roles(UserRole.SUPER_ADMIN)
+    @Roles(UserRole.ADMIN)
     async testConfig(@Body() config: any) {
         return this.emailService.testConfig(config);
     }
@@ -71,13 +70,13 @@ export class EmailController {
     }
 
     @Get('templates')
-    @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN)
+    @Roles(UserRole.ADMIN)
     async getTemplates() {
         return this.emailService.getTemplates();
     }
 
     @Put('templates/:id')
-    @Roles(UserRole.SUPER_ADMIN, UserRole.SUPERADMIN_ADMIN)
+    @Roles(UserRole.ADMIN)
     async updateTemplate(@Param('id') id: string, @Body() data: { subject: string; body: string }) {
         return this.emailService.updateTemplate(id, data);
     }

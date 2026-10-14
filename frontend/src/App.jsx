@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from './context/AuthContext';
 import { ModuleProvider } from './context/ModuleContext';
-import { useConfig } from './context/ConfigContext';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
@@ -11,17 +10,10 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import LeadsPage from './pages/LeadsPage';
 import UsersPage from './pages/UsersPage';
-import BillingPage from './pages/BillingPage';
 import SettingsPage from './pages/SettingsPage';
 import PipelinePage from './pages/PipelinePage';
 import ReportsPage from './pages/ReportsPage';
-import CompaniesPage from './pages/CompaniesPage';
-import CompanyDetailsPage from './pages/CompanyDetailsPage';
-import PlansPage from './pages/PlansPage';
 import IntegrationsPage from './pages/IntegrationsPage';
-import PaymentSettingsPage from './pages/PaymentSettingsPage';
-import CouponsPage from './pages/CouponsPage';
-import CheckoutPage from './pages/CheckoutPage';
 import WhatsAppChatsPage from './pages/WhatsAppChatsPage';
 import WhatsAppChatPage from './pages/WhatsAppChatPage';
 import WhatsAppDirectChatPage from './pages/WhatsAppDirectChatPage';
@@ -33,14 +25,10 @@ import FlowsPage from './pages/FlowsPage';
 import AiAgentsPage from './pages/AiAgentsPage';
 import TicketsPage from './pages/TicketsPage';
 import TicketDetailsPage from './pages/TicketDetailsPage';
-import AnnouncementsAdminPage from './pages/AnnouncementsAdminPage';
-import AnnouncementsViewPage from './pages/AnnouncementsViewPage';
 import ModuleSettingsPage from './pages/ModuleSettingsPage';
 
 export default function App() {
   const { user, loading } = useAuth();
-  const { config } = useConfig() || {};
-  const isSelfHosted = config?.deployment_mode === 'self_hosted';
 
   if (loading) {
     return (
@@ -69,18 +57,6 @@ export default function App() {
           element={user ? <Navigate to="/" replace /> : <LoginPage type="client" />}
         />
         <Route
-          path="/army"
-          element={
-            isSelfHosted ? (
-              <Navigate to="/login" replace />
-            ) : user ? (
-              <Navigate to="/" replace />
-            ) : (
-              <LoginPage type="admin" />
-            )
-          }
-        />
-        <Route
           path="/forgot-password"
           element={user ? <Navigate to="/" replace /> : <ForgotPasswordPage />}
         />
@@ -90,7 +66,6 @@ export default function App() {
         />
         <Route
           path="/"
-
           element={
             <ProtectedRoute>
               <Layout />
@@ -108,45 +83,15 @@ export default function App() {
               <PipelinePage />
             </ProtectedRoute>
           } />
-          <Route path="billing" element={
-            <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin']}>
-              <BillingPage />
-            </ProtectedRoute>
-          } />
-
           <Route path="reports" element={
             <ProtectedRoute roles={['admin', 'manager']} module="REPORTS">
               <ReportsPage />
             </ProtectedRoute>
           } />
           <Route
-            path="companies"
-            element={
-              <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'superadmin_staff']}>
-                <CompaniesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="companies/:id"
-            element={
-              <ProtectedRoute roles={['super_admin', 'superadmin_admin']}>
-                <CompanyDetailsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="plans"
-            element={
-              <ProtectedRoute roles={['super_admin', 'superadmin_admin']}>
-                <PlansPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="users"
             element={
-              <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin']}>
+              <ProtectedRoute roles={['admin']}>
                 <UsersPage />
               </ProtectedRoute>
             }
@@ -223,46 +168,16 @@ export default function App() {
               <WhatsAppDirectChatPage />
             </ProtectedRoute>
           } />
-          {!isSelfHosted && (
-            <>
-              <Route path="tickets" element={
-                <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin', 'manager']}>
-                  <TicketsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="tickets/:id" element={
-                <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'admin', 'manager']}>
-                  <TicketDetailsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="announcements" element={
-                <ProtectedRoute roles={['super_admin', 'superadmin_admin', 'superadmin_staff']}>
-                  <AnnouncementsAdminPage />
-                </ProtectedRoute>
-              } />
-              <Route path="company-announcements" element={
-                <ProtectedRoute roles={['admin', 'manager', 'staff']}>
-                  <AnnouncementsViewPage />
-                </ProtectedRoute>
-              } />
-            </>
-          )}
-          <Route
-            path="payment-settings"
-            element={
-              <ProtectedRoute roles={['super_admin']}>
-                <PaymentSettingsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="coupons"
-            element={
-              <ProtectedRoute roles={['super_admin', 'superadmin_admin']}>
-                <CouponsPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="tickets" element={
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+              <TicketsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="tickets/:id" element={
+            <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+              <TicketDetailsPage />
+            </ProtectedRoute>
+          } />
           <Route
             path="module-settings"
             element={
@@ -272,9 +187,8 @@ export default function App() {
             }
           />
         </Route>
-        <Route path="/checkout/:planSlug" element={<CheckoutPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      </ModuleProvider>
+    </ModuleProvider>
   );
 }

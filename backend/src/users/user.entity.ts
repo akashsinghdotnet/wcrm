@@ -3,9 +3,6 @@ import { Exclude } from 'class-transformer';
 import { Company } from '../companies/company.entity';
 
 export enum UserRole {
-    SUPER_ADMIN = 'super_admin',
-    SUPERADMIN_ADMIN = 'superadmin_admin', // Superadmin's admin user
-    SUPERADMIN_STAFF = 'superadmin_staff', // Superadmin's staff user
     ADMIN = 'admin',
     MANAGER = 'manager',
     STAFF = 'staff',
