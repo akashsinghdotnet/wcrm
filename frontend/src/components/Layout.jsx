@@ -224,6 +224,19 @@ export default function Layout() {
         navigate(redirectTo);
     };
 
+    const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+    const profileMenuRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
+                setProfileMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const displayName = user?.name || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email;
 
     const isSelfHosted = config?.deployment_mode === 'self_hosted';
@@ -380,10 +393,10 @@ export default function Layout() {
                     )}
                 </nav>
 
-                {/* User info + logout */}
-                <div className={`p-4 border-t ${isDark ? 'border-slate-800' : 'border-gray-200'}`}>
-                    {isSelfHosted && (
-                        <div className={`mb-3 p-3 rounded-xl border ${isDark ? 'bg-emerald-950/20 border-emerald-800/40' : 'bg-emerald-50 border-emerald-200'}`}>
+                {/* Sidebar footer (self-hosted promotional card) */}
+                {isSelfHosted && (
+                    <div className={`p-4 border-t ${isDark ? 'border-slate-800' : 'border-gray-200'}`}>
+                        <div className={`p-3 rounded-xl border ${isDark ? 'bg-emerald-950/20 border-emerald-800/40' : 'bg-emerald-50 border-emerald-200'}`}>
                             <div className="flex items-center justify-between mb-1.5">
                                 <span className="text-[11px] font-bold text-emerald-500 uppercase tracking-wider">Community</span>
                                 <span className="text-[10px] text-gray-400 dark:text-slate-500">v{config?.app_version || '1.0.0'}</span>
@@ -398,32 +411,8 @@ export default function Layout() {
                                 <span>☁️ Managed Cloud</span>
                             </a>
                         </div>
-                    )}
-                    <button 
-                        onClick={() => {
-                            navigate('/settings');
-                            setSidebarOpen(false);
-                        }}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-left ${isDark ? 'hover:bg-slate-800/80' : 'hover:bg-gray-100'}`}
-                    >
-                        <div className="w-9 h-9 rounded-full bg-indigo-600/30 flex items-center justify-center shrink-0">
-                            <span className="text-sm font-semibold text-indigo-400">
-                                {displayName?.[0]?.toUpperCase()}
-                            </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{displayName}</p>
-                            <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{getRoleLabel(user?.role)}</p>
-                        </div>
-                    </button>
-                    <button
-                        onClick={handleLogout}
-                        className="mt-2 w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                    >
-                        <LogOut className="w-4 h-4" />
-                        Logout
-                    </button>
-                </div>
+                    </div>
+                )}
             </aside>
 
             {/* Main content */}
@@ -460,14 +449,30 @@ export default function Layout() {
                     </div>
                 )}
                 {/* Top bar */}
-                <header className={`h-16 border-b backdrop-blur-sm flex items-center px-4 lg:px-6 sticky top-0 z-30 ${isDark ? 'border-slate-800 bg-slate-900/80' : 'border-gray-200 bg-white/90'}`}>
-                    <button
-                        onClick={() => setSidebarOpen(true)}
-                        className="lg:hidden mr-4 p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
-                    >
-                        <Menu className="w-5 h-5" />
-                    </button>
-                    <div className="flex-1" />
+                <header className={`h-16 border-b backdrop-blur-sm flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 ${isDark ? 'border-slate-800 bg-slate-900/80' : 'border-gray-200 bg-white/90'}`}>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setSidebarOpen(true)}
+                            className="lg:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+                        >
+                            <Menu className="w-5 h-5" />
+                        </button>
+                        <div className="flex items-center gap-2">
+                            <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${
+                                isDark 
+                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            }`}>
+                                {getRoleLabel(user?.role)}
+                            </span>
+                            {user?.company?.companyName && (
+                                <span className={`text-xs hidden sm:inline font-medium ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                                    • {user.company.companyName}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="flex items-center gap-3">
                         {/* Theme toggle */}
                         <button
@@ -550,10 +555,68 @@ export default function Layout() {
                             </div>
                         )}
 
-                        <span className={`text-sm hidden sm:block ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{displayName}</span>
-                        <span className="px-2.5 py-1 text-xs font-medium bg-indigo-600/20 text-indigo-400 rounded-full">
-                            {getRoleLabel(user?.role)}
-                        </span>
+                        {/* User Profile Circular Avatar & Dropdown */}
+                        <div 
+                            className="relative" 
+                            ref={profileMenuRef}
+                            onMouseEnter={() => setProfileMenuOpen(true)}
+                            onMouseLeave={() => setProfileMenuOpen(false)}
+                        >
+                            <button
+                                onClick={() => setProfileMenuOpen(prev => !prev)}
+                                className="flex items-center gap-2 p-0.5 rounded-full hover:ring-2 hover:ring-emerald-500/40 transition-all focus:outline-none"
+                                title={displayName}
+                            >
+                                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-md ring-1 ring-white/20">
+                                    {displayName?.[0]?.toUpperCase()}
+                                </div>
+                            </button>
+
+                            {profileMenuOpen && (
+                                <div className={`absolute right-0 top-full mt-2 w-64 rounded-2xl shadow-2xl border p-2 z-50 transition-all ${
+                                    isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-gray-200 text-gray-900'
+                                }`}>
+                                    {/* Profile Header */}
+                                    <div className={`px-3 py-2.5 border-b ${isDark ? 'border-slate-800' : 'border-gray-100'}`}>
+                                        <p className="text-sm font-bold truncate">{displayName}</p>
+                                        <p className={`text-xs truncate ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{user?.email}</p>
+                                        <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full">
+                                            {getRoleLabel(user?.role)}
+                                        </span>
+                                    </div>
+
+                                    {/* Menu Options */}
+                                    <div className="py-1">
+                                        <button
+                                            onClick={() => {
+                                                setProfileMenuOpen(false);
+                                                navigate('/settings');
+                                            }}
+                                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors text-left ${
+                                                isDark ? 'hover:bg-slate-800 text-slate-300 hover:text-white' : 'hover:bg-gray-100 text-gray-700 hover:text-gray-900'
+                                            }`}
+                                        >
+                                            <Settings className="w-4 h-4 text-emerald-500" />
+                                            Edit Profile & Settings
+                                        </button>
+                                    </div>
+
+                                    {/* Logout Option */}
+                                    <div className={`pt-1 border-t ${isDark ? 'border-slate-800' : 'border-gray-100'}`}>
+                                        <button
+                                            onClick={() => {
+                                                setProfileMenuOpen(false);
+                                                handleLogout();
+                                            }}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors text-left"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            Logout
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </header>
 
