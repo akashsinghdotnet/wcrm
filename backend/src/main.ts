@@ -11,7 +11,7 @@ async function bootstrap() {
 
   // Global SEO Noindex header middleware for app.wcrm.si
   app.use((req: any, res: any, next: any) => {
-    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex');
     next();
   });
 

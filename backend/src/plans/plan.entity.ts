@@ -19,6 +19,9 @@ export class Plan {
     @Column('decimal', { precision: 10, scale: 2 })
     priceYearly: number;
 
+    @Column({ default: 'USD' })
+    currency: string;
+
     @Column({ default: 1 })
     adminLimit: number;
 

@@ -10,6 +10,7 @@ import {
     User, Mail, Phone, MapPin, Lock, Eye, EyeOff, Tag, X
 } from 'lucide-react';
 import { WcrmIcon } from '../components/WcrmLogo';
+import { CURRENCIES, CURRENCY_LIST, convertAmount, formatCurrency } from '../utils/currency';
 
 const INDIAN_STATES = [
     '—', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -27,6 +28,7 @@ export default function CheckoutPage() {
     const [plan, setPlan] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedMethod, setSelectedMethod] = useState(null);
+    const [selectedCurrency, setSelectedCurrency] = useState(() => searchParams.get('currency') || localStorage.getItem('wcrm_user_currency') || 'USD');
     const [billingPeriod, setBillingPeriod] = useState(searchParams.get('billing') === 'yearly' ? 'yearly' : 'monthly');
     const [paymentSettings, setPaymentSettings] = useState(null);
     const [processing, setProcessing] = useState(false);
@@ -135,34 +137,23 @@ export default function CheckoutPage() {
         toast.success('Coupon removed');
     };
 
-    // ₹ formatter with paisa (2 decimal places)
-    const fmt = (amount) => {
-        const num = Number(amount);
-        const parts = num.toFixed(2).split('.');
-        // Indian grouping: last 3 digits, then pairs of 2
-        let intPart = parts[0];
-        const isNeg = intPart.startsWith('-');
-        if (isNeg) intPart = intPart.slice(1);
-        let formatted;
-        if (intPart.length > 3) {
-            const last3 = intPart.slice(-3);
-            const rest = intPart.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ',');
-            formatted = rest + ',' + last3;
-        } else {
-            formatted = intPart;
-        }
-        return `₹${isNeg ? '-' : ''}${formatted}.${parts[1]}`;
-    };
+    const fmt = (amount) => formatCurrency(amount, selectedCurrency);
 
-    const GST_RATE = 18;
-    // For yearly: originalPrice = monthly × 12 (full rate), basePrice = yearly (discounted)
-    const originalPrice = plan ? (billingPeriod === 'yearly' ? Number(plan.priceMonthly) * 12 : Number(plan.priceMonthly)) : 0;
-    const basePrice = plan ? Number(billingPeriod === 'monthly' ? plan.priceMonthly : plan.priceYearly) : 0;
-    const annualSavings = billingPeriod === 'yearly' && plan ? originalPrice - basePrice : 0;
+    const GST_RATE = selectedCurrency === 'INR' ? 18 : 0;
+    const planBaseCurrency = plan?.currency || 'USD';
+
+    // Original & Base prices converted from plan base currency to selected currency
+    const rawOriginal = plan ? (billingPeriod === 'yearly' ? Number(plan.priceMonthly) * 12 : Number(plan.priceMonthly)) : 0;
+    const originalPrice = convertAmount(rawOriginal, planBaseCurrency, selectedCurrency);
+
+    const rawBase = plan ? Number(billingPeriod === 'monthly' ? plan.priceMonthly : plan.priceYearly) : 0;
+    const basePrice = convertAmount(rawBase, planBaseCurrency, selectedCurrency);
+
+    const annualSavings = billingPeriod === 'yearly' && plan ? Math.max(0, originalPrice - basePrice) : 0;
     const discount = appliedCoupon
         ? appliedCoupon.type === 'percentage'
             ? parseFloat((basePrice * appliedCoupon.value / 100).toFixed(2))
-            : Math.min(appliedCoupon.value, basePrice)
+            : Math.min(convertAmount(appliedCoupon.value, appliedCoupon.currency || 'INR', selectedCurrency), basePrice)
         : 0;
     const subtotal = Math.max(0, parseFloat((basePrice - discount).toFixed(2)));
     const gstAmount = parseFloat((subtotal * GST_RATE / 100).toFixed(2));
@@ -733,7 +724,26 @@ export default function CheckoutPage() {
                     {/* Right – Order Summary (2 cols) */}
                     <div className="lg:col-span-2">
                         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sticky top-6">
-                            <h3 className="text-base font-semibold text-white mb-5">Order Summary</h3>
+                            <div className="flex items-center justify-between mb-5">
+                                <h3 className="text-base font-semibold text-white">Order Summary</h3>
+                                <div className="flex items-center gap-1.5 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1">
+                                    <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                                    <select
+                                        value={selectedCurrency}
+                                        onChange={(e) => {
+                                            setSelectedCurrency(e.target.value);
+                                            localStorage.setItem('wcrm_user_currency', e.target.value);
+                                        }}
+                                        className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
+                                    >
+                                        {CURRENCY_LIST.map(c => (
+                                            <option key={c.code} value={c.code} className="bg-slate-900 text-white">
+                                                {c.code} ({c.symbol})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
 
                             {/* Plan Card */}
                             <div className="bg-gradient-to-br from-indigo-600/10 to-purple-600/10 border border-indigo-500/20 rounded-xl p-4 mb-5">
@@ -815,17 +825,19 @@ export default function CheckoutPage() {
                                     <span className="text-slate-400">Subtotal</span>
                                     <span className="text-white">{fmt(subtotal)}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-slate-400">GST (18%)</span>
-                                    <span className="text-white">{fmt(gstAmount)}</span>
-                                </div>
+                                {GST_RATE > 0 && (
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-400">GST (18%)</span>
+                                        <span className="text-white">{fmt(gstAmount)}</span>
+                                    </div>
+                                )}
                                 <div className="h-px bg-slate-800" />
                                 <div className="flex justify-between">
                                     <span className="text-white font-semibold">Total</span>
                                     <span className="text-xl font-bold text-white">{fmt(finalPrice)}</span>
                                 </div>
                                 <p className="text-xs text-slate-500 flex items-center gap-1">
-                                    <Clock className="w-3 h-3" /> Billed {billingPeriod === 'monthly' ? 'every month' : 'annually'}. Price inclusive of 18% GST.
+                                    <Clock className="w-3 h-3" /> Billed {billingPeriod === 'monthly' ? 'every month' : 'annually'}. {GST_RATE > 0 ? 'Price inclusive of 18% GST.' : ''}
                                 </p>
                             </div>
 

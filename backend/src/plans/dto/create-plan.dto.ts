@@ -13,6 +13,9 @@ export class CreatePlanDto {
     @Min(0)
     priceYearly: number;
 
+    @IsOptional()
+    currency?: string;
+
     @IsNumber()
     @Min(1)
     adminLimit: number;

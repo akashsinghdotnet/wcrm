@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { Invoice, InvoiceStatus } from './invoice.entity';
 import { InvoiceSettings } from './invoice-settings.entity';
 import { Company } from '../companies/company.entity';
@@ -15,6 +16,22 @@ export class BillingService {
         @InjectRepository(Company)
         private companyRepo: Repository<Company>,
     ) { }
+
+    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+    async checkSubscriptionExpirations() {
+        const now = new Date();
+        const expiredCompanies = await this.companyRepo
+            .createQueryBuilder('c')
+            .where('c.subscriptionStatus = :status', { status: 'active' })
+            .andWhere('c.renewalDate IS NOT NULL AND c.renewalDate < :now', { now })
+            .getMany();
+
+        for (const company of expiredCompanies) {
+            company.subscriptionStatus = 'past_due';
+            await this.companyRepo.save(company);
+            console.log(`[BillingService] Company subscription expired: ${company.companyName} (${company.id}) -> set to past_due`);
+        }
+    }
 
     async createSystemInvoice(data: any) {
         let invoiceNumber = data.invoiceNumber;
