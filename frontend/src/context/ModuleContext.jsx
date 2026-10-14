@@ -7,9 +7,10 @@ const ModuleContext = createContext(null);
 
 // All available module definitions
 export const MODULE_DEFINITIONS = [
-    { key: 'SALES', label: 'Sales & Pipeline', description: 'Leads management, pipeline view, and deal tracking', icon: 'Kanban', color: 'from-blue-500 to-cyan-500' },
-    { key: 'WHATSAPP', label: 'WhatsApp', description: 'WhatsApp messaging, chats, and broadcast campaigns', icon: 'MessageCircle', color: 'from-green-500 to-emerald-500' },
-    { key: 'CALLING', label: 'Calling', description: 'Phone calling integration with Twilio', icon: 'Phone', color: 'from-orange-500 to-amber-500' },
+    { key: 'WHATSAPP', label: 'WhatsApp CRM & Broadcasts', description: 'WhatsApp team inbox, live chats, and scheduled campaigns', icon: 'MessageCircle', color: 'from-green-500 to-emerald-500' },
+    { key: 'SALES', label: 'Sales & Deal Pipeline', description: 'Leads management, pipeline view, and deal tracking', icon: 'Kanban', color: 'from-blue-500 to-cyan-500' },
+    { key: 'AUTOMATIONS', label: 'AI Agents & Automations', description: 'Automated 24/7 AI agents and visual flowchart triggers', icon: 'Bot', color: 'from-purple-500 to-pink-500' },
+    { key: 'CALLING', label: 'Phone Calling (Twilio)', description: 'Phone calling integration with Twilio', icon: 'Phone', color: 'from-orange-500 to-amber-500' },
     { key: 'REPORTS', label: 'Reports & Analytics', description: 'Advanced reports, dashboards, and analytics', icon: 'BarChart3', color: 'from-indigo-500 to-violet-500' },
 ];
 

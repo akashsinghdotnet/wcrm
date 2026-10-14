@@ -460,27 +460,6 @@ function submitWcrmForm(e) {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 flex-shrink-0">
-                                            {active && integration.id === 'tradeindia' && hasCredentials('tradeindia') && (
-                                                <button
-                                                    onClick={async () => {
-                                                        const toastId = toast.loading('Fetching TradeIndia leads...');
-                                                        try {
-                                                            const res = await api.post('/integrations/tradeindia/fetch', { companyId: user.companyId });
-                                                            if (res.data.success) {
-                                                                toast.success(res.data.message || 'Successfully triggered TradeIndia fetch', { id: toastId });
-                                                            } else {
-                                                                toast.error(res.data.message || 'Failed to fetch leads from TradeIndia', { id: toastId });
-                                                            }
-                                                        } catch (err) {
-                                                            toast.error('Failed to connect to backend', { id: toastId });
-                                                        }
-                                                    }}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:text-gray-900 dark:text-white bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg transition-all border border-emerald-500/20"
-                                                >
-                                                    <RefreshCcw className="w-3.5 h-3.5" />
-                                                    Fetch Leads
-                                                </button>
-                                            )}
                                             {active && (platformCreds.length > 0 || integration.id === 'meta') && (
                                                 <button
                                                     onClick={() => openConfigModal(integration.id)}

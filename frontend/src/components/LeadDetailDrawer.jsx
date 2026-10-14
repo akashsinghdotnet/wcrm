@@ -94,13 +94,9 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
     };
 
     const sourceLabels = {
-        meta_ads: 'Meta Ads',
-        google_ads: 'Google Ads',
-        justdial: 'JustDial',
-        indiamart: 'IndiaMart',
-        tradeindia: 'TradeIndia',
-        website: 'Website',
         whatsapp: 'WhatsApp',
+        meta_ads: 'Meta Ads',
+        website: 'Website Form',
         manual: 'Manual',
     };
 

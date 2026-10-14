@@ -369,11 +369,8 @@ export default function PlansPage() {
                                     <div className="space-y-2 max-h-48 overflow-y-auto p-2 bg-gray-50 dark:bg-slate-800/50 rounded-xl border border-gray-200 dark:border-slate-700">
                                         {[
                                             { key: 'meta', label: 'Meta / Facebook Ads' },
-                                            { key: 'google', label: 'Google Ads' },
-                                            { key: 'indiamart', label: 'IndiaMart' },
-                                            { key: 'tradeindia', label: 'Trade India' },
-                                            { key: 'justdial', label: 'JustDial' },
-                                            { key: 'website', label: 'Website Form' }
+                                            { key: 'website', label: 'Website Form & WordPress' },
+                                            { key: 'webhooks', label: 'REST Webhooks' }
                                         ].map(int => (
                                             <label key={int.key} className="flex items-center gap-3 p-2 hover:bg-white dark:hover:bg-slate-800 rounded-lg cursor-pointer transition-colors">
                                                 <input

@@ -71,26 +71,18 @@ export default function LeadsPage() {
                 const res = await api.get('/integrations/status').catch(() => null);
                 if (res?.data) {
                     const sources = [{ key: 'manual', label: 'Manual' }];
-                    if (res.data.meta) sources.push({ key: 'meta_ads', label: 'Meta Ads' });
-                    if (res.data.google) sources.push({ key: 'google_ads', label: 'Google Ads' });
-                    if (res.data.indiamart) sources.push({ key: 'indiamart', label: 'IndiaMart' });
-                    if (res.data.tradeindia) sources.push({ key: 'tradeindia', label: 'Trade India' });
-                    if (res.data.justdial) sources.push({ key: 'justdial', label: 'JustDial' });
-                    sources.push({ key: 'website', label: 'Website' });
                     sources.push({ key: 'whatsapp', label: 'WhatsApp' });
+                    if (res.data.meta) sources.push({ key: 'meta_ads', label: 'Meta Ads' });
+                    sources.push({ key: 'website', label: 'Website Form' });
                     setActiveSources(sources);
                 }
             } catch {
-                // Fallback to all sources
+                // Fallback to active sources
                 setActiveSources([
                     { key: 'manual', label: 'Manual' },
-                    { key: 'meta_ads', label: 'Meta Ads' },
-                    { key: 'google_ads', label: 'Google Ads' },
-                    { key: 'indiamart', label: 'IndiaMart' },
-                    { key: 'tradeindia', label: 'Trade India' },
-                    { key: 'justdial', label: 'JustDial' },
-                    { key: 'website', label: 'Website' },
                     { key: 'whatsapp', label: 'WhatsApp' },
+                    { key: 'meta_ads', label: 'Meta Ads' },
+                    { key: 'website', label: 'Website Form' },
                 ]);
             }
         };
