@@ -579,7 +579,7 @@ export default function WhatsAppSettings() {
     }
 
     return (
-        <div className="max-w-4xl space-y-6">
+        <div className="space-y-6">
             {/* Top Navigation Mode Tabs (Embedded vs Manual) - Only in Cloud Mode */}
             {!isSelfHosted && (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-1.5 bg-slate-900/80 rounded-2xl border border-white/10">
@@ -731,7 +731,7 @@ export default function WhatsAppSettings() {
                         /* Not connected yet: Official 1-Click CTA */
                         <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-6">
-                                <div className="space-y-2 max-w-xl">
+                                <div className="space-y-2 max-w-3xl">
                                     <div className="flex items-center gap-2">
                                         <span className="px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-semibold flex items-center gap-1.5">
                                             <Sparkles className="w-3.5 h-3.5" /> Official Meta Onboarding

@@ -186,7 +186,7 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="space-y-6 max-w-7xl">
+        <div className="space-y-6">
             <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h2>
                 <p className="text-gray-500 dark:text-slate-400 mt-1">Manage your account and preferences</p>
@@ -226,14 +226,15 @@ export default function SettingsPage() {
             {/* Content */}
             <div className="min-h-[400px]">
                 {activeTab === 'general' && (
-                    <div className="space-y-6 max-w-2xl">
+                    <div className="space-y-6">
                         {/* General System Settings - Super Admin Only */}
                         {user.role === 'super_admin' && (
                             <GeneralSystemSettings />
                         )}
 
-                        {/* Profile Section */}
-                        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 space-y-4">
+                        <div className={`grid grid-cols-1 ${user.role === 'admin' ? 'lg:grid-cols-2' : ''} gap-6 items-start`}>
+                            {/* Profile Section */}
+                            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 space-y-4">
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="w-10 h-10 bg-indigo-600/20 rounded-xl flex items-center justify-center">
                                     <User className="w-5 h-5 text-indigo-400" />
@@ -359,11 +360,12 @@ export default function SettingsPage() {
                                 <CompanyForm companyId={user.companyId} />
                             </div>
                         )}
+                        </div>
                     </div>
                 )}
 
                 {activeTab === 'security' && (
-                    <div className="max-w-2xl space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                         {/* 2FA Section */}
                         <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-6 space-y-4">
                             <div className="flex items-center gap-3 mb-2">
@@ -510,7 +512,7 @@ export default function SettingsPage() {
                 )}
 
                 {activeTab === 'email' && user.role === 'super_admin' && (
-                    <div className="max-w-4xl">
+                    <div>
                         <EmailSettings />
                     </div>
                 )}

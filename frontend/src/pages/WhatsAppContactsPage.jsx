@@ -237,132 +237,129 @@ export default function WhatsAppContactsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
+        <div className="space-y-6">
             {/* Header */}
-            <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                            <Users className="w-8 h-8 text-green-400" />
-                            WhatsApp Contacts
-                        </h1>
-                        <p className="text-gray-500 dark:text-slate-400 mt-1">Manage your WhatsApp contacts, lists, and tags</p>
-                    </div>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => setShowListModal(true)}
-                            className="px-4 py-2 bg-purple-600 text-gray-900 dark:text-white rounded-xl hover:bg-purple-700 flex items-center gap-2"
-                        >
-                            <List className="w-4 h-4" />
-                            New List
-                        </button>
-                        <button
-                            onClick={() => setShowTagModal(true)}
-                            className="px-4 py-2 bg-pink-600 text-gray-900 dark:text-white rounded-xl hover:bg-pink-700 flex items-center gap-2"
-                        >
-                            <Tag className="w-4 h-4" />
-                            New Tag
-                        </button>
-                        <button
-                            onClick={() => setShowImportModal(true)}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center gap-2"
-                        >
-                            <Upload className="w-4 h-4" />
-                            Import CSV
-                        </button>
-                        <button
-                            onClick={() => { setSelectedContact(null); setShowContactModal(true); }}
-                            className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 flex items-center gap-2"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Add Contact
-                        </button>
-                    </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                        <Users className="w-6 h-6 text-emerald-500" />
+                        WhatsApp Contacts
+                    </h2>
+                    <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Manage your audience, lists, and segmentation tags</p>
                 </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-4 gap-4 mb-6">
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-gray-300 dark:border-slate-700">
-                        <div className="text-gray-500 dark:text-slate-400 text-sm mb-1">Total Contacts</div>
-                        <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</div>
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-green-500/20">
-                        <div className="text-gray-500 dark:text-slate-400 text-sm mb-1 flex items-center gap-2">
-                            <UserCheck className="w-4 h-4 text-green-400" />
-                            Opted In
-                        </div>
-                        <div className="text-2xl font-bold text-green-400">{stats.optedIn}</div>
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-red-500/20">
-                        <div className="text-gray-500 dark:text-slate-400 text-sm mb-1 flex items-center gap-2">
-                            <UserX className="w-4 h-4 text-red-400" />
-                            Opted Out
-                        </div>
-                        <div className="text-2xl font-bold text-red-400">{stats.optedOut}</div>
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-gray-300 dark:border-slate-700">
-                        <div className="text-gray-500 dark:text-slate-400 text-sm mb-1">Pending</div>
-                        <div className="text-2xl font-bold text-gray-500 dark:text-slate-400">{stats.pending}</div>
-                    </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        onClick={() => setShowListModal(true)}
+                        className="px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl border border-gray-300 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 transition-all flex items-center gap-1.5 shadow-sm"
+                    >
+                        <List className="w-4 h-4 text-purple-500" />
+                        New List
+                    </button>
+                    <button
+                        onClick={() => setShowTagModal(true)}
+                        className="px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl border border-gray-300 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 transition-all flex items-center gap-1.5 shadow-sm"
+                    >
+                        <Tag className="w-4 h-4 text-pink-500" />
+                        New Tag
+                    </button>
+                    <button
+                        onClick={() => setShowImportModal(true)}
+                        className="px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl border border-gray-300 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 transition-all flex items-center gap-1.5 shadow-sm"
+                    >
+                        <Upload className="w-4 h-4 text-blue-500" />
+                        Import CSV
+                    </button>
+                    <button
+                        onClick={() => { setSelectedContact(null); setShowContactModal(true); }}
+                        className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-xl flex items-center gap-1.5 shadow-sm transition-all"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Add Contact
+                    </button>
                 </div>
+            </div>
 
-                {/* Filters */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-gray-300 dark:border-slate-700">
-                    <div className="flex items-center gap-4">
-                        <Filter className="w-5 h-5 text-gray-500 dark:text-slate-400" />
-                        <div className="flex-1 flex gap-3">
-                            <div className="relative flex-1">
-                                <Search className="w-4 h-4 absolute left-3 top-3 text-gray-500 dark:text-slate-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Search contacts..."
-                                    value={filters.search}
-                                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                                    className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                />
-                            </div>
-                            <select
-                                value={filters.listId}
-                                onChange={(e) => setFilters({ ...filters, listId: e.target.value })}
-                                className="px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                            >
-                                <option value="">All Lists</option>
-                                {lists.map(list => (
-                                    <option key={list.id} value={list.id}>{list.name}</option>
-                                ))}
-                            </select>
-                            <select
-                                value={filters.tagId}
-                                onChange={(e) => setFilters({ ...filters, tagId: e.target.value })}
-                                className="px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                            >
-                                <option value="">All Tags</option>
-                                {tags.map(tag => (
-                                    <option key={tag.id} value={tag.id}>{tag.name}</option>
-                                ))}
-                            </select>
-                            <select
-                                value={filters.optedIn}
-                                onChange={(e) => setFilters({ ...filters, optedIn: e.target.value })}
-                                className="px-4 py-2 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                            >
-                                <option value="">All Status</option>
-                                <option value="true">Opted In</option>
-                                <option value="false">Not Opted In</option>
-                            </select>
-                        </div>
+            {/* Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-200 dark:border-slate-800 shadow-sm">
+                    <div className="text-gray-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider mb-1">Total Contacts</div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</div>
+                </div>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-200 dark:border-slate-800 shadow-sm">
+                    <div className="text-emerald-600 dark:text-emerald-400 text-xs font-medium uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        <UserCheck className="w-4 h-4" />
+                        Opted In
+                    </div>
+                    <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.optedIn}</div>
+                </div>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-200 dark:border-slate-800 shadow-sm">
+                    <div className="text-red-500 dark:text-red-400 text-xs font-medium uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        <UserX className="w-4 h-4" />
+                        Opted Out
+                    </div>
+                    <div className="text-2xl font-bold text-red-500 dark:text-red-400">{stats.optedOut}</div>
+                </div>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-200 dark:border-slate-800 shadow-sm">
+                    <div className="text-gray-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wider mb-1">Pending</div>
+                    <div className="text-2xl font-bold text-gray-500 dark:text-slate-400">{stats.pending}</div>
+                </div>
+            </div>
+
+            {/* Filters */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-200 dark:border-slate-800 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div className="relative flex-1">
+                        <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400 dark:text-slate-500" />
+                        <input
+                            type="text"
+                            placeholder="Search contacts by name, phone, email..."
+                            value={filters.search}
+                            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                            className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <select
+                            value={filters.listId}
+                            onChange={(e) => setFilters({ ...filters, listId: e.target.value })}
+                            className="px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        >
+                            <option value="">All Lists</option>
+                            {lists.map(list => (
+                                <option key={list.id} value={list.id}>{list.name}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={filters.tagId}
+                            onChange={(e) => setFilters({ ...filters, tagId: e.target.value })}
+                            className="px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        >
+                            <option value="">All Tags</option>
+                            {tags.map(tag => (
+                                <option key={tag.id} value={tag.id}>{tag.name}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={filters.optedIn}
+                            onChange={(e) => setFilters({ ...filters, optedIn: e.target.value })}
+                            className="px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        >
+                            <option value="">All Status</option>
+                            <option value="true">Opted In</option>
+                            <option value="false">Not Opted In</option>
+                        </select>
                     </div>
                 </div>
             </div>
 
             {/* Contacts Table */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-300 dark:border-slate-700 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-800 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-white dark:bg-slate-900">
+                        <thead className="bg-gray-50 dark:bg-slate-800/60 border-b border-gray-200 dark:border-slate-800">
                             <tr>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Name</th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Phone</th>
+                                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Name</th>
+                                <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Phone</th>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Email</th>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Lists</th>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Tags</th>

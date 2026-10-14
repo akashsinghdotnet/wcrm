@@ -156,13 +156,13 @@ export default function LeadAssignmentSettings() {
             </div>
 
             {/* Add Rule Form */}
-            <form onSubmit={handleAdd} className="flex flex-wrap items-end gap-3">
-                <div>
+            <form onSubmit={handleAdd} className="flex flex-wrap items-end gap-4">
+                <div className="flex-1 min-w-[240px]">
                     <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Lead Source</label>
                     <select
                         value={source}
                         onChange={(e) => setSource(e.target.value)}
-                        className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                         <option value="">Select Source</option>
                         {SOURCE_OPTIONS.map(s => (
@@ -170,12 +170,12 @@ export default function LeadAssignmentSettings() {
                         ))}
                     </select>
                 </div>
-                <div>
+                <div className="flex-1 min-w-[240px]">
                     <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Assign To</label>
                     <select
                         value={assignedTo}
                         onChange={(e) => setAssignedTo(e.target.value)}
-                        className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                         <option value="">Select Employee</option>
                         {users.map(u => (
@@ -188,7 +188,7 @@ export default function LeadAssignmentSettings() {
                 <button
                     type="submit"
                     disabled={!source || !assignedTo || saving}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-all shadow-lg shadow-indigo-600/25 disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-all shadow-lg shadow-indigo-600/25 disabled:opacity-50 shrink-0 h-[42px]"
                 >
                     <Plus className="w-4 h-4" />
                     {saving ? 'Saving...' : 'Add Rule'}
