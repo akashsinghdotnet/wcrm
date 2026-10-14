@@ -581,13 +581,15 @@ export default function Layout() {
                         <div 
                             className="relative" 
                             ref={profileMenuRef}
-                            onMouseEnter={() => setProfileMenuOpen(true)}
-                            onMouseLeave={() => setProfileMenuOpen(false)}
                         >
                             <button
+                                type="button"
                                 onClick={() => setProfileMenuOpen(prev => !prev)}
-                                className="flex items-center gap-2 p-0.5 rounded-full hover:ring-2 hover:ring-emerald-500/40 transition-all focus:outline-none"
+                                className={`flex items-center gap-2 p-0.5 rounded-full transition-all focus:outline-none cursor-pointer ${
+                                    profileMenuOpen ? 'ring-2 ring-emerald-500 shadow-md shadow-emerald-500/25' : 'hover:ring-2 hover:ring-emerald-500/40'
+                                }`}
                                 title={displayName}
+                                aria-expanded={profileMenuOpen}
                             >
                                 <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-md ring-1 ring-white/20">
                                     {displayName?.[0]?.toUpperCase()}
