@@ -33,13 +33,7 @@ export class WhatsAppConfig {
     autoReplyDelaySec: number;
 
     @Column({ default: 'META' })
-    provider: 'META' | 'WEB_JS';
-
-    @Column({ nullable: true })
-    webJsStatus: string;
-
-    @Column({ nullable: true })
-    webJsPhoneNumber: string;
+    provider: string;
 
     @Column({ nullable: true })
     metaAppId: string;

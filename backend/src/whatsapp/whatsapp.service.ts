@@ -590,10 +590,6 @@ export class WhatsAppService {
             throw new BadRequestException('WhatsApp Business API is not configured for this company');
         }
 
-        if (config.provider === 'WEB_JS') {
-            this.logger.error(`[WhatsApp] WhatsApp Web provider is no longer supported`);
-            throw new BadRequestException('WhatsApp Web provider is retired. Please switch to official API.');
-        }
 
         this.logger.log(`[WhatsApp] Found config - Phone Number ID: ${config.phoneNumberId?.substring(0, 8)}...`);
 
