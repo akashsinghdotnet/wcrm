@@ -6,8 +6,8 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Global API prefix — all routes become /api/...
-  app.setGlobalPrefix('api');
+  // Global API prefix — all routes become /api/... (exclude /robots.txt for SEO/AI bot rejection)
+  app.setGlobalPrefix('api', { exclude: ['robots.txt'] });
 
   // Global SEO Noindex header middleware for app.wcrm.si
   app.use((req: any, res: any, next: any) => {
