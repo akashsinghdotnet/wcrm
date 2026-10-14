@@ -314,45 +314,67 @@ export default function Layout() {
                 <div
                     className={`h-16 flex items-center px-5 border-b overflow-hidden ${isDark ? 'border-slate-800' : 'border-gray-200'}`}
                 >
-                    <div className="flex items-center gap-3 min-w-0 max-h-12 overflow-hidden">
-                        {config?.sidebar_logo_link ? (
-                            <a href={config.sidebar_logo_link} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 flex items-center">
-                                {((isDark ? (config?.sidebar_logo_url || config?.login_logo_url) : (config?.sidebar_logo_light_url || config?.login_logo_light_url || config?.sidebar_logo_url || config?.login_logo_url)) || config?.app_logo) ? (
-                                    <img
-                                        src={(isDark ? (config?.sidebar_logo_url || config?.login_logo_url) : (config?.sidebar_logo_light_url || config?.login_logo_light_url || config?.sidebar_logo_url || config?.login_logo_url)) || config?.app_logo}
-                                        alt="Logo"
-                                        className="object-contain rounded-lg hover:opacity-80 transition-opacity max-h-10 w-auto"
-                                        style={{ maxWidth: config.sidebar_logo_width ? `${Math.min(config.sidebar_logo_width, 140)}px` : '120px', maxHeight: '40px' }}
-                                    />
-                                ) : (
-                                    <div className="w-10 h-10 bg-gradient-to-tr from-[#075E54] to-[#25D366] rounded-xl flex items-center justify-center hover:opacity-90 transition-all shadow-md shadow-[#25D366]/20 shrink-0">
-                                        <WcrmIcon className="w-5 h-5 text-white" />
+                    {isSelfHosted ? (
+                        <a
+                            href="https://wcrm.si"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center hover:opacity-85 transition-opacity py-1"
+                            title="Wcrm — WhatsApp CRM (wcrm.si)"
+                        >
+                            <img
+                                src={isDark ? '/wcrm-logo-for-dark-bg.png' : '/wcrm-logo-for-light-bg.png'}
+                                alt="Wcrm"
+                                className="h-8 max-h-9 w-auto object-contain"
+                            />
+                        </a>
+                    ) : (
+                        <div className="flex items-center gap-3 min-w-0 max-h-12 overflow-hidden">
+                            {config?.sidebar_logo_link ? (
+                                <a href={config.sidebar_logo_link} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 flex items-center">
+                                    {((isDark ? (config?.sidebar_logo_url || config?.login_logo_url) : (config?.sidebar_logo_light_url || config?.login_logo_light_url || config?.sidebar_logo_url || config?.login_logo_url)) || config?.app_logo) ? (
+                                        <img
+                                            src={(isDark ? (config?.sidebar_logo_url || config?.login_logo_url) : (config?.sidebar_logo_light_url || config?.login_logo_light_url || config?.sidebar_logo_url || config?.login_logo_url)) || config?.app_logo}
+                                            alt="Logo"
+                                            className="object-contain rounded-lg hover:opacity-80 transition-opacity max-h-10 w-auto"
+                                            style={{ maxWidth: config.sidebar_logo_width ? `${Math.min(config.sidebar_logo_width, 140)}px` : '120px', maxHeight: '40px' }}
+                                        />
+                                    ) : (
+                                        <img
+                                            src={isDark ? '/wcrm-logo-for-dark-bg.png' : '/wcrm-logo-for-light-bg.png'}
+                                            alt="Wcrm"
+                                            className="h-8 max-h-9 w-auto object-contain hover:opacity-85 transition-opacity"
+                                        />
+                                    )}
+                                </a>
+                            ) : (
+                                <a href="https://wcrm.si" target="_blank" rel="noopener noreferrer" className="flex-shrink-0 flex items-center hover:opacity-85 transition-opacity">
+                                    {((isDark ? (config?.sidebar_logo_url || config?.login_logo_url) : (config?.sidebar_logo_light_url || config?.login_logo_light_url || config?.sidebar_logo_url || config?.login_logo_url)) || config?.app_logo) ? (
+                                        <img
+                                            src={(isDark ? (config?.sidebar_logo_url || config?.login_logo_url) : (config?.sidebar_logo_light_url || config?.login_logo_light_url || config?.sidebar_logo_url || config?.login_logo_url)) || config?.app_logo}
+                                            alt="Logo"
+                                            className="object-contain rounded-lg max-h-10 w-auto"
+                                            style={{ maxWidth: config.sidebar_logo_width ? `${Math.min(config.sidebar_logo_width, 140)}px` : '120px', maxHeight: '40px' }}
+                                        />
+                                    ) : (
+                                        <img
+                                            src={isDark ? '/wcrm-logo-for-dark-bg.png' : '/wcrm-logo-for-light-bg.png'}
+                                            alt="Wcrm"
+                                            className="h-8 max-h-9 w-auto object-contain"
+                                        />
+                                    )}
+                                </a>
+                            )}
+                            {((config?.sidebar_logo_url || config?.login_logo_url || config?.app_logo)) ? null : (
+                                (config?.sidebar_show_text === undefined || config?.sidebar_show_text === 'true') && (
+                                    <div className="min-w-0 truncate">
+                                        <h1 className={`text-base font-bold tracking-tight truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{config?.sidebar_text_content || 'Wcrm'}</h1>
+                                        <p className={`text-[11px] truncate ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>WhatsApp CRM</p>
                                     </div>
-                                )}
-                            </a>
-                        ) : (
-                            <div className="flex-shrink-0 flex items-center">
-                                {((isDark ? (config?.sidebar_logo_url || config?.login_logo_url) : (config?.sidebar_logo_light_url || config?.login_logo_light_url || config?.sidebar_logo_url || config?.login_logo_url)) || config?.app_logo) ? (
-                                    <img
-                                        src={(isDark ? (config?.sidebar_logo_url || config?.login_logo_url) : (config?.sidebar_logo_light_url || config?.login_logo_light_url || config?.sidebar_logo_url || config?.login_logo_url)) || config?.app_logo}
-                                        alt="Logo"
-                                        className="object-contain rounded-lg max-h-10 w-auto"
-                                        style={{ maxWidth: config.sidebar_logo_width ? `${Math.min(config.sidebar_logo_width, 140)}px` : '120px', maxHeight: '40px' }}
-                                    />
-                                ) : (
-                                    <div className="w-10 h-10 bg-gradient-to-tr from-[#075E54] to-[#25D366] rounded-xl flex items-center justify-center shadow-md shadow-[#25D366]/20 shrink-0">
-                                        <WcrmIcon className="w-5 h-5 text-white" />
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                        {(config?.sidebar_show_text === undefined || config?.sidebar_show_text === 'true') && (
-                            <div className="min-w-0 truncate">
-                                <h1 className={`text-base font-bold tracking-tight truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{config?.sidebar_text_content || 'Wcrm'}</h1>
-                                <p className={`text-[11px] truncate ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>WhatsApp CRM</p>
-                            </div>
-                        )}
-                    </div>
+                                )
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Navigation */}

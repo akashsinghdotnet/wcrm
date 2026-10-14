@@ -491,12 +491,13 @@ export default function CheckoutPage() {
                                 style={{ height: '36px', width: 'auto' }}
                             />
                         ) : (
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-gradient-to-tr from-[#075E54] to-[#25D366] rounded-lg flex items-center justify-center shadow-sm shadow-[#25D366]/20">
-                                    <WcrmIcon className="w-4 h-4 text-white" />
-                                </div>
-                                <span className="text-white font-semibold text-sm">{config?.login_text_content || 'Wcrm'}</span>
-                            </div>
+                            <a href="https://wcrm.si" target="_blank" rel="noopener noreferrer" className="hover:opacity-85 transition-opacity">
+                                <img
+                                    src="/wcrm-logo-for-dark-bg.png"
+                                    alt="Wcrm"
+                                    className="h-8 w-auto object-contain"
+                                />
+                            </a>
                         )}
                     </div>
                     <div className="flex items-center gap-2 text-slate-400 text-xs">

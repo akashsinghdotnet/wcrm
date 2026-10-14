@@ -145,41 +145,63 @@ export default function LoginPage({ type = 'client' }) {
             <div className="w-full max-w-md relative z-10">
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    {config?.login_logo_link ? (
-                        <a href={config.login_logo_link} target="_blank" rel="noopener noreferrer" className="inline-block mb-4">
-                            {((config?.login_logo_url) || config?.app_logo) ? (
-                                <img
-                                    src={(config?.login_logo_url) || config?.app_logo}
-                                    alt="Logo"
-                                    className="mx-auto object-contain hover:opacity-80 transition-opacity"
-                                    style={{ width: config.login_logo_width ? `${config.login_logo_width}px` : '4rem', height: 'auto', maxHeight: '120px' }}
-                                />
-                            ) : (
-                                <div className="w-16 h-16 bg-gradient-to-tr from-[#075E54] to-[#25D366] rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-[#25D366]/25 hover:opacity-95 transition-all">
-                                    <WcrmIcon className="w-9 h-9 text-white" />
-                                </div>
-                            )}
+                    {isSelfHosted ? (
+                        <a
+                            href="https://wcrm.si"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block mb-3 hover:opacity-90 transition-opacity"
+                            title="Wcrm — WhatsApp CRM (wcrm.si)"
+                        >
+                            <img
+                                src="/wcrm-logo-for-dark-bg.png"
+                                alt="Wcrm"
+                                className="h-12 sm:h-14 w-auto mx-auto object-contain"
+                            />
                         </a>
                     ) : (
-                        <>
-                            {((config?.login_logo_url) || config?.app_logo) ? (
-                                <img
-                                    src={(config?.login_logo_url) || config?.app_logo}
-                                    alt="Logo"
-                                    className="mx-auto mb-4 object-contain"
-                                    style={{ width: config.login_logo_width ? `${config.login_logo_width}px` : '4rem', height: 'auto', maxHeight: '120px' }}
-                                />
-                            ) : (
-                                <div className="w-16 h-16 bg-gradient-to-tr from-[#075E54] to-[#25D366] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#25D366]/25">
-                                    <WcrmIcon className="w-9 h-9 text-white" />
-                                </div>
-                            )}
-                        </>
+                        config?.login_logo_link ? (
+                            <a href={config.login_logo_link} target="_blank" rel="noopener noreferrer" className="inline-block mb-3">
+                                {((config?.login_logo_url) || config?.app_logo) ? (
+                                    <img
+                                        src={(config?.login_logo_url) || config?.app_logo}
+                                        alt="Logo"
+                                        className="mx-auto object-contain hover:opacity-80 transition-opacity"
+                                        style={{ width: config.login_logo_width ? `${config.login_logo_width}px` : '4rem', height: 'auto', maxHeight: '120px' }}
+                                    />
+                                ) : (
+                                    <img
+                                        src="/wcrm-logo-for-dark-bg.png"
+                                        alt="Wcrm"
+                                        className="h-12 sm:h-14 w-auto mx-auto object-contain hover:opacity-90 transition-opacity"
+                                    />
+                                )}
+                            </a>
+                        ) : (
+                            <a href="https://wcrm.si" target="_blank" rel="noopener noreferrer" className="inline-block mb-3 hover:opacity-90 transition-opacity">
+                                {((config?.login_logo_url) || config?.app_logo) ? (
+                                    <img
+                                        src={(config?.login_logo_url) || config?.app_logo}
+                                        alt="Logo"
+                                        className="mx-auto mb-4 object-contain"
+                                        style={{ width: config.login_logo_width ? `${config.login_logo_width}px` : '4rem', height: 'auto', maxHeight: '120px' }}
+                                    />
+                                ) : (
+                                    <img
+                                        src="/wcrm-logo-for-dark-bg.png"
+                                        alt="Wcrm"
+                                        className="h-12 sm:h-14 w-auto mx-auto object-contain"
+                                    />
+                                )}
+                            </a>
+                        )
                     )}
-                    {(config?.login_show_text === undefined || config?.login_show_text === 'true') && (
-                        <h1 className="text-3xl font-bold text-white tracking-tight">{config?.login_text_content || 'Wcrm'}</h1>
+                    {!isSelfHosted && ((config?.login_logo_url || config?.app_logo)) ? null : (
+                        !isSelfHosted && (config?.login_show_text === undefined || config?.login_show_text === 'true') && (
+                            <h1 className="text-3xl font-bold text-white tracking-tight">{config?.login_text_content || 'Wcrm'}</h1>
+                        )
                     )}
-                    <p className="text-slate-400 mt-2">{requires2FA ? 'Two-Factor Authentication' : pageTitle}</p>
+                    <p className="text-slate-400 mt-2 font-medium">{requires2FA ? 'Two-Factor Authentication' : pageTitle}</p>
                 </div>
 
                 {/* Login Card */}
@@ -305,6 +327,19 @@ export default function LoginPage({ type = 'client' }) {
                     )}
 
                 </div>
+
+                {isSelfHosted && (
+                    <div className="text-center mt-6 text-xs text-slate-500">
+                        <a
+                            href="https://wcrm.si"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5"
+                        >
+                            Powered by <span className="font-semibold text-slate-300">Wcrm</span> — Open-Source WhatsApp CRM
+                        </a>
+                    </div>
+                )}
             </div>
         </div>
     );
