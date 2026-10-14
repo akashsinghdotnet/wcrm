@@ -1,0 +1,80 @@
+services:
+  # ==========================================
+  # Database Service (PostgreSQL)
+  # ==========================================
+  db:
+    image: postgres:16-alpine
+    container_name: wcrm-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-wcrm}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-wcrm_secret_pass}
+      POSTGRES_DB: ${DB_NAME:-wcrm}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - wcrm-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-wcrm} -d ${DB_NAME:-wcrm}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # Backend API Service (NestJS)
+  # ==========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wcrm-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 4000
+      DEPLOYMENT_MODE: self_hosted
+      DB_TYPE: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-wcrm}
+      DB_PASSWORD: ${DB_PASSWORD:-wcrm_secret_pass}
+      DB_NAME: ${DB_NAME:-wcrm}
+      DB_SYNCHRONIZE: "true"
+      JWT_SECRET: ${JWT_SECRET:-wcrm_production_jwt_secret_change_me}
+      META_APP_ID: ${META_APP_ID}
+      META_APP_SECRET: ${META_APP_SECRET}
+      META_CONFIG_ID: ${META_CONFIG_ID}
+      CLOUD_URL: https://wcrm.si
+      COMMUNITY_FEED_URL: https://wcrm.si/community-feed.json
+    ports:
+      - "4000:4000"
+    networks:
+      - wcrm-network
+
+  # ==========================================
+  # Frontend Application (Vite + Nginx)
+  # ==========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+    container_name: wcrm-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - wcrm-network
+
+networks:
+  wcrm-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
