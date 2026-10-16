@@ -5,6 +5,7 @@ dist/
 ._*
 .npm-cache/
 .npm-local-cache/
+.claude/
 *.zip
 *.tar.gz
 

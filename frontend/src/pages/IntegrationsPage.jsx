@@ -38,8 +38,8 @@ const INTEGRATIONS = [
     },
     {
         id: 'website',
-        name: 'Website Form (WordPress / Webhook)',
-        description: 'Connect your website contact form or WordPress plugin to auto-create leads and trigger instant WhatsApp automations.',
+        name: 'Website Form & Webhook Lead Capture',
+        description: 'Connect your website contact form or embed script to auto-create leads and trigger instant WhatsApp automations.',
         color: 'from-violet-500 to-purple-500',
         iconBg: 'bg-violet-500/10 border-violet-500/20',
         iconColor: 'text-violet-400',
@@ -55,7 +55,7 @@ const INTEGRATIONS = [
             'Enable this integration by toggling the switch on',
             'Click "Guide" to see the embeddable form code and live preview',
             'Click "Copy Form Code" to copy the ready-to-use HTML snippet',
-            'Paste the code into your website (works with WordPress, Shopify, Wix, React, plain HTML, or any CMS)',
+            'Paste the code into your website (works with Shopify, Wix, Webflow, React, plain HTML, or any CMS)',
             'Customize the form styles (colors, fonts) to match your website design',
             'Form submissions will automatically create leads in your CRM and assign them via round-robin',
         ],
@@ -713,7 +713,7 @@ function submitWcrmForm(e) {
                                                             <p className="font-medium text-indigo-300 mb-1">How to use</p>
                                                             <ol className="space-y-1 list-decimal list-inside text-gray-500 dark:text-slate-400">
                                                                 <li>Click <strong className="text-gray-900 dark:text-white">Copy Form Code</strong> above</li>
-                                                                <li>Paste it into your website's HTML (works with WordPress, Shopify, Wix, React, or any website)</li>
+                                                                <li>Paste it into your website's HTML (works with Shopify, Wix, Webflow, React, or any website)</li>
                                                                 <li>Customize the styles (colors, fonts, spacing) to match your website's look</li>
                                                                 <li>Leads submitted through the form will automatically appear in your CRM</li>
                                                             </ol>
