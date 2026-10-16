@@ -53,8 +53,6 @@ export function ModuleProvider({ children }) {
         if (!user) return false;
         // In self_hosted mode, all CRM modules are unlocked 100%
         if (isSelfHosted) return true;
-        // Super admin always has all modules (they have a role but no companyId)
-        if (user.role && !user.companyId) return true;
         return activeModules.includes(moduleKey);
     }, [activeModules, user, isSelfHosted]);
 

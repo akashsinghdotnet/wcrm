@@ -11,7 +11,6 @@ export class ModulesController {
     async getModules(@Request() req) {
         const companyId = req.user.companyId;
         if (!companyId) {
-            // Super admin — return all modules as active
             return {
                 activeModules: this.modulesService.getAllModuleDefinitions().map(m => m.key),
                 allModules: this.modulesService.getAllModuleDefinitions(),
@@ -28,7 +27,7 @@ export class ModulesController {
     async updateModules(@Request() req, @Body() body: { activeModules: string[] }) {
         const companyId = req.user.companyId;
         if (!companyId) {
-            return { message: 'Super admin modules cannot be modified' };
+            return { message: 'Company context required to update modules' };
         }
         const config = await this.modulesService.updateActiveModules(companyId, body.activeModules);
         return {

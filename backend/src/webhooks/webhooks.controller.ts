@@ -8,7 +8,7 @@ import { WebhookWebsiteDto } from './dto/webhook-website.dto';
 
 /**
  * Public webhook endpoints (no JWT required).
- * External services like Meta Lead Ads and Website / WordPress forms
+ * External services like Meta Lead Ads and Website forms / Webhooks
  * call these URLs to push new leads into Wcrm.
  */
 @Controller('webhooks')
@@ -107,7 +107,7 @@ export class WebhooksController {
     }
 
     /**
-     * Website Form Lead (WordPress Plugin / Custom Web Form)
+     * Website Form Lead (Custom Web Form / Embed / Webhook)
      * POST /api/webhooks/website
      */
     @Post('website')
@@ -115,8 +115,8 @@ export class WebhooksController {
     async handleWebsite(@Body() dto: WebhookWebsiteDto) {
         const companyId = dto.companyId ? dto.companyId.replace(/^.*companyId=/i, '').trim() : '';
 
-        // If this is a test connection request from WordPress plugin, verify without creating a lead
-        if (dto.name === 'WordPress Plugin Test Lead' || dto.message?.includes('Test Connection') || (dto as any).testConnection) {
+        // If this is a test connection request, verify without creating a lead
+        if (dto.name?.toLowerCase().includes('test lead') || dto.message?.includes('Test Connection') || (dto as any).testConnection) {
             const companyExists = await this.leadsService.verifyCompanyExists(companyId);
             if (!companyExists) {
                 throw new BadRequestException('Invalid Company ID: Company not found in Wcrm.');

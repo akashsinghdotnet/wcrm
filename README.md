@@ -37,7 +37,7 @@ Whether you want to deploy a self-hosted instance on your own server or connect 
 - 👥 **Audience & Contact CRM**: Filter and organize contacts with tags, custom lists, opt-in/opt-out compliance tracking, and CSV bulk import.
 - 🤖 **AI Agents & Flow Automations**: Build 24/7 intelligent automated responders and conditional visual triggers for inquiries.
 - 🔔 **Multi-Channel Notifications**: Real-time bell notifications, sound alerts, and unread badges across all conversation threads.
-- 🔌 **Integrations**: Native WordPress plugin, WooCommerce order alerts, and REST webhooks for external apps.
+- 🔌 **Integrations**: Embeddable website lead capture forms, Meta Lead Ads, and REST webhooks for external apps.
 - 🐳 **1-Click Self-Hosting**: Fully containerized stack with Docker Compose for effortless deployment.
 
 ---
@@ -56,10 +56,10 @@ cd wcrm
 ```bash
 cp backend/.env.example backend/.env
 ```
-Edit `backend/.env` with your secure `JWT_SECRET` and your Meta App credentials:
-- `META_APP_ID`
-- `META_APP_SECRET`
-- `META_CONFIG_ID`
+Edit `backend/.env` with your secure `JWT_SECRET` and Meta WhatsApp Cloud API credentials:
+- `WHATSAPP_PHONE_NUMBER_ID`
+- `WHATSAPP_ACCESS_TOKEN`
+- `WHATSAPP_WABA_ID`
 
 ### 3. Start the Stack
 ```bash
@@ -117,7 +117,6 @@ wcrm/
 │   ├── nginx.conf            # Production SPA & API reverse proxy
 │   ├── Dockerfile            # Nginx production container
 │   └── .env.example
-├── wordpress-plugin/         # Official Wcrm WordPress integration
 ├── docker-compose.yml        # Multi-service stack (DB + Backend + Frontend)
 └── LICENSE                   # AGPL-3.0 License
 ```
