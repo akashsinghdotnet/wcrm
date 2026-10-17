@@ -1,6 +1,9 @@
 <p align="center">
   <a href="https://wcrm.si" target="_blank" rel="noopener noreferrer">
-    <img src="frontend/public/wcrm-logo-for-light-bg.png" alt="Wcrm Logo" width="220" />
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="frontend/public/wcrm-logo-for-dark-bg.png">
+      <img src="frontend/public/wcrm-logo-for-light-bg.png" alt="Wcrm Logo" width="240" />
+    </picture>
   </a>
 </p>
 
@@ -56,10 +59,10 @@ cd wcrm
 ```bash
 cp backend/.env.example backend/.env
 ```
-Edit `backend/.env` with your secure `JWT_SECRET` and Meta WhatsApp Cloud API credentials:
-- `WHATSAPP_PHONE_NUMBER_ID`
-- `WHATSAPP_ACCESS_TOKEN`
-- `WHATSAPP_WABA_ID`
+Edit `backend/.env` with your secure `JWT_SECRET` and your Meta App credentials:
+- `META_APP_ID`
+- `META_APP_SECRET`
+- `META_CONFIG_ID`
 
 ### 3. Start the Stack
 ```bash
