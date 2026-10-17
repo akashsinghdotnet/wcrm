@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -21,8 +21,17 @@ export default function DashboardPage() {
     const loadData = async () => {
         try {
             if (user?.role === 'admin' || user?.role === 'manager') {
-                const statsRes = await api.get(`/dashboard/admin?companyId=${user.companyId || ''}`);
-                setStats(statsRes.data);
+                const [statsRes, broadcastsRes] = await Promise.all([
+                    api.get(`/dashboard/admin?companyId=${user.companyId || ''}`).catch(() => ({ data: {} })),
+                    api.get('/whatsapp-crm/broadcasts').catch(() => ({ data: [] })),
+                ]);
+                const broadcastList = Array.isArray(broadcastsRes?.data) 
+                    ? broadcastsRes.data 
+                    : (broadcastsRes?.data?.broadcasts || []);
+                setStats({
+                    ...(statsRes.data || {}),
+                    activeBroadcasts: broadcastList.filter(b => b.status === 'active' || b.status === 'scheduled').length,
+                });
             } else {
                 const staffRes = await api.get('/dashboard/staff');
                 setStaffStats(staffRes.data);
@@ -44,13 +53,71 @@ export default function DashboardPage() {
 
     const isAdmin = user?.role === 'admin' || user?.role === 'manager';
 
+    const automationsCount = useMemo(() => {
+        try {
+            const saved = localStorage.getItem('wcrm_automations_v2');
+            if (!saved) return 0;
+            const list = JSON.parse(saved);
+            return Array.isArray(list) ? list.filter(a => a.status === 'active' || a.status === true).length : 0;
+        } catch {
+            return 0;
+        }
+    }, []);
+
+    const flowsCount = useMemo(() => {
+        try {
+            const saved = localStorage.getItem('wcrm_interactive_flows_v2');
+            if (!saved) return 0;
+            const list = JSON.parse(saved);
+            return Array.isArray(list) ? list.filter(f => f.status === 'active').length : 0;
+        } catch {
+            return 0;
+        }
+    }, []);
+
     const statCards = [
-        { label: 'WhatsApp Chats', value: stats?.totalLeads || 0, icon: MessageSquare, color: 'emerald', link: '/inbox' },
-        { label: 'Audience Contacts', value: stats?.leadsToday ? `${stats.leadsToday} New` : 'Active', icon: Users, color: 'cyan', link: '/contacts' },
-        { label: 'Pipeline Deals', value: stats?.convertedLeads || 0, icon: TrendingUp, color: 'amber', link: '/pipeline' },
-        { label: 'Active Broadcasts', value: 'Campaigns', icon: Radio, color: 'indigo', link: '/broadcasts' },
-        { label: 'Live Automations', value: 'Triggers', icon: Zap, color: 'emerald', link: '/automations' },
-        { label: 'Interactive Flows', value: 'Active Trees', icon: GitFork, color: 'purple', link: '/flows' },
+        { 
+            label: 'WhatsApp Chats', 
+            value: (stats?.totalLeads ?? 0).toLocaleString(), 
+            icon: MessageSquare, 
+            color: 'emerald', 
+            link: '/inbox' 
+        },
+        { 
+            label: 'Audience Contacts', 
+            value: stats?.leadsToday ? `${stats.leadsToday} New Today` : `${(stats?.totalContacts ?? stats?.totalLeads ?? 0).toLocaleString()} Active`, 
+            icon: Users, 
+            color: 'cyan', 
+            link: '/contacts' 
+        },
+        { 
+            label: 'Pipeline Deals', 
+            value: (stats?.convertedLeads ?? 0).toLocaleString(), 
+            icon: TrendingUp, 
+            color: 'amber', 
+            link: '/pipeline' 
+        },
+        { 
+            label: 'Active Broadcasts', 
+            value: `${stats?.activeBroadcasts ?? 0} Campaigns`, 
+            icon: Radio, 
+            color: 'indigo', 
+            link: '/broadcasts' 
+        },
+        { 
+            label: 'Live Automations', 
+            value: `${automationsCount} Triggers`, 
+            icon: Zap, 
+            color: 'emerald', 
+            link: '/automations' 
+        },
+        { 
+            label: 'Interactive Flows', 
+            value: `${flowsCount} Active Trees`, 
+            icon: GitFork, 
+            color: 'purple', 
+            link: '/flows' 
+        },
     ];
 
     const colorMap = {
