@@ -1,8 +1,8 @@
 <p align="center">
   <a href="https://wcrm.si" target="_blank" rel="noopener noreferrer">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="frontend/public/wcrm-logo-for-dark-bg.png">
-      <img src="frontend/public/wcrm-logo-for-light-bg.png" alt="Wcrm Logo" width="240" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/akashsinghdotnet/wcrm/main/frontend/public/wcrm-brand-logo-dark.png">
+      <img src="https://raw.githubusercontent.com/akashsinghdotnet/wcrm/main/frontend/public/wcrm-brand-logo-light.png" alt="Wcrm Logo" width="240" />
     </picture>
   </a>
 </p>
