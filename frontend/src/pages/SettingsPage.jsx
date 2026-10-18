@@ -11,7 +11,6 @@ import TeamSettings from '../components/TeamSettings';
 import WhatsAppSettings from '../components/WhatsAppSettings';
 import CallingSettings from '../components/CallingSettings';
 import LeadAssignmentSettings from '../components/LeadAssignmentSettings';
-import EmailTemplates from '../components/EmailTemplates';
 import IntegrationsPage from './IntegrationsPage';
 import CompanyPaymentSettings from '../components/CompanyPaymentSettings';
 import CommunitySettingsCard from '../components/CommunitySettingsCard';
@@ -203,7 +202,6 @@ export default function SettingsPage() {
                     ...(user.role === 'admin' ? [{ id: 'calling', label: 'Calling', icon: Phone }] : []),
                     ...(user.role === 'admin' ? [
                         { id: 'email', label: 'Email Settings', icon: Mail },
-                        { id: 'email-templates', label: 'Email Templates', icon: FileText }
                     ] : [])
                 ].map(tab => (
                     <button
@@ -511,10 +509,6 @@ export default function SettingsPage() {
                     </div>
                 )}
 
-                {activeTab === 'email-templates' && user.role === 'admin' && (
-                    <EmailTemplates />
-                )}
-
                 {activeTab === 'community' && (
                     <CommunitySettingsCard config={config} />
                 )}
@@ -545,6 +539,9 @@ export default function SettingsPage() {
 
 
 function CompanyForm({ companyId }) {
+    const { user } = useAuth();
+    const effectiveCompanyId = companyId || user?.companyId || user?.company?.id;
+
     const [form, setForm] = useState({
         companyName: '',
         address: '',
@@ -557,8 +554,11 @@ function CompanyForm({ companyId }) {
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        if (!companyId) return;
-        api.get(`/companies/${companyId}`).then((res) => {
+        if (!effectiveCompanyId) {
+            setLoading(false);
+            return;
+        }
+        api.get(`/companies/${effectiveCompanyId}`).then((res) => {
             setForm({
                 companyName: res.data.companyName || '',
                 address: res.data.address || '',
@@ -568,17 +568,18 @@ function CompanyForm({ companyId }) {
                 email: res.data.email || '',
             });
             setLoading(false);
-        }).catch(() => {
+        }).catch((err) => {
             setLoading(false);
-            toast.error('Failed to load company details');
+            console.error('Failed to load company details', err);
         });
-    }, [companyId]);
+    }, [effectiveCompanyId]);
 
     const handleSave = async (e) => {
         e.preventDefault();
+        if (!effectiveCompanyId) return;
         setSaving(true);
         try {
-            await api.patch(`/companies/${companyId}`, form);
+            await api.patch(`/companies/${effectiveCompanyId}`, form);
             toast.success('Company details updated');
         } catch (err) {
             console.error(err);
@@ -592,37 +593,59 @@ function CompanyForm({ companyId }) {
 
     return (
         <form onSubmit={handleSave} className="space-y-4">
-            <div>
-                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Company Name</label>
-                <input
-                    value={form.companyName}
-                    readOnly
-                    className="w-full px-4 py-2.5 bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-500 dark:text-slate-400 cursor-not-allowed"
-                />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Company Name</label>
+                    <input
+                        value={form.companyName}
+                        onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        placeholder="Company Name"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Support Email</label>
+                    <input
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        placeholder="support@company.com"
+                    />
+                </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Address</label>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Support Phone</label>
                     <input
-                        value={form.address}
-                        onChange={(e) => setForm({ ...form, address: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        placeholder="123 Business St, City"
+                        value={form.phone}
+                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        placeholder="+1 555 123 4567"
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">GST No</label>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">GST No / Tax ID</label>
                     <input
                         value={form.gstNo}
                         onChange={(e) => setForm({ ...form, gstNo: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        placeholder="GSTIN12345"
+                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        placeholder="Tax ID / GSTIN"
                     />
                 </div>
             </div>
+            <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-slate-300 mb-1.5">Address</label>
+                <input
+                    value={form.address}
+                    onChange={(e) => setForm({ ...form, address: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="123 Business St, City, Country"
+                />
+            </div>
             <button
                 type="submit"
-                disabled={saving}
+                disabled={saving || !effectiveCompanyId}
                 className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-medium transition-all disabled:opacity-50 shadow-lg shadow-emerald-600/25 cursor-pointer"
             >
                 {saving ? 'Saving...' : 'Save Company Details'}

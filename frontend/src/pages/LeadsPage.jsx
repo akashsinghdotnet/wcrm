@@ -67,24 +67,10 @@ export default function LeadsPage() {
     // Fetch active integration sources on mount
     useEffect(() => {
         const fetchActiveSources = async () => {
-            try {
-                const res = await api.get('/integrations/status').catch(() => null);
-                if (res?.data) {
-                    const sources = [{ key: 'manual', label: 'Manual' }];
-                    sources.push({ key: 'whatsapp', label: 'WhatsApp' });
-                    if (res.data.meta) sources.push({ key: 'meta_ads', label: 'Meta Ads' });
-                    sources.push({ key: 'website', label: 'Website Form' });
-                    setActiveSources(sources);
-                }
-            } catch {
-                // Fallback to active sources
-                setActiveSources([
-                    { key: 'manual', label: 'Manual' },
-                    { key: 'whatsapp', label: 'WhatsApp' },
-                    { key: 'meta_ads', label: 'Meta Ads' },
-                    { key: 'website', label: 'Website Form' },
-                ]);
-            }
+            setActiveSources([
+                { key: 'manual', label: 'Manual' },
+                { key: 'whatsapp', label: 'WhatsApp' },
+            ]);
         };
         fetchActiveSources();
     }, []);

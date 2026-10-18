@@ -157,8 +157,20 @@ export default function SetupPage() {
             <div className="w-full max-w-2xl relative z-10 space-y-8">
                 {/* Header Branding */}
                 <div className="text-center space-y-3">
-                    <div className="inline-flex items-center justify-center mb-1">
-                        <WcrmIcon className="w-12 h-12 shadow-lg shadow-emerald-500/20 rounded-2xl" />
+                    <div className="inline-flex items-center justify-center mb-2">
+                        <a
+                            href="https://wcrm.si"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="transition-transform hover:scale-105"
+                            title="Visit Wcrm Website"
+                        >
+                            <img
+                                src="/wcrm-logo-for-dark-bg.png"
+                                alt="Wcrm"
+                                className="h-11 w-auto object-contain"
+                            />
+                        </a>
                     </div>
 
                     <div className="flex items-center justify-center gap-2">

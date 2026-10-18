@@ -47,26 +47,6 @@ export default function NotificationsPage() {
                 });
             });
 
-            // Sample system notifications for rich UI experience
-            list.push({
-                id: 'sys-ai-agent',
-                type: 'ai',
-                title: 'AI Agent Ready',
-                message: 'Your WhatsApp AI Assistant is online and ready to answer customer queries 24/7.',
-                time: new Date(Date.now() - 3600000).toISOString(),
-                unread: false,
-                link: '/ai-agents',
-            });
-
-            list.push({
-                id: 'sys-broadcast-tip',
-                type: 'broadcast',
-                title: 'Broadcast Safety Tip',
-                message: 'Always use Meta-approved templates for marketing broadcasts to protect your quality rating.',
-                time: new Date(Date.now() - 86400000).toISOString(),
-                unread: false,
-                link: '/broadcasts',
-            });
 
             // In self-hosted mode, inject remote community announcements & promotions
             if (isSelfHosted) {

@@ -5,8 +5,6 @@ import { Plus, Trash2, Loader2, Shuffle, RefreshCcw, UserCheck } from 'lucide-re
 
 const SOURCE_OPTIONS = [
     { value: 'whatsapp', label: 'WhatsApp Inbound' },
-    { value: 'meta_ads', label: 'Meta Ads' },
-    { value: 'website', label: 'Website / Webhook' },
     { value: 'manual', label: 'Manual Entry' },
 ];
 
