@@ -3,16 +3,16 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import {
-    MessageCircle, Search, Phone, Clock, ArrowLeft,
+    MessageCircle, Search, Clock, ArrowLeft,
     Paperclip, FileText, Image as ImageIcon, MoreVertical, Reply, Forward,
-    Trash2, X, Users, Check, CheckCheck, AlertCircle,
+    Trash2, X, Check, CheckCheck, AlertCircle,
     RotateCw, Lock, MessageSquarePlus, ExternalLink, Send
 } from 'lucide-react';
 
 const statusIcons = {
     sent: <Check size={14} className="text-gray-400 dark:text-gray-400" />,
     delivered: <CheckCheck size={14} className="text-gray-400 dark:text-gray-400" />,
-    read: <CheckCheck size={14} className="text-[#34B7F1]" />,
+    read: <CheckCheck size={14} className="text-teal-300" />,
     failed: <AlertCircle size={14} className="text-red-400" />,
 };
 
@@ -63,7 +63,7 @@ const ImageWithAuth = ({ mediaId, alt }) => {
 
     if (loading) {
         return (
-            <div className="w-56 h-56 flex items-center justify-center bg-black/5 dark:bg-white/5 rounded-xl animate-pulse">
+            <div className="w-56 h-56 flex items-center justify-center bg-gray-100 dark:bg-slate-800 rounded-xl animate-pulse">
                 <ImageIcon size={28} className="opacity-40 text-emerald-600 dark:text-emerald-400" />
             </div>
         );
@@ -108,7 +108,7 @@ const AudioWithAuth = ({ mediaId }) => {
 
     if (loading) {
         return (
-            <div className="w-48 h-12 flex items-center justify-center bg-black/5 dark:bg-white/5 rounded-full animate-pulse">
+            <div className="w-48 h-12 flex items-center justify-center bg-gray-100 dark:bg-slate-800 rounded-full animate-pulse">
                 <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
             </div>
         );
@@ -151,12 +151,16 @@ const DocumentWithAuth = ({ mediaId, filename, isOut }) => {
         <button
             onClick={handleDownload}
             disabled={downloading}
-            className="w-full text-left flex items-center gap-3 mb-1 bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 transition-colors p-3 rounded-xl border border-black/5 dark:border-white/10 group cursor-pointer"
+            className={`w-full text-left flex items-center gap-3 mb-1 transition-colors p-3 rounded-xl border group cursor-pointer ${
+                isOut
+                    ? 'bg-white/10 hover:bg-white/20 border-white/20 text-white'
+                    : 'bg-gray-50 hover:bg-gray-100 dark:bg-slate-700/60 dark:hover:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200'
+            }`}
         >
             {downloading ? (
-                <div className="w-5 h-5 flex-shrink-0 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 flex-shrink-0 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
             ) : (
-                <FileText size={20} className={`flex-shrink-0 ${isOut ? 'text-emerald-100 group-hover:text-white' : 'text-blue-500 dark:text-blue-400'}`} />
+                <FileText size={20} className={`flex-shrink-0 ${isOut ? 'text-white' : 'text-emerald-600 dark:text-emerald-400'}`} />
             )}
             <span className="text-sm truncate font-medium flex-1 overflow-hidden" title={filename || 'Download Document'}>
                 {filename || 'Download Document'}
@@ -165,7 +169,7 @@ const DocumentWithAuth = ({ mediaId, filename, isOut }) => {
     );
 };
 
-const LinkPreview = ({ url }) => {
+const LinkPreview = ({ url, isOut }) => {
     const [preview, setPreview] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -186,11 +190,13 @@ const LinkPreview = ({ url }) => {
 
     if (loading) {
         return (
-            <div className="mt-2 bg-black/5 dark:bg-white/5 rounded-xl border border-black/10 dark:border-white/10 p-3 flex gap-3 animate-pulse">
-                <div className="w-12 h-12 bg-black/10 dark:bg-white/10 rounded-lg shrink-0" />
+            <div className={`mt-2 rounded-xl border p-3 flex gap-3 animate-pulse ${
+                isOut ? 'bg-white/10 border-white/20' : 'bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700'
+            }`}>
+                <div className="w-12 h-12 bg-gray-200 dark:bg-slate-700 rounded-lg shrink-0" />
                 <div className="flex-1 space-y-2 py-1">
-                    <div className="h-3 bg-black/10 dark:bg-white/10 rounded w-3/4" />
-                    <div className="h-2 bg-black/10 dark:bg-white/10 rounded w-1/2" />
+                    <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-3/4" />
+                    <div className="h-2 bg-gray-200 dark:bg-slate-700 rounded w-1/2" />
                 </div>
             </div>
         );
@@ -203,10 +209,14 @@ const LinkPreview = ({ url }) => {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 flex overflow-hidden rounded-xl border border-black/10 dark:border-black/30 bg-black/5 hover:bg-black/10 dark:bg-black/20 dark:hover:bg-black/30 transition-colors group text-left max-w-sm"
+            className={`mt-2 flex overflow-hidden rounded-xl border transition-colors group text-left max-w-sm ${
+                isOut
+                    ? 'bg-white/10 hover:bg-white/20 border-white/20 text-white'
+                    : 'bg-gray-50 hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-750 border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white'
+            }`}
         >
             {preview.image && (
-                <div className="w-16 h-16 shrink-0 border-r border-black/10 dark:border-black/30 overflow-hidden bg-gray-100 dark:bg-slate-800">
+                <div className="w-16 h-16 shrink-0 border-r border-black/10 dark:border-white/10 overflow-hidden bg-gray-200 dark:bg-slate-800">
                     <img
                         src={preview.image}
                         alt="preview"
@@ -218,15 +228,19 @@ const LinkPreview = ({ url }) => {
             <div className="flex-1 p-2.5 min-w-0 flex flex-col justify-center gap-0.5">
                 <p className="text-[13px] font-bold leading-tight truncate">{preview.title || preview.domain}</p>
                 {preview.description && (
-                    <p className="text-[11px] opacity-70 leading-snug line-clamp-1">{preview.description}</p>
+                    <p className={`text-[11px] leading-snug line-clamp-1 ${isOut ? 'text-white/80' : 'text-gray-500 dark:text-slate-400'}`}>
+                        {preview.description}
+                    </p>
                 )}
-                <p className="text-[10px] opacity-50 uppercase tracking-wider truncate">{preview.domain}</p>
+                <p className={`text-[10px] uppercase tracking-wider truncate ${isOut ? 'text-white/60' : 'text-gray-400 dark:text-slate-500'}`}>
+                    {preview.domain}
+                </p>
             </div>
         </a>
     );
 };
 
-const MessageText = ({ text, className = "text-[14.5px] leading-relaxed whitespace-pre-wrap break-words" }) => {
+const MessageText = ({ text, isOut, className = "text-[14.5px] leading-relaxed whitespace-pre-wrap break-words" }) => {
     if (!text) return null;
     const stringText = typeof text === 'string' ? text : (typeof text === 'object' ? JSON.stringify(text) : String(text || ''));
     if (!stringText) return null;
@@ -244,7 +258,9 @@ const MessageText = ({ text, className = "text-[14.5px] leading-relaxed whitespa
                     href={part}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline underline-offset-2 font-medium text-emerald-600 hover:text-emerald-700 dark:text-[#53bdeb] dark:hover:text-[#34B7F1]"
+                    className={`underline underline-offset-2 font-medium ${
+                        isOut ? 'text-white hover:text-white/80 font-semibold' : 'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300'
+                    }`}
                 >
                     {part}
                 </a>
@@ -260,7 +276,7 @@ const MessageText = ({ text, className = "text-[14.5px] leading-relaxed whitespa
             <p className={className}>{elements}</p>
             {uniqueUrls.length > 0 && (
                 <div className="flex flex-col gap-1 mt-1">
-                    {uniqueUrls.map((url, i) => <LinkPreview key={i} url={url} />)}
+                    {uniqueUrls.map((url, i) => <LinkPreview key={i} url={url} isOut={isOut} />)}
                 </div>
             )}
         </div>
@@ -606,22 +622,22 @@ export default function WhatsAppChatsPage() {
     const totalUnreadCount = conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
 
     return (
-        <div className="w-full h-full flex overflow-hidden bg-white dark:bg-[#111b21] select-text">
+        <div className="w-full h-full flex overflow-hidden bg-gray-50 dark:bg-slate-950 select-text">
             {/* ---------------- LEFT PANEL: Conversations Sidebar ---------------- */}
-            <div className={`w-full md:w-[380px] lg:w-[410px] xl:w-[430px] flex-shrink-0 flex flex-col h-full bg-white dark:bg-[#111b21] border-r border-gray-200 dark:border-[#222e35] ${
+            <div className={`w-full md:w-[380px] lg:w-[410px] xl:w-[430px] flex-shrink-0 flex flex-col h-full bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 ${
                 leadId ? 'hidden md:flex' : 'flex'
             }`}>
                 {/* Header */}
-                <div className="h-16 px-4 flex items-center justify-between bg-[#f0f2f5] dark:bg-[#202c33] border-b border-gray-200 dark:border-[#222e35] flex-shrink-0">
+                <div className="h-16 px-4 flex items-center justify-between bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 flex-shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-white/20">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-white/20">
                             <MessageCircle size={18} />
                         </div>
                         <div>
                             <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                Chats
+                                Inbox
                                 {totalUnreadCount > 0 && (
-                                    <span className="px-2 py-0.5 text-[11px] font-bold bg-[#25d366] text-white rounded-full">
+                                    <span className="px-2 py-0.5 text-[11px] font-bold bg-emerald-500 text-white rounded-full">
                                         {totalUnreadCount}
                                     </span>
                                 )}
@@ -639,14 +655,14 @@ export default function WhatsAppChatsPage() {
                                 fetchConversations();
                             }}
                             title="Refresh conversations"
-                            className="p-2 text-gray-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+                            className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
                         >
                             <RotateCw size={18} className={refreshing ? 'animate-spin text-emerald-500' : ''} />
                         </button>
                         <button
                             onClick={() => setDmModal(true)}
                             title="Start New Direct Chat"
-                            className="p-2 text-gray-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+                            className="p-2 text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all shadow-sm cursor-pointer"
                         >
                             <MessageSquarePlus size={18} />
                         </button>
@@ -654,15 +670,15 @@ export default function WhatsAppChatsPage() {
                 </div>
 
                 {/* Search Bar & Filter Chips */}
-                <div className="p-2.5 bg-white dark:bg-[#111b21] border-b border-gray-100 dark:border-[#222e35] flex-shrink-0 space-y-2">
+                <div className="p-3 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 flex-shrink-0 space-y-2.5">
                     <div className="relative">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search or start new chat"
-                            className="w-full pl-10 pr-9 py-2 bg-[#f0f2f5] dark:bg-[#202c33] border-none rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
+                            placeholder="Search or start new chat..."
+                            className="w-full pl-10 pr-9 py-2 bg-gray-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700/60 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                         />
                         {search && (
                             <button
@@ -675,23 +691,23 @@ export default function WhatsAppChatsPage() {
                     </div>
 
                     {/* Filter Pills */}
-                    <div className="flex items-center gap-1.5 px-0.5">
+                    <div className="flex items-center gap-2">
                         <button
                             onClick={() => setFilterTab('all')}
-                            className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
+                            className={`px-3.5 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                                 filterTab === 'all'
-                                    ? 'bg-[#00a884] text-white shadow-sm'
-                                    : 'bg-[#f0f2f5] dark:bg-[#202c33] text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
+                                    ? 'bg-emerald-600 text-white shadow-sm'
+                                    : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
                             }`}
                         >
                             All
                         </button>
                         <button
                             onClick={() => setFilterTab('unread')}
-                            className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                            className={`px-3.5 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                                 filterTab === 'unread'
-                                    ? 'bg-[#00a884] text-white shadow-sm'
-                                    : 'bg-[#f0f2f5] dark:bg-[#202c33] text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
+                                    ? 'bg-emerald-600 text-white shadow-sm'
+                                    : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
                             }`}
                         >
                             Unread
@@ -707,7 +723,7 @@ export default function WhatsAppChatsPage() {
                 </div>
 
                 {/* Conversation List */}
-                <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-[#222e35]/60">
+                <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-slate-800/60">
                     {convLoading ? (
                         <div className="p-4 space-y-4">
                             {[1, 2, 3, 4, 5, 6].map(i => (
@@ -722,15 +738,15 @@ export default function WhatsAppChatsPage() {
                         </div>
                     ) : filteredConversations.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-                            <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-3">
-                                <MessageCircle size={32} />
+                            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-3">
+                                <MessageCircle size={28} />
                             </div>
                             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                                 {conversations.length === 0 ? 'No conversations yet' : 'No matching chats'}
                             </h3>
                             <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 max-w-xs">
                                 {conversations.length === 0
-                                    ? 'Start a new conversation using the pen button above or receive messages from customers.'
+                                    ? 'Start a new conversation using the button above or receive messages from leads.'
                                     : 'Try checking your search spelling or switch filter to All.'}
                             </p>
                             {conversations.length === 0 && (
@@ -754,36 +770,36 @@ export default function WhatsAppChatsPage() {
                                     onClick={() => {
                                         navigate(`/inbox/${conv.lead.id}`);
                                     }}
-                                    className={`w-full px-3.5 py-3 flex items-center gap-3.5 text-left transition-colors cursor-pointer relative group ${
+                                    className={`w-full px-4 py-3.5 flex items-center gap-3.5 text-left transition-colors cursor-pointer relative group ${
                                         isSelected
-                                            ? 'bg-[#f0f2f5] dark:bg-[#2a3942]'
-                                            : 'hover:bg-[#f5f6f6] dark:hover:bg-[#202c33]/70'
+                                            ? 'bg-emerald-50/70 dark:bg-emerald-950/20'
+                                            : 'hover:bg-gray-50 dark:hover:bg-slate-800/50'
                                     }`}
                                 >
                                     {/* Active Bar indicator */}
                                     {isSelected && (
-                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#00a884]" />
+                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500" />
                                     )}
 
                                     {/* Avatar */}
                                     <div className="relative flex-shrink-0">
-                                        <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${getLeadColor(conv.lead.name)} flex items-center justify-center shadow-sm text-white font-bold text-base`}>
+                                        <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${getLeadColor(conv.lead.name)} flex items-center justify-center shadow-sm text-white font-bold text-sm`}>
                                             {conv.lead.name?.charAt(0)?.toUpperCase() || '?'}
                                         </div>
-                                        <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-[#111b21] ${statusInfo.dot}`} />
+                                        <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${statusInfo.dot}`} />
                                     </div>
 
                                     {/* Contact Details & Last Message */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between mb-1">
-                                            <h3 className={`text-[14.5px] truncate font-semibold ${
-                                                isSelected ? 'text-gray-900 dark:text-white' : 'text-gray-800 dark:text-[#e9edef]'
+                                            <h3 className={`text-sm truncate font-semibold ${
+                                                isSelected ? 'text-emerald-950 dark:text-emerald-200' : 'text-gray-900 dark:text-white'
                                             }`}>
                                                 {conv.lead.name || conv.lead.phone}
                                             </h3>
                                             {conv.lastMessage && (
                                                 <span className={`text-[11px] shrink-0 ml-2 ${
-                                                    conv.unreadCount > 0 ? 'text-[#00a884] font-bold' : 'text-gray-400 dark:text-slate-400'
+                                                    conv.unreadCount > 0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-gray-400 dark:text-slate-500'
                                                 }`}>
                                                     {formatTime(conv.lastMessage.createdAt)}
                                                 </span>
@@ -791,7 +807,7 @@ export default function WhatsAppChatsPage() {
                                         </div>
 
                                         <div className="flex items-center justify-between gap-2">
-                                            <div className="flex items-center gap-1 text-[13px] text-gray-500 dark:text-slate-400 min-w-0 truncate">
+                                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 min-w-0 truncate">
                                                 {isOut && (
                                                     <span className="shrink-0 inline-flex items-center">
                                                         {statusIcons[conv.lastMessage?.status] || <Check size={14} className="text-gray-400" />}
@@ -812,7 +828,7 @@ export default function WhatsAppChatsPage() {
 
                                             {/* Unread badge */}
                                             {conv.unreadCount > 0 && (
-                                                <span className="shrink-0 min-w-[20px] h-5 bg-[#25d366] text-white text-[11px] font-bold rounded-full flex items-center justify-center px-1.5 shadow-sm">
+                                                <span className="shrink-0 min-w-[20px] h-5 bg-emerald-500 text-white text-[11px] font-bold rounded-full flex items-center justify-center px-1.5 shadow-sm">
                                                     {conv.unreadCount}
                                                 </span>
                                             )}
@@ -837,57 +853,57 @@ export default function WhatsAppChatsPage() {
                 </div>
             </div>
 
-            {/* ---------------- RIGHT PANEL: WhatsApp Chat Window ---------------- */}
-            <div className={`flex-1 flex flex-col h-full min-w-0 bg-[#efeae2] dark:bg-[#0b141a] relative ${
+            {/* ---------------- RIGHT PANEL: Chat Window ---------------- */}
+            <div className={`flex-1 flex flex-col h-full min-w-0 bg-gray-50 dark:bg-slate-950 relative ${
                 leadId ? 'flex' : 'hidden md:flex'
             }`}>
                 {!leadId ? (
-                    // WhatsApp Web Welcome / Default Screen
-                    <div className="h-full w-full flex flex-col items-center justify-center p-8 text-center bg-[#f0f2f5] dark:bg-[#111b21] border-b-[6px] border-[#00a884]">
+                    // Wcrm Welcome / Default Screen
+                    <div className="h-full w-full flex flex-col items-center justify-center p-8 text-center bg-gray-50 dark:bg-slate-950 border-b-4 border-emerald-500">
                         <div className="max-w-md flex flex-col items-center">
-                            <div className="w-24 h-24 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center mb-6 shadow-sm ring-8 ring-emerald-500/5">
-                                <MessageCircle size={48} className="text-[#00a884]" />
+                            <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white mb-6 shadow-xl shadow-emerald-500/10 ring-4 ring-emerald-500/20">
+                                <MessageCircle size={40} />
                             </div>
                             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                                WhatsApp Web for Wcrm
+                                Wcrm Inbox
                             </h2>
                             <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed mb-6">
-                                Send and receive messages in real-time. Select a contact from the left sidebar to start chatting, view conversation history, and manage customer interactions.
+                                Connect with your customers and leads seamlessly. Select a contact from the left sidebar to start chatting, view history, and send media in real-time.
                             </p>
                             <button
                                 onClick={() => setDmModal(true)}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#00a884] hover:bg-[#02906f] text-white text-sm font-semibold rounded-full shadow-md transition-all active:scale-95 cursor-pointer"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
                             >
                                 <MessageSquarePlus size={18} />
                                 Start Direct Message
                             </button>
 
                             <div className="mt-12 flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500">
-                                <Lock size={13} />
-                                <span>End-to-end encrypted with Meta WhatsApp Business Cloud API</span>
+                                <Lock size={13} className="text-emerald-500" />
+                                <span>Direct integration with official Meta WhatsApp Cloud API</span>
                             </div>
                         </div>
                     </div>
                 ) : chatLoading && !lead ? (
-                    <div className="h-full w-full flex flex-col items-center justify-center gap-3 bg-[#efeae2] dark:bg-[#0b141a]">
+                    <div className="h-full w-full flex flex-col items-center justify-center gap-3 bg-gray-50 dark:bg-slate-950">
                         <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                         <p className="text-sm text-gray-600 dark:text-slate-400">Loading conversation...</p>
                     </div>
                 ) : lead ? (
                     <>
                         {/* Chat Header */}
-                        <div className="h-16 px-4 flex items-center justify-between bg-[#f0f2f5] dark:bg-[#202c33] border-b border-gray-200 dark:border-[#222e35] flex-shrink-0 z-10 shadow-sm">
+                        <div className="h-16 px-5 flex items-center justify-between bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 flex-shrink-0 z-10 shadow-xs">
                             <div className="flex items-center gap-3 min-w-0">
                                 {/* Mobile Back Button */}
                                 <button
                                     onClick={() => navigate('/inbox')}
-                                    className="p-1.5 -ml-1 text-gray-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 rounded-full md:hidden transition-colors cursor-pointer"
+                                    className="p-1.5 -ml-1 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl md:hidden transition-colors cursor-pointer"
                                     title="Back to chats"
                                 >
                                     <ArrowLeft size={20} />
                                 </button>
 
-                                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getLeadColor(lead.name)} flex items-center justify-center text-white font-bold text-base shadow-sm shrink-0`}>
+                                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getLeadColor(lead.name)} flex items-center justify-center text-white font-bold text-sm shadow-sm shrink-0`}>
                                     {lead.name?.charAt(0)?.toUpperCase() || '?'}
                                 </div>
 
@@ -912,20 +928,11 @@ export default function WhatsAppChatsPage() {
 
                             {/* Header Actions */}
                             <div className="flex items-center gap-1.5 relative">
-                                {lead.phone && (
-                                    <a
-                                        href={`tel:${lead.phone}`}
-                                        title={`Call ${lead.phone}`}
-                                        className="p-2 text-gray-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors cursor-pointer"
-                                    >
-                                        <Phone size={18} />
-                                    </a>
-                                )}
-
+                                {/* Kept as requested by user ("Don't remove it for now") */}
                                 <a
                                     href={`/leads`}
                                     title="View Leads Table"
-                                    className="p-2 text-gray-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors cursor-pointer hidden sm:flex"
+                                    className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer hidden sm:flex"
                                 >
                                     <ExternalLink size={18} />
                                 </a>
@@ -933,14 +940,14 @@ export default function WhatsAppChatsPage() {
                                 <button
                                     onClick={() => setShowMenu(p => !p)}
                                     title="More Options"
-                                    className="p-2 text-gray-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+                                    className="p-2 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
                                 >
                                     <MoreVertical size={18} />
                                 </button>
 
                                 {showMenu && (
                                     <div
-                                        className="absolute right-0 top-12 z-50 w-52 bg-white dark:bg-[#233138] border border-gray-200 dark:border-slate-700 rounded-xl shadow-2xl py-1 overflow-hidden"
+                                        className="absolute right-0 top-12 z-50 w-52 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-xl py-1 overflow-hidden"
                                         onMouseLeave={() => setShowMenu(false)}
                                     >
                                         <button
@@ -960,14 +967,11 @@ export default function WhatsAppChatsPage() {
 
                         {/* Messages Body */}
                         <div
-                            className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 space-y-3"
-                            style={{
-                                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23334155' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-                            }}
+                            className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 space-y-3 bg-gray-50 dark:bg-slate-950"
                         >
                             {messages.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center py-16 text-gray-500 dark:text-slate-400">
-                                    <div className="w-14 h-14 rounded-full bg-white/70 dark:bg-white/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3 shadow-sm">
+                                    <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3 shadow-xs">
                                         <MessageCircle size={28} />
                                     </div>
                                     <p className="text-base font-semibold text-gray-800 dark:text-slate-200">No messages in this chat yet</p>
@@ -994,7 +998,7 @@ export default function WhatsAppChatsPage() {
                                         <div key={msg.id || idx} className="space-y-3">
                                             {showDateDivider && (
                                                 <div className="flex justify-center my-3">
-                                                    <span className="px-3 py-1 rounded-lg text-[11px] font-semibold bg-white/85 dark:bg-[#182229] text-gray-600 dark:text-slate-300 shadow-sm border border-black/5 dark:border-white/5">
+                                                    <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 shadow-xs border border-gray-200 dark:border-slate-700">
                                                         {formatMessageDate(msg.createdAt)}
                                                     </span>
                                                 </div>
@@ -1007,7 +1011,7 @@ export default function WhatsAppChatsPage() {
                                                         <button
                                                             onClick={() => setReplyTo(msg)}
                                                             title="Reply"
-                                                            className="p-1.5 bg-white dark:bg-[#202c33] rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 transition-colors cursor-pointer"
+                                                            className="p-1.5 bg-white dark:bg-slate-800 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 transition-colors cursor-pointer border border-gray-200 dark:border-slate-700"
                                                         >
                                                             <Reply size={13} />
                                                         </button>
@@ -1017,24 +1021,24 @@ export default function WhatsAppChatsPage() {
                                                                 setShowForwardModal(true);
                                                             }}
                                                             title="Forward"
-                                                            className="p-1.5 bg-white dark:bg-[#202c33] rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 transition-colors cursor-pointer"
+                                                            className="p-1.5 bg-white dark:bg-slate-800 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 transition-colors cursor-pointer border border-gray-200 dark:border-slate-700"
                                                         >
                                                             <Forward size={13} />
                                                         </button>
                                                     </div>
 
                                                     {/* Chat Bubble */}
-                                                    <div className={`rounded-2xl px-3.5 py-2.5 shadow-sm text-sm w-fit ${
+                                                    <div className={`rounded-2xl px-4 py-2.5 shadow-sm text-sm w-fit ${
                                                         isOut
-                                                            ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-[#111b21] dark:text-[#e9edef] rounded-tr-xs border border-emerald-500/10'
-                                                            : 'bg-white dark:bg-[#202c33] text-[#111b21] dark:text-[#e9edef] rounded-tl-xs border border-black/5 dark:border-white/5'
+                                                            ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-tr-xs shadow-md shadow-emerald-600/10'
+                                                            : 'bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-tl-xs border border-gray-200 dark:border-slate-800'
                                                     }`}>
                                                         {/* Referral Meta Ad Banner */}
                                                         {msg.referral && (
                                                             <div className={`mb-2.5 p-2.5 rounded-xl border flex flex-col gap-1.5 ${
-                                                                isOut ? 'bg-white/20 border-white/30' : 'bg-emerald-50/60 dark:bg-slate-700/60 border-emerald-200 dark:border-slate-600'
+                                                                isOut ? 'bg-white/15 border-white/20' : 'bg-emerald-50 dark:bg-slate-800 border-emerald-200 dark:border-slate-700'
                                                             }`}>
-                                                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit bg-emerald-600 text-white">
+                                                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit bg-emerald-500 text-white">
                                                                     From Meta Ad
                                                                 </span>
                                                                 {msg.referral.headline && (
@@ -1048,7 +1052,9 @@ export default function WhatsAppChatsPage() {
                                                                         href={msg.referral.source_url}
                                                                         target="_blank"
                                                                         rel="noopener noreferrer"
-                                                                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 dark:text-blue-300 hover:underline mt-1"
+                                                                        className={`inline-flex items-center gap-1 text-[11px] font-semibold hover:underline mt-1 ${
+                                                                            isOut ? 'text-white' : 'text-emerald-600 dark:text-emerald-400'
+                                                                        }`}
                                                                     >
                                                                         View Ad &rarr;
                                                                     </a>
@@ -1071,25 +1077,25 @@ export default function WhatsAppChatsPage() {
                                                                     msg.content !== '[document message]' &&
                                                                     msg.content !== '[audio message]' &&
                                                                     msg.content !== '[video message]' && (
-                                                                        <MessageText text={msg.content} className="text-[14px] leading-relaxed whitespace-pre-wrap break-words mt-1" />
+                                                                        <MessageText text={msg.content} isOut={isOut} className="text-[14px] leading-relaxed whitespace-pre-wrap break-words mt-1" />
                                                                     )}
                                                             </div>
                                                         ) : isLegacyMedia ? (
                                                             <div className="flex items-center gap-2 mb-1 bg-black/10 p-2.5 rounded-lg border border-white/10">
                                                                 {isLegacyImage ? (
-                                                                    <ImageIcon size={20} className={isOut ? 'text-emerald-200' : 'text-blue-400'} />
+                                                                    <ImageIcon size={20} className={isOut ? 'text-white' : 'text-emerald-500'} />
                                                                 ) : (
-                                                                    <FileText size={20} className={isOut ? 'text-emerald-200' : 'text-blue-400'} />
+                                                                    <FileText size={20} className={isOut ? 'text-white' : 'text-emerald-500'} />
                                                                 )}
                                                                 <span className="text-sm truncate font-medium">{msg.content.replace(' (Media)', '')}</span>
                                                             </div>
                                                         ) : (
-                                                            <MessageText text={msg.content} />
+                                                            <MessageText text={msg.content} isOut={isOut} />
                                                         )}
 
                                                         {/* Timestamp & Status Checkmarks */}
-                                                        <div className={`flex items-center gap-1.5 mt-1 ${isOut ? 'justify-end' : 'justify-start'}`}>
-                                                            <span className="text-[10px] text-gray-500 dark:text-slate-400">
+                                                        <div className={`flex items-center gap-1.5 mt-1 ${isOut ? 'justify-end text-emerald-100/90' : 'justify-start text-gray-400 dark:text-slate-500'}`}>
+                                                            <span className="text-[10px]">
                                                                 {msg.createdAt
                                                                     ? new Date(msg.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
                                                                     : ''}
@@ -1108,10 +1114,10 @@ export default function WhatsAppChatsPage() {
 
                         {/* Reply Banner */}
                         {replyTo && (
-                            <div className="flex items-center gap-3 px-4 py-2 bg-[#f0f2f5] dark:bg-[#202c33] border-t border-gray-200 dark:border-[#222e35] border-l-4 border-[#00a884] flex-shrink-0">
-                                <Reply size={16} className="text-[#00a884] flex-shrink-0" />
+                            <div className="flex items-center gap-3 px-4 py-2 bg-emerald-50/80 dark:bg-emerald-950/30 border-t border-gray-200 dark:border-slate-800 border-l-4 border-emerald-500 flex-shrink-0">
+                                <Reply size={16} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-bold text-[#00a884]">
+                                    <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
                                         Replying to {replyTo.direction === 'outbound' ? 'You' : lead.name}
                                     </p>
                                     <p className="text-xs text-gray-600 dark:text-slate-300 truncate">
@@ -1128,8 +1134,8 @@ export default function WhatsAppChatsPage() {
                         )}
 
                         {/* Input Footer */}
-                        <div className="px-3 sm:px-4 py-2.5 bg-[#f0f2f5] dark:bg-[#202c33] border-t border-gray-200 dark:border-[#222e35] flex-shrink-0">
-                            <form onSubmit={handleSend} className="flex items-end gap-2 sm:gap-3 w-full">
+                        <div className="px-4 py-3 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 flex-shrink-0">
+                            <form onSubmit={handleSend} className="flex items-end gap-2.5 sm:gap-3 w-full">
                                 {/* Hidden file input */}
                                 <input
                                     type="file"
@@ -1143,13 +1149,13 @@ export default function WhatsAppChatsPage() {
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
                                     disabled={sending}
-                                    className="p-2.5 text-gray-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors flex-shrink-0 cursor-pointer"
+                                    className="p-2.5 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors flex-shrink-0 cursor-pointer"
                                     title="Attach Document or Image"
                                 >
                                     <Paperclip size={20} />
                                 </button>
 
-                                <div className="flex-1 bg-white dark:bg-[#2a3942] rounded-2xl overflow-hidden focus-within:ring-1 focus-within:ring-[#00a884] transition-all">
+                                <div className="flex-1 bg-gray-50 dark:bg-slate-800/90 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 transition-all">
                                     <textarea
                                         ref={inputRef}
                                         value={text}
@@ -1161,7 +1167,7 @@ export default function WhatsAppChatsPage() {
                                             }
                                         }}
                                         placeholder="Type a message..."
-                                        className="w-full max-h-28 bg-transparent px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none resize-none leading-relaxed"
+                                        className="w-full max-h-28 bg-transparent px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none resize-none leading-relaxed"
                                         rows="1"
                                         style={{ minHeight: '42px' }}
                                     />
@@ -1170,7 +1176,7 @@ export default function WhatsAppChatsPage() {
                                 <button
                                     type="submit"
                                     disabled={sending || (!text.trim() && !sending)}
-                                    className="w-10 h-10 flex-shrink-0 bg-[#00a884] hover:bg-[#02906f] disabled:opacity-40 disabled:hover:bg-[#00a884] text-white rounded-full flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer"
+                                    className="w-10 h-10 flex-shrink-0 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer"
                                 >
                                     {sending ? (
                                         <Clock size={18} className="animate-pulse" />
@@ -1179,7 +1185,7 @@ export default function WhatsAppChatsPage() {
                                     )}
                                 </button>
                             </form>
-                            <div className="text-center mt-1 hidden sm:block">
+                            <div className="text-center mt-1.5 hidden sm:block">
                                 <span className="text-[10px] text-gray-400 dark:text-slate-500">
                                     Press Enter to send, Shift + Enter for new line
                                 </span>
@@ -1197,12 +1203,12 @@ export default function WhatsAppChatsPage() {
                     onClick={() => setDmModal(false)}
                 >
                     <div
-                        className="bg-white dark:bg-[#202c33] rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-200 dark:border-[#222e35]"
+                        className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-200 dark:border-slate-800"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-[#222e35]">
+                        <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-slate-800">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
                                     <MessageSquarePlus size={20} />
                                 </div>
                                 <div>
@@ -1212,7 +1218,7 @@ export default function WhatsAppChatsPage() {
                             </div>
                             <button
                                 onClick={() => setDmModal(false)}
-                                className="p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-white"
+                                className="p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-white cursor-pointer"
                             >
                                 <X size={18} />
                             </button>
@@ -1229,7 +1235,7 @@ export default function WhatsAppChatsPage() {
                                     value={dmPhone}
                                     onChange={(e) => setDmPhone(e.target.value)}
                                     placeholder="e.g. 919876543210"
-                                    className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#111b21] border border-gray-200 dark:border-[#222e35] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                                 />
                             </div>
 
@@ -1242,7 +1248,7 @@ export default function WhatsAppChatsPage() {
                                     value={dmName}
                                     onChange={(e) => setDmName(e.target.value)}
                                     placeholder="e.g. Rahul Sharma"
-                                    className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#111b21] border border-gray-200 dark:border-[#222e35] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                    className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                                 />
                             </div>
 
@@ -1256,7 +1262,7 @@ export default function WhatsAppChatsPage() {
                                     value={dmMsg}
                                     onChange={(e) => setDmMsg(e.target.value)}
                                     placeholder="Hi, thanks for connecting..."
-                                    className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-[#111b21] border border-gray-200 dark:border-[#222e35] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
+                                    className="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
                                 />
                             </div>
 
@@ -1271,7 +1277,7 @@ export default function WhatsAppChatsPage() {
                                 <button
                                     type="submit"
                                     disabled={dmSending}
-                                    className="flex-1 px-4 py-2.5 rounded-xl bg-[#00a884] hover:bg-[#02906f] disabled:opacity-50 text-white text-sm font-semibold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                                    className="flex-1 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-semibold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
                                 >
                                     {dmSending ? (
                                         <>
@@ -1295,19 +1301,19 @@ export default function WhatsAppChatsPage() {
                     onClick={() => setShowForwardModal(false)}
                 >
                     <div
-                        className="bg-white dark:bg-[#202c33] rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-200 dark:border-[#222e35]"
+                        className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-200 dark:border-slate-800"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                            <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                                 <Forward size={20} />
                             </div>
                             <h3 className="text-base font-bold text-gray-900 dark:text-white">Forward Message</h3>
                         </div>
 
-                        <div className="max-h-64 overflow-y-auto mb-4 border border-gray-200 dark:border-slate-700 rounded-xl divide-y divide-gray-100 dark:divide-slate-700/50">
+                        <div className="max-h-64 overflow-y-auto mb-4 border border-gray-200 dark:border-slate-700 rounded-xl divide-y divide-gray-100 dark:divide-slate-800">
                             {allLeads.length === 0 ? (
-                                <p className="text-gray-500 dark:text-slate-400 text-sm py-8 text-center bg-gray-50 dark:bg-[#111b21]">
+                                <p className="text-gray-500 dark:text-slate-400 text-sm py-8 text-center bg-gray-50 dark:bg-slate-800/50">
                                     No other contacts available
                                 </p>
                             ) : (
@@ -1315,7 +1321,7 @@ export default function WhatsAppChatsPage() {
                                     <button
                                         key={l.id}
                                         onClick={() => handleForward(l)}
-                                        className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700/50 flex items-center gap-3 transition-colors bg-white dark:bg-[#202c33] cursor-pointer"
+                                        className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800/60 flex items-center gap-3 transition-colors bg-white dark:bg-slate-900 cursor-pointer"
                                     >
                                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shrink-0">
                                             <span className="text-white text-xs font-bold">{l.name?.charAt(0)?.toUpperCase()}</span>
@@ -1331,7 +1337,7 @@ export default function WhatsAppChatsPage() {
 
                         <button
                             onClick={() => setShowForwardModal(false)}
-                            className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 text-sm font-bold text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 text-sm font-bold text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                         >
                             Cancel
                         </button>
@@ -1346,11 +1352,11 @@ export default function WhatsAppChatsPage() {
                     onClick={() => setClearConfirm(false)}
                 >
                     <div
-                        className="bg-white dark:bg-[#202c33] rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-200 dark:border-[#222e35]"
+                        className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-200 dark:border-slate-800"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-600">
+                            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center text-red-600">
                                 <Trash2 size={20} />
                             </div>
                             <h3 className="text-base font-bold text-gray-900 dark:text-white">Clear Chat History</h3>
@@ -1361,7 +1367,7 @@ export default function WhatsAppChatsPage() {
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setClearConfirm(false)}
-                                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-slate-700 text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                             >
                                 Cancel
                             </button>
