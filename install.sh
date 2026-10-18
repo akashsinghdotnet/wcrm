@@ -44,55 +44,102 @@ esac
 
 echo -e "🔍 Detected Operating System: ${BOLD}${MACHINE}${NC}"
 
-# 2. Check for Docker
-echo -n "🔍 Checking for Docker... "
-if ! command -v docker >/dev/null 2>&1; then
-    echo -e "${RED}NOT FOUND${NC}"
-    echo ""
-    echo -e "${YELLOW}Docker is required to run Wcrm Community Edition.${NC}"
-    
-    if [ "$MACHINE" = "Linux" ] && [ -f /etc/debian_version ]; then
-        echo -e "Would you like this script to install Docker automatically via the official Docker script? [y/N]"
-        read -r INSTALL_DOCKER_CHOICE
-        if [[ "$INSTALL_DOCKER_CHOICE" =~ ^[Yy]$ ]]; then
-            echo -e "📦 Installing Docker..."
-            curl -fsSL https://get.docker.com | sh
-            sudo usermod -aG docker "$USER" 2>/dev/null || true
-            echo -e "${GREEN}✓ Docker installed successfully.${NC}"
-        else
-            echo -e "${RED}Please install Docker from https://docs.docker.com/get-docker/ and run this script again.${NC}"
-            exit 1
-        fi
-    else
-        echo -e "${RED}Please install Docker Desktop from https://www.docker.com/products/docker-desktop/ and run this script again.${NC}"
-        exit 1
+# Helper function to check if docker command works (with or without sudo)
+check_docker_daemon() {
+    if docker info >/dev/null 2>&1; then
+        return 0
+    elif sudo docker info >/dev/null 2>&1; then
+        USE_SUDO=1
+        return 0
     fi
-else
-    echo -e "${GREEN}✓ OK${NC} ($(docker --version))"
+    return 1
+}
+
+# 2. Check & Auto-Install Docker
+echo -e "🔍 Checking container runtime..."
+
+# Include standard Docker paths on Mac in case not yet in PATH
+if [ "$MACHINE" = "Mac" ]; then
+    export PATH="/Applications/Docker.app/Contents/Resources/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"
 fi
 
-# 3. Check for Docker Compose
-echo -n "🔍 Checking for Docker Compose... "
-if docker compose version >/dev/null 2>&1; then
-    COMPOSE_CMD="docker compose"
+if ! command -v docker >/dev/null 2>&1 && [ ! -d "/Applications/Docker.app" ]; then
+    echo -e "${YELLOW}⚙️  Docker is not installed. Installing automatically...${NC}"
+    
+    if [ "$MACHINE" = "Mac" ]; then
+        # Check Homebrew
+        if ! command -v brew >/dev/null 2>&1; then
+            echo -e "📦 Installing Homebrew package manager..."
+            NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv 2>/dev/null || true)"
+        fi
+        echo -e "📦 Installing Docker Desktop via Homebrew..."
+        brew install --cask docker
+        export PATH="/Applications/Docker.app/Contents/Resources/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"
+    elif [ "$MACHINE" = "Linux" ]; then
+        echo -e "📦 Installing Docker via official installer..."
+        curl -fsSL https://get.docker.com | sh
+        sudo usermod -aG docker "$USER" 2>/dev/null || true
+        sudo systemctl start docker 2>/dev/null || sudo service docker start 2>/dev/null || true
+        sudo systemctl enable docker 2>/dev/null || true
+    else
+        echo -e "${RED}Unsupported OS for automated install. Please install Docker and retry.${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}✓ Docker installation complete.${NC}"
+fi
+
+# 3. Ensure Docker Daemon is Started
+if ! check_docker_daemon; then
+    echo -e "${YELLOW}⚡ Docker daemon is not running. Starting Docker service...${NC}"
+    if [ "$MACHINE" = "Mac" ]; then
+        open -a Docker 2>/dev/null || open -a /Applications/Docker.app 2>/dev/null || true
+    elif [ "$MACHINE" = "Linux" ]; then
+        sudo systemctl start docker 2>/dev/null || sudo service docker start 2>/dev/null || true
+    fi
+
+    echo -n "⏳ Waiting for Docker engine to become ready"
+    DAEMON_WAIT=0
+    MAX_DAEMON_WAIT=45
+    while ! check_docker_daemon; do
+        sleep 2
+        DAEMON_WAIT=$((DAEMON_WAIT+1))
+        echo -n "."
+        if [ $DAEMON_WAIT -ge $MAX_DAEMON_WAIT ]; then
+            echo ""
+            echo -e "${RED}Docker is taking longer than expected to start.${NC}"
+            echo -e "Please ensure Docker Desktop / service is running and re-run this script."
+            exit 1
+        fi
+    done
+    echo ""
+    echo -e "${GREEN}✓ Docker engine is running.${NC}"
+else
+    echo -e "${GREEN}✓ Docker engine is running.${NC}"
+fi
+
+# 4. Determine Docker & Compose Commands
+DOCKER_CMD="docker"
+if [ "$USE_SUDO" = "1" ]; then
+    DOCKER_CMD="sudo docker"
+fi
+
+echo -n "🔍 Checking Docker Compose... "
+if $DOCKER_CMD compose version >/dev/null 2>&1; then
+    COMPOSE_CMD="$DOCKER_CMD compose"
     echo -e "${GREEN}✓ OK${NC} ($($COMPOSE_CMD version))"
 elif command -v docker-compose >/dev/null 2>&1; then
     COMPOSE_CMD="docker-compose"
-    echo -e "${GREEN}✓ OK${NC} ($(docker-compose --version))"
+    if [ "$USE_SUDO" = "1" ]; then
+        COMPOSE_CMD="sudo docker-compose"
+    fi
+    echo -e "${GREEN}✓ OK${NC} ($($COMPOSE_CMD --version))"
 else
-    echo -e "${RED}NOT FOUND${NC}"
-    echo -e "${RED}Please install Docker Compose plugin: https://docs.docker.com/compose/install/${NC}"
-    exit 1
-fi
-
-# 4. Check if Docker Daemon is running
-echo -n "🔍 Checking Docker Daemon status... "
-if ! docker info >/dev/null 2>&1; then
-    echo -e "${RED}NOT RUNNING${NC}"
-    echo -e "${RED}Docker service is not running. Please start Docker and run this script again.${NC}"
-    exit 1
-else
-    echo -e "${GREEN}✓ Running${NC}"
+    echo -e "${YELLOW}Installing Docker Compose plugin...${NC}"
+    if [ "$MACHINE" = "Linux" ]; then
+        sudo apt-get update 2>/dev/null && sudo apt-get install -y docker-compose-plugin 2>/dev/null || true
+        COMPOSE_CMD="docker compose"
+    fi
 fi
 
 echo ""
@@ -212,3 +259,10 @@ echo ""
 echo -e "${GREEN}Enjoy using Wcrm! For documentation & community, visit https://wcrm.si${NC}"
 echo -e "${GREEN}${BOLD}=================================================================${NC}"
 echo ""
+
+# Auto-open browser if running locally on desktop
+if [ "$MACHINE" = "Mac" ]; then
+    open "http://${SERVER_IP}" 2>/dev/null || open "http://localhost" 2>/dev/null || true
+elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "http://${SERVER_IP}" 2>/dev/null || true
+fi

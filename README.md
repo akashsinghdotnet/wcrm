@@ -45,21 +45,23 @@ Whether you want to deploy a self-hosted instance on your own server or connect 
 
 ---
 
-## 🚀 1-Step Quick Start (Recommended)
+## 🚀 1-Command Automated Quick Start (Zero Prerequisites)
 
-Self-hosting Wcrm takes less than 2 minutes.
-
-### Option 1: One-Line Automated Installer
-Run this single command on your Linux/macOS server:
+Deploying Wcrm Community Edition takes just **one single command**. The installer automatically detects your operating system, installs missing dependencies (including Docker & Docker Compose if not present), starts the Docker daemon, generates secure cryptographic secrets, builds containers, and launches the CRM setup wizard in your browser.
 
 ```bash
-git clone https://github.com/akashsinghdotnet/wcrm.git && cd wcrm && bash install.sh
+git clone https://github.com/akashsinghdotnet/wcrm.git && cd wcrm && ./install.sh
 ```
 
-The installer will:
-1. Verify Docker and Docker Compose (and offer auto-install on Debian/Ubuntu).
-2. Generate secure cryptographic secrets for JWT and database credentials automatically.
-3. Build and launch PostgreSQL, NestJS API, and React frontend in detached containers.
+*(Or direct pipe: `curl -fsSL https://raw.githubusercontent.com/akashsinghdotnet/wcrm/main/install.sh | bash`)*
+
+The automated installer will:
+1. 🔍 Detect OS (Linux/macOS) and check system requirements.
+2. 📦 Automatically install **Docker** and **Docker Compose** if missing.
+3. ⚡ Ensure Docker daemon is active and responsive.
+4. 🔑 Generate high-entropy cryptographic secrets for JWT and database credentials.
+5. 🚀 Build and launch PostgreSQL, NestJS API, and React frontend containers.
+6. 🌐 Automatically open your browser to `http://localhost` for the **Initial Admin Setup Wizard**.
 
 ---
 
