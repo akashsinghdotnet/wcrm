@@ -66,8 +66,15 @@ export function AuthProvider({ children }) {
         return userData;
     };
 
+    const setSession = (access_token, userData) => {
+        localStorage.setItem('wcrm_token', access_token);
+        localStorage.setItem('wcrm_user', JSON.stringify(userData));
+        setToken(access_token);
+        setUser(userData);
+    };
+
     return (
-        <AuthContext.Provider value={{ user, token, login, verify2FA, logout, loading }}>
+        <AuthContext.Provider value={{ user, token, login, verify2FA, logout, loading, setSession }}>
             {children}
         </AuthContext.Provider>
     );

@@ -16,6 +16,7 @@ import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { CallingModule } from './calling/calling.module';
 import { ModulesModule } from './modules/modules.module';
 import { CompanySettingsModule } from './company-settings/company-settings.module';
+import { SetupModule } from './setup/setup.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -57,6 +58,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     CallingModule,
     ModulesModule,
     CompanySettingsModule,
+    SetupModule,
   ],
   controllers: [AppController],
   providers: [AppService],

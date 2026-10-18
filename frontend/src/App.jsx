@@ -24,6 +24,7 @@ import AutomationsPage from './pages/AutomationsPage';
 import FlowsPage from './pages/FlowsPage';
 import AiAgentsPage from './pages/AiAgentsPage';
 import ModuleSettingsPage from './pages/ModuleSettingsPage';
+import SetupPage from './pages/SetupPage';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -51,8 +52,12 @@ export default function App() {
       />
       <Routes>
         <Route
+          path="/setup"
+          element={user ? <Navigate to="/" replace /> : <SetupPage />}
+        />
+        <Route
           path="/login"
-          element={user ? <Navigate to="/" replace /> : <LoginPage type="client" />}
+          element={user ? <Navigate to="/" replace /> : <LoginPage />}
         />
         <Route
           path="/forgot-password"

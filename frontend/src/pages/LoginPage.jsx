@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
+import api from '../services/api';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -15,6 +16,16 @@ export default function LoginPage() {
     const { login, verify2FA } = useAuth();
     const navigate = useNavigate();
 
+    useEffect(() => {
+        // If the instance has not been configured yet, redirect to Setup Wizard
+        api.get('/setup/status')
+            .then(res => {
+                if (res.data?.isConfigured === false) {
+                    navigate('/setup', { replace: true });
+                }
+            })
+            .catch(() => {});
+    }, [navigate]);
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -215,7 +226,16 @@ export default function LoginPage() {
                     )}
                 </div>
 
-                <div className="text-center mt-6 text-xs text-slate-500">
+                <div className="text-center mt-4">
+                    <a
+                        href="/setup"
+                        className="text-xs text-slate-400 hover:text-emerald-400 transition-colors inline-flex items-center gap-1.5"
+                    >
+                        First-time install? <span className="underline font-semibold text-emerald-400">Run Setup Wizard</span>
+                    </a>
+                </div>
+
+                <div className="text-center mt-4 text-xs text-slate-500">
                     <a
                         href="https://wcrm.si"
                         target="_blank"

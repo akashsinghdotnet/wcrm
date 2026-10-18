@@ -45,33 +45,47 @@ Whether you want to deploy a self-hosted instance on your own server or connect 
 
 ---
 
-## 🚀 Quick Start with Docker (Recommended)
+## 🚀 1-Step Quick Start (Recommended)
 
-Self-hosting Wcrm takes less than 2 minutes with Docker:
+Self-hosting Wcrm takes less than 2 minutes.
 
-### 1. Clone the repository
+### Option 1: One-Line Automated Installer
+Run this single command on your Linux/macOS server:
+
 ```bash
+git clone https://github.com/akashsinghdotnet/wcrm.git && cd wcrm && ./install.sh
+```
+
+The installer will:
+1. Verify Docker and Docker Compose (and offer auto-install on Debian/Ubuntu).
+2. Generate secure cryptographic secrets for JWT and database credentials automatically.
+3. Build and launch PostgreSQL, NestJS API, and React frontend in detached containers.
+
+---
+
+### Option 2: Manual Docker Compose Setup
+If you prefer to configure environment variables manually:
+
+```bash
+# 1. Clone repository
 git clone https://github.com/akashsinghdotnet/wcrm.git
 cd wcrm
-```
 
-### 2. Configure Environment
-```bash
+# 2. Configure Environment
 cp backend/.env.example backend/.env
-```
-Edit `backend/.env` with your secure `JWT_SECRET` and your Meta App credentials:
-- `META_APP_ID`
-- `META_APP_SECRET`
-- `META_CONFIG_ID`
 
-### 3. Start the Stack
-```bash
+# 3. Start Stack
 docker compose up -d
 ```
 
-That's it! Open your browser:
+---
+
+### 🌐 First-Time Onboarding Wizard
+Once started, open your browser:
 * **Web CRM App**: `http://localhost` (or `http://your-server-ip`)
 * **Backend API**: `http://localhost:4000/api`
+
+On your first visit, Wcrm will automatically launch the **Initial Setup Wizard** prompting you to create your organization workspace and primary **Company Administrator account**. You can start adding team members and connecting WhatsApp immediately!
 
 ---
 
