@@ -52,14 +52,55 @@ export class WhatsAppCRMService {
             throw new BadRequestException(`Contact with phone ${dto.phone} already exists`);
         }
 
+        const { listIds, tagIds, ...contactData } = dto;
+
         // Set opt-in date if opted in
         const contact = this.contactRepo.create({
-            ...dto,
+            ...contactData,
             companyId,
             optInDate: dto.isOptedIn ? new Date() : null,
         });
 
-        return this.contactRepo.save(contact);
+        const saved = await this.contactRepo.save(contact);
+
+        if (listIds && Array.isArray(listIds) && listIds.length > 0) {
+            for (const listId of listIds) {
+                await this.addContactsToList(listId, [saved.id]).catch(() => {});
+            }
+        }
+
+        if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {
+            await this.addTagsToContact(saved.id, tagIds).catch(() => {});
+        }
+
+        return saved;
+    }
+
+    async updateContact(companyId: string, id: string, dto: Partial<CreateContactDto>): Promise<WhatsAppContact> {
+        const contact = await this.contactRepo.findOne({ where: { id, companyId } });
+        if (!contact) {
+            throw new NotFoundException(`Contact #${id} not found`);
+        }
+
+        const { listIds, tagIds, ...updateData } = dto;
+        Object.assign(contact, updateData);
+        if (dto.isOptedIn !== undefined) {
+            contact.optInDate = dto.isOptedIn ? new Date() : null;
+        }
+
+        const saved = await this.contactRepo.save(contact);
+
+        if (listIds && Array.isArray(listIds) && listIds.length > 0) {
+            for (const listId of listIds) {
+                await this.addContactsToList(listId, [saved.id]).catch(() => {});
+            }
+        }
+
+        if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {
+            await this.addTagsToContact(saved.id, tagIds).catch(() => {});
+        }
+
+        return saved;
     }
 
     async importContacts(companyId: string, dto: ImportContactsDto): Promise<{

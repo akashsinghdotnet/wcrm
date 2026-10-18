@@ -9,6 +9,7 @@ import { SaveWhatsAppConfigDto } from './dto/save-config.dto';
 import { Lead, LeadSource, LeadStatus } from '../leads/lead.entity';
 import { Activity, ActivityType } from '../leads/activity.entity';
 import { LeadsService } from '../leads/leads.service';
+import { CompanySetting } from '../company-settings/company-setting.entity';
 
 @Injectable()
 export class WhatsAppService {
@@ -27,6 +28,8 @@ export class WhatsAppService {
         private leadRepo: Repository<Lead>,
         @InjectRepository(Activity)
         private activityRepo: Repository<Activity>,
+        @InjectRepository(CompanySetting)
+        private companySettingRepo: Repository<CompanySetting>,
         @Inject(forwardRef(() => LeadsService))
         private leadsService: LeadsService,
     ) { }
@@ -800,6 +803,10 @@ export class WhatsAppService {
 
             if (messageType === 'text') {
                 text = msg.text?.body || '';
+            } else if (messageType === 'interactive') {
+                text = msg.interactive?.button_reply?.title || msg.interactive?.list_reply?.title || msg.interactive?.button_reply?.id || '[Interactive Reply]';
+            } else if (messageType === 'button') {
+                text = msg.button?.text || msg.button?.payload || '[Button Click]';
             } else if (msg[messageType]) {
                 const mediaObj = msg[messageType];
                 mediaId = mediaObj.id || undefined;
@@ -829,6 +836,8 @@ export class WhatsAppService {
             } else {
                 this.logger.warn(`[WhatsApp Webhook] No existing lead found for phone ${fromPhone} in company ${companyId}`);
             }
+
+            const isFirstInbound = !lead;
 
             // Auto-create lead if not found
             if (!lead) {
@@ -901,6 +910,15 @@ export class WhatsAppService {
             });
             await this.activityRepo.save(activity);
             this.logger.log(`[WhatsApp Webhook] ✓ Logged activity for lead ${lead.id}`);
+
+            // ── Auto-trigger Flow / Automation Engine ────────────────────────
+            try {
+                const interactivePayload = msg.interactive || (msg.type === 'button' ? { button_reply: { id: msg.button?.payload, title: msg.button?.text } } : null);
+                await this.executeFlowAutomations(companyId, lead, fromPhone, text, messageType, interactivePayload, isFirstInbound);
+            } catch (autoErr) {
+                this.logger.warn(`[FlowEngine] Automation execution warning: ${autoErr.message}`);
+            }
+            // ──────────────────────────────────────────────────────────────────
         }
 
         this.logger.log(`[WhatsApp Webhook] ✓ Webhook processing complete`);
@@ -1533,6 +1551,324 @@ export class WhatsAppService {
         } catch (error) {
             this.logger.error(`Error downloading media ${mediaId}: ${error.message}`);
             throw new BadRequestException('Failed to retrieve media file');
+        }
+    }
+
+    // ==================== FLOW & AUTOMATION ENGINE ====================
+
+    async getFlows(companyId: string): Promise<any[]> {
+        const setting = await this.companySettingRepo.findOne({
+            where: { companyId, key: 'whatsapp_flows' }
+        });
+        if (!setting || !setting.value) return [];
+        try {
+            return JSON.parse(setting.value);
+        } catch {
+            return [];
+        }
+    }
+
+    async saveFlows(companyId: string, flows: any[]): Promise<any[]> {
+        let setting = await this.companySettingRepo.findOne({
+            where: { companyId, key: 'whatsapp_flows' }
+        });
+        const serialized = JSON.stringify(flows || []);
+        if (setting) {
+            setting.value = serialized;
+        } else {
+            setting = this.companySettingRepo.create({
+                companyId,
+                key: 'whatsapp_flows',
+                value: serialized,
+            });
+        }
+        await this.companySettingRepo.save(setting);
+        return flows;
+    }
+
+    async getAutomations(companyId: string): Promise<any[]> {
+        const setting = await this.companySettingRepo.findOne({
+            where: { companyId, key: 'whatsapp_automations' }
+        });
+        if (!setting || !setting.value) return [];
+        try {
+            return JSON.parse(setting.value);
+        } catch {
+            return [];
+        }
+    }
+
+    async saveAutomations(companyId: string, automations: any[]): Promise<any[]> {
+        let setting = await this.companySettingRepo.findOne({
+            where: { companyId, key: 'whatsapp_automations' }
+        });
+        const serialized = JSON.stringify(automations || []);
+        if (setting) {
+            setting.value = serialized;
+        } else {
+            setting = this.companySettingRepo.create({
+                companyId,
+                key: 'whatsapp_automations',
+                value: serialized,
+            });
+        }
+        await this.companySettingRepo.save(setting);
+        return automations;
+    }
+
+    async executeFlowAutomations(
+        companyId: string,
+        lead: Lead,
+        fromPhone: string,
+        text: string,
+        messageType: string,
+        interactivePayload?: any,
+        isFirstInbound?: boolean,
+    ): Promise<boolean> {
+        try {
+            const incomingLower = (text || '').trim().toLowerCase();
+            const buttonId = interactivePayload?.button_reply?.id || interactivePayload?.list_reply?.id;
+            const buttonTitle = (interactivePayload?.button_reply?.title || interactivePayload?.list_reply?.title || '').toLowerCase();
+
+            // 1. EVALUATE AUTOMATIONS
+            const automations = await this.getAutomations(companyId);
+            if (Array.isArray(automations) && automations.length > 0) {
+                for (const auto of automations) {
+                    if (auto.status !== 'active') continue;
+
+                    let matched = false;
+                    const triggerType = auto.trigger;
+
+                    if (triggerType === 'first_inbound' && isFirstInbound) {
+                        matched = true;
+                    } else if (triggerType === 'every_inbound') {
+                        matched = true;
+                    } else if (triggerType === 'keyword_match') {
+                        const rawKeywords = auto.triggerConfig?.keywords || auto.keywords || '';
+                        const keywords = rawKeywords
+                            .split(',')
+                            .map((k: string) => k.trim().toLowerCase())
+                            .filter(Boolean);
+
+                        if (keywords.length > 0 && keywords.some((k: string) =>
+                            incomingLower === k || incomingLower.startsWith(k + ' ') || incomingLower.endsWith(' ' + k) || incomingLower.includes(k)
+                        )) {
+                            matched = true;
+                        }
+                    }
+
+                    if (matched && Array.isArray(auto.steps) && auto.steps.length > 0) {
+                        this.logger.log(`[AutomationEngine] Matched active Automation "${auto.name}" (${auto.id}) for lead ${lead.id}`);
+                        for (const step of auto.steps) {
+                            await this.executeAutomationStep(companyId, lead, fromPhone, step, auto);
+                        }
+                        return true;
+                    }
+                }
+            }
+
+            // 2. EVALUATE FLOWS (Node-based interactive flows)
+            const flows = await this.getFlows(companyId);
+            if (!Array.isArray(flows) || flows.length === 0) {
+                return false;
+            }
+
+            for (const flow of flows) {
+                if (flow.status !== 'active' || !Array.isArray(flow.nodes) || flow.nodes.length === 0) {
+                    continue;
+                }
+
+                const startNode = flow.nodes.find((n: any) => n.type === 'start') || flow.nodes[0];
+                const rawKeywords = flow.triggerKeyword || startNode?.config?.keyword || '';
+                const keywords = rawKeywords
+                    .split(',')
+                    .map((k: string) => k.trim().toLowerCase())
+                    .filter(Boolean);
+
+                let isMatch = false;
+                let targetNodeIdFromButton: string | null = null;
+
+                // 1. Interactive button / list payload match
+                if (buttonId || buttonTitle) {
+                    for (const node of flow.nodes) {
+                        if (node.type === 'send_buttons' && Array.isArray(node.config?.buttons)) {
+                            const btn = node.config.buttons.find((b: any) => 
+                                b.id === buttonId || (b.label && b.label.toLowerCase() === buttonTitle)
+                            );
+                            if (btn && btn.targetNodeId) {
+                                targetNodeIdFromButton = btn.targetNodeId;
+                                isMatch = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // 2. Keyword match (e.g. "hi", "hello", "menu", "pricing")
+                if (!isMatch && keywords.length > 0) {
+                    isMatch = keywords.some((k: string) => 
+                        incomingLower === k || incomingLower.startsWith(k + ' ') || incomingLower.endsWith(' ' + k) || incomingLower.includes(k)
+                    );
+                }
+
+                // 3. Number quick-reply (e.g. customer replied with "1", "2")
+                if (!isMatch && /^\d+$/.test(incomingLower)) {
+                    const optIndex = parseInt(incomingLower, 10) - 1;
+                    for (const node of flow.nodes) {
+                        if (node.type === 'send_buttons' && Array.isArray(node.config?.buttons)) {
+                            if (node.config.buttons[optIndex] && node.config.buttons[optIndex].targetNodeId) {
+                                targetNodeIdFromButton = node.config.buttons[optIndex].targetNodeId;
+                                isMatch = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!isMatch) {
+                    continue;
+                }
+
+                this.logger.log(`[FlowEngine] Matched active Flow "${flow.name}" (${flow.id}) for message "${incomingLower}" from ${fromPhone}`);
+
+                const nextNodeId = targetNodeIdFromButton || startNode?.config?.nextNodeId || flow.nodes[1]?.id;
+                if (!nextNodeId) {
+                    continue;
+                }
+
+                const actionNode = flow.nodes.find((n: any) => n.id === nextNodeId);
+                if (!actionNode) {
+                    continue;
+                }
+
+                await this.executeNode(companyId, lead, fromPhone, actionNode, flow);
+                return true;
+            }
+
+            return false;
+        } catch (err) {
+            this.logger.error(`[FlowEngine] Error executing flow automations: ${err.message}`, err.stack);
+            return false;
+        }
+    }
+
+    private async executeAutomationStep(companyId: string, lead: Lead, toPhone: string, step: any, auto: any) {
+        const replaceVars = (str: string) => {
+            if (!str) return '';
+            return str
+                .replace(/\{\{name\}\}/gi, lead.name || 'there')
+                .replace(/\{\{phone\}\}/gi, toPhone)
+                .replace(/\{\{company\}\}/gi, auto.name || 'Wcrm');
+        };
+
+        const type = step.type || 'message';
+
+        if (type === 'message' || type === 'send_message') {
+            const content = replaceVars(step.content || step.text || '');
+            if (content) {
+                await this.sendMessage(companyId, lead.id, toPhone, content);
+            }
+        } else if (type === 'link' || type === 'send_link') {
+            const text = replaceVars(step.content || step.text || '');
+            const url = step.url || step.linkUrl || '';
+            const fullMsg = url ? (text ? `${text}\n\n👉 ${url}` : url) : text;
+            if (fullMsg) {
+                await this.sendMessage(companyId, lead.id, toPhone, fullMsg);
+            }
+        } else if (type === 'template' || type === 'send_template') {
+            const templateName = step.templateName || step.template;
+            if (templateName) {
+                try {
+                    await this.sendTemplate(
+                        companyId,
+                        lead.id,
+                        toPhone,
+                        templateName,
+                        step.languageCode || 'en_US',
+                    );
+                } catch (tErr) {
+                    this.logger.warn(`Failed to send template ${templateName}: ${tErr.message}. Falling back to text.`);
+                    if (step.content) {
+                        await this.sendMessage(companyId, lead.id, toPhone, replaceVars(step.content));
+                    }
+                }
+            } else if (step.content) {
+                await this.sendMessage(companyId, lead.id, toPhone, replaceVars(step.content));
+            }
+        } else if (type === 'buttons' || type === 'send_buttons') {
+            const header = replaceVars(step.headerText || '');
+            const body = replaceVars(step.content || step.bodyText || step.text || 'Please select an option:');
+            const footer = step.footerText || '';
+            const buttons: any[] = step.buttons || [];
+
+            let fullText = '';
+            if (header) fullText += `*${header}*\n\n`;
+            fullText += body;
+            if (buttons.length > 0) {
+                fullText += '\n\n' + buttons.map((b: any, i: number) => {
+                    const label = typeof b === 'string' ? b : (b.label || b.text);
+                    return `${i + 1}️⃣ ${label}`;
+                }).join('\n');
+                fullText += `\n\n_Reply with 1, 2, or 3_`;
+            }
+            if (footer) fullText += `\n\n_${footer}_`;
+
+            await this.sendMessage(companyId, lead.id, toPhone, fullText);
+        } else if (type === 'tag') {
+            if (step.tagName) {
+                try {
+                    const existingNotes = lead.notes || '';
+                    lead.notes = existingNotes ? `${existingNotes} | Tag: ${step.tagName}` : `Tag: ${step.tagName}`;
+                    await this.leadRepo.save(lead);
+                } catch (e) {
+                    this.logger.warn(`Could not attach tag in automation: ${e.message}`);
+                }
+            }
+        }
+    }
+
+    private async executeNode(companyId: string, lead: Lead, toPhone: string, node: any, flow: any) {
+        this.logger.log(`[FlowEngine] Executing node "${node.title || node.id}" (type: ${node.type})`);
+
+        const replaceVars = (str: string) => {
+            if (!str) return '';
+            return str
+                .replace(/\{\{name\}\}/gi, lead.name || 'there')
+                .replace(/\{\{phone\}\}/gi, toPhone)
+                .replace(/\{\{company\}\}/gi, flow.name || 'Wcrm');
+        };
+
+        if (node.type === 'send_message') {
+            const rawText = node.config?.text || node.config?.message || '';
+            if (rawText) {
+                const messageText = replaceVars(rawText);
+                await this.sendMessage(companyId, lead.id, toPhone, messageText);
+            }
+        } else if (node.type === 'send_buttons') {
+            const header = replaceVars(node.config?.headerText || '');
+            const body = replaceVars(node.config?.bodyText || node.config?.text || 'Please choose an option:');
+            const footer = node.config?.footerText || '';
+            const buttons: any[] = node.config?.buttons || [];
+
+            let fullText = '';
+            if (header) fullText += `*${header}*\n\n`;
+            fullText += body;
+            if (buttons.length > 0) {
+                fullText += '\n\n' + buttons.map((b, i) => `${i + 1}️⃣ ${b.label}`).join('\n');
+                fullText += `\n\n_Reply with 1, 2, or 3_`;
+            }
+            if (footer) fullText += `\n\n_${footer}_`;
+
+            await this.sendMessage(companyId, lead.id, toPhone, fullText);
+        } else if (node.type === 'send_media') {
+            const caption = replaceVars(node.config?.caption || '');
+            const mediaUrl = node.config?.mediaUrl || '';
+            const textToSend = caption ? `${caption}\n${mediaUrl}` : mediaUrl;
+            if (textToSend) {
+                await this.sendMessage(companyId, lead.id, toPhone, textToSend);
+            }
+        } else if (node.type === 'handoff') {
+            await this.sendMessage(companyId, lead.id, toPhone, `Connecting you with a specialist. One of our team members will be right with you! 👋`);
         }
     }
 }

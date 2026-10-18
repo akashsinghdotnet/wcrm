@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
+import api from '../services/api';
 import { 
     GitFork, Plus, Play, Trash2, Edit3, MessageSquare, 
     Smartphone, CheckCircle2, ArrowRight, CornerDownRight, 
     Share2, Layers, Sparkles, X, Save, RefreshCw, Send, CheckCheck,
     ZoomIn, ZoomOut, Maximize2, Move, HelpCircle, AlertCircle,
     Split, Clock, UserCheck, Image, FileText, ListFilter, Sliders,
-    ChevronRight, ChevronDown, Check, Eye
+    ChevronRight, ChevronDown, Check, Eye, CloudUpload
 } from 'lucide-react';
 
 const NODE_TYPES = [
@@ -163,6 +164,47 @@ export default function FlowsPage() {
     const activeNode = useMemo(() => {
         return activeFlow?.nodes?.find(n => n.id === selectedNodeId) || null;
     }, [activeFlow, selectedNodeId]);
+
+    const [isSaving, setIsSaving] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    // Fetch flows from backend on mount
+    useEffect(() => {
+        let isMounted = true;
+        const fetchServerFlows = async () => {
+            try {
+                const res = await api.get('/whatsapp/flows');
+                if (isMounted && res.data && Array.isArray(res.data) && res.data.length > 0) {
+                    setFlows(res.data);
+                    if (!res.data.some(f => f.id === selectedFlowId)) {
+                        setSelectedFlowId(res.data[0].id);
+                    }
+                } else if (isMounted) {
+                    // Seed initial flow to backend
+                    await api.post('/whatsapp/flows', { flows: INITIAL_FLOWS }).catch(() => {});
+                }
+            } catch (err) {
+                console.warn('Could not load flows from server:', err);
+            } finally {
+                if (isMounted) setIsLoaded(true);
+            }
+        };
+        fetchServerFlows();
+        return () => { isMounted = false; };
+    }, []);
+
+    const handleSaveAndDeploy = async () => {
+        setIsSaving(true);
+        try {
+            await api.post('/whatsapp/flows', { flows });
+            localStorage.setItem('wcrm_interactive_flows_v2', JSON.stringify(flows));
+            toast.success('Flows saved and deployed to WhatsApp server! Active flows are live.');
+        } catch (err) {
+            toast.error('Failed to deploy flows: ' + (err.response?.data?.message || err.message));
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     // Save to local storage
     useEffect(() => {
@@ -548,13 +590,28 @@ export default function FlowsPage() {
                         </div>
                     </div>
 
+                    {/* Save & Deploy to Server */}
+                    <button
+                        onClick={handleSaveAndDeploy}
+                        disabled={isSaving}
+                        className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 transition disabled:opacity-50"
+                        title="Deploy active flows directly to WhatsApp server engine"
+                    >
+                        {isSaving ? (
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                            <CloudUpload className="w-3.5 h-3.5" />
+                        )}
+                        Save & Deploy
+                    </button>
+
                     {/* Simulator Trigger */}
                     <button
                         onClick={() => {
                             setIsSimOpen(true);
                             resetSimulator();
                         }}
-                        className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 transition"
+                        className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white font-semibold text-xs flex items-center gap-1.5 border border-white/10 transition"
                     >
                         <Play className="w-3.5 h-3.5 fill-current" />
                         Test in Mobile

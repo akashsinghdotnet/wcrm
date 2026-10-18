@@ -26,4 +26,10 @@ export class CreateContactDto {
     @IsObject()
     @IsOptional()
     customFields?: Record<string, any>;
+
+    @IsOptional()
+    listIds?: string[];
+
+    @IsOptional()
+    tagIds?: string[];
 }

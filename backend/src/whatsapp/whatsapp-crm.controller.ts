@@ -20,6 +20,11 @@ export class WhatsAppCRMController {
         return this.crmService.createContact(req.user.companyId, dto);
     }
 
+    @Put('contacts/:id')
+    async updateContact(@Request() req, @Param('id') id: string, @Body() dto: Partial<CreateContactDto>) {
+        return this.crmService.updateContact(req.user.companyId, id, dto);
+    }
+
     @Post('contacts/import')
     async importContacts(@Request() req, @Body() dto: ImportContactsDto) {
         return this.crmService.importContacts(req.user.companyId, dto);

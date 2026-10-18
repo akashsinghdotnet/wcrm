@@ -15,6 +15,7 @@ import { WhatsAppBroadcast } from './entities/whatsapp-broadcast.entity';
 import { WhatsAppBroadcastLog } from './entities/whatsapp-broadcast-log.entity';
 import { WhatsAppCRMService } from './whatsapp-crm.service';
 import { WhatsAppCRMController } from './whatsapp-crm.controller';
+import { CompanySetting } from '../company-settings/company-setting.entity';
 
 @Module({
     imports: [
@@ -29,6 +30,7 @@ import { WhatsAppCRMController } from './whatsapp-crm.controller';
             WhatsAppTemplate,
             WhatsAppBroadcast,
             WhatsAppBroadcastLog,
+            CompanySetting,
         ]),
         forwardRef(() => LeadsModule),
     ],

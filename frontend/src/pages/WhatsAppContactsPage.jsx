@@ -70,33 +70,23 @@ export default function WhatsAppContactsPage() {
     const handleCreateContact = async (e) => {
         e.preventDefault();
         try {
-            let contactId;
+            const payload = {
+                name: contactForm.name.trim(),
+                phone: contactForm.phone.trim(),
+                email: contactForm.email?.trim() || undefined,
+                notes: contactForm.notes?.trim() || undefined,
+                isOptedIn: !!contactForm.isOptedIn,
+                optInSource: contactForm.optInSource || 'manual',
+                listIds: Array.isArray(contactForm.listIds) ? contactForm.listIds : [],
+                tagIds: Array.isArray(contactForm.tagIds) ? contactForm.tagIds : [],
+            };
+
             if (selectedContact) {
-                await api.put(`/whatsapp-crm/contacts/${selectedContact.id}`, contactForm);
-                contactId = selectedContact.id;
+                await api.put(`/whatsapp-crm/contacts/${selectedContact.id}`, payload);
                 toast.success('Contact updated');
             } else {
-                const res = await api.post('/whatsapp-crm/contacts', contactForm);
-                contactId = res.data.id;
+                await api.post('/whatsapp-crm/contacts', payload);
                 toast.success('Contact created');
-            }
-
-            // Add to lists
-            for (const listId of contactForm.listIds) {
-                try {
-                    await api.post(`/whatsapp-crm/lists/${listId}/contacts`, { contactIds: [contactId] });
-                } catch (err) {
-                    console.error('Failed to add contact to list', err);
-                }
-            }
-
-            // Add tags
-            for (const tagId of contactForm.tagIds) {
-                try {
-                    await api.post(`/whatsapp-crm/contacts/${contactId}/tags`, { tagIds: [tagId] });
-                } catch (err) {
-                    console.error('Failed to add tag to contact', err);
-                }
             }
 
             setShowContactModal(false);

@@ -218,4 +218,29 @@ export class WhatsAppController {
     async debugConfig(@Param('companyId') companyId: string) {
         return this.whatsappService.debugConfiguration(companyId);
     }
+
+    // Flow & Automation Workflows
+    @Get('flows')
+    @UseGuards(JwtAuthGuard)
+    async getFlows(@Request() req) {
+        return this.whatsappService.getFlows(req.user.companyId);
+    }
+
+    @Post('flows')
+    @UseGuards(JwtAuthGuard)
+    async saveFlows(@Request() req, @Body() body: { flows: any[] }) {
+        return this.whatsappService.saveFlows(req.user.companyId, body.flows);
+    }
+
+    @Get('automations')
+    @UseGuards(JwtAuthGuard)
+    async getAutomations(@Request() req) {
+        return this.whatsappService.getAutomations(req.user.companyId);
+    }
+
+    @Post('automations')
+    @UseGuards(JwtAuthGuard)
+    async saveAutomations(@Request() req, @Body() body: { automations?: any[], flows?: any[] }) {
+        return this.whatsappService.saveAutomations(req.user.companyId, body.automations || body.flows || []);
+    }
 }
