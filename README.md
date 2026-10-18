@@ -53,7 +53,7 @@ Self-hosting Wcrm takes less than 2 minutes.
 Run this single command on your Linux/macOS server:
 
 ```bash
-git clone https://github.com/akashsinghdotnet/wcrm.git && cd wcrm && ./install.sh
+git clone https://github.com/akashsinghdotnet/wcrm.git && cd wcrm && bash install.sh
 ```
 
 The installer will:
