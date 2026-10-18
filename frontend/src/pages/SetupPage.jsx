@@ -18,6 +18,7 @@ export default function SetupPage() {
 
     const [statusLoading, setStatusLoading] = useState(true);
     const [isConfigured, setIsConfigured] = useState(false);
+    const [connectionError, setConnectionError] = useState(null);
 
     // Form inputs
     const [companyName, setCompanyName] = useState('');
@@ -31,19 +32,13 @@ export default function SetupPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
-    useEffect(() => {
-        // If logged in, go straight to dashboard
-        if (user) {
-            navigate('/', { replace: true });
-            return;
-        }
-
-        // Strictly verify self-hosted mode and setup status
+    const checkStatus = () => {
+        setStatusLoading(true);
+        setConnectionError(null);
         api.get('/setup/status')
             .then((res) => {
                 const data = res.data || {};
                 if (!data.isSelfHosted) {
-                    // SaaS Cloud mode — redirect away immediately
                     navigate('/login', { replace: true });
                     return;
                 }
@@ -55,16 +50,22 @@ export default function SetupPage() {
                     setIsConfigured(false);
                 }
             })
-            .catch(() => {
-                // If endpoint fails, fall back to checking isSelfHosted
-                if (!isSelfHosted) {
-                    navigate('/login', { replace: true });
-                }
+            .catch((err) => {
+                const msg = err.response?.data?.message || err.message || 'Cannot reach Wcrm backend API';
+                setConnectionError(msg);
             })
             .finally(() => {
                 setStatusLoading(false);
             });
-    }, [user, isSelfHosted, navigate]);
+    };
+
+    useEffect(() => {
+        if (user) {
+            navigate('/', { replace: true });
+            return;
+        }
+        checkStatus();
+    }, [user, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -113,6 +114,32 @@ export default function SetupPage() {
             <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-400 space-y-4">
                 <RefreshCw className="animate-spin text-emerald-400" size={32} />
                 <p className="text-sm font-medium">Checking Wcrm system status...</p>
+            </div>
+        );
+    }
+
+    if (connectionError) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-300 space-y-5 text-center max-w-md mx-auto">
+                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                    <AlertCircle size={28} />
+                </div>
+                <div className="space-y-2">
+                    <h2 className="text-xl font-bold text-white">Starting Backend Engine</h2>
+                    <p className="text-sm text-slate-400">
+                        The backend API container is currently initializing. Please wait a few moments and retry.
+                    </p>
+                    <p className="text-xs text-slate-500 font-mono bg-slate-900 p-2 rounded-lg border border-slate-800 break-words">
+                        {connectionError}
+                    </p>
+                </div>
+                <button
+                    onClick={checkStatus}
+                    className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold text-sm transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-95"
+                >
+                    <RefreshCw size={16} />
+                    Retry Connection
+                </button>
             </div>
         );
     }
