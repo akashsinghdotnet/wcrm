@@ -113,7 +113,7 @@ export default function App() {
           } />
           <Route path="inbox/:leadId" element={
             <ProtectedRoute roles={['admin', 'manager', 'staff']}>
-              <WhatsAppChatPage />
+              <WhatsAppChatsPage />
             </ProtectedRoute>
           } />
           <Route path="notifications" element={
@@ -163,7 +163,7 @@ export default function App() {
           } />
           <Route path="whatsapp-chats/:leadId" element={
             <ProtectedRoute roles={['admin', 'manager', 'staff']}>
-              <WhatsAppChatPage />
+              <WhatsAppChatsPage />
             </ProtectedRoute>
           } />
           <Route path="whatsapp-direct/:phone" element={

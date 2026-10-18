@@ -155,7 +155,7 @@ export default function Layout() {
     }
 
     return (
-        <div className={`min-h-screen flex ${isDark ? 'bg-slate-950' : 'bg-gray-50'}`}>
+        <div className={`h-screen flex overflow-hidden ${isDark ? 'bg-slate-950' : 'bg-gray-50'}`}>
             {/* Mobile overlay */}
             {sidebarOpen && (
                 <div
@@ -238,7 +238,7 @@ export default function Layout() {
             </aside>
 
             {/* Main content */}
-            <div className={`flex-1 flex flex-col min-h-screen min-w-0 ${isDark ? '' : 'bg-gray-50'}`}>
+            <div className={`flex-1 flex flex-col h-screen min-w-0 overflow-hidden ${isDark ? '' : 'bg-gray-50'}`}>
                 {/* Community Promotional / Update Announcement Banner */}
                 {activePromo && (
                     <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 text-white px-4 py-2 text-xs flex items-center justify-between shadow-sm z-40">
@@ -374,9 +374,16 @@ export default function Layout() {
                 </header>
 
                 {/* Page content */}
-                <main className={`flex-1 overflow-auto p-4 lg:p-6 ${isDark ? '' : 'bg-gray-50'}`}>
-                    <Outlet />
-                </main>
+                {(() => {
+                    const isInbox = location.pathname.startsWith('/inbox') || 
+                                    location.pathname.startsWith('/whatsapp-chats') || 
+                                    location.pathname.startsWith('/whatsapp-direct');
+                    return (
+                        <main className={`flex-1 min-h-0 ${isInbox ? 'overflow-hidden p-0 flex flex-col' : 'overflow-auto p-4 lg:p-6'} ${isDark ? '' : 'bg-gray-50'}`}>
+                            <Outlet />
+                        </main>
+                    );
+                })()}
             </div>
         </div>
     );
