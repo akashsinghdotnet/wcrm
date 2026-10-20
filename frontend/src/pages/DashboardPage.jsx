@@ -240,7 +240,7 @@ export default function DashboardPage() {
                                         <div key={plan.id} className="flex items-center justify-between p-3 bg-gray-100 dark:bg-slate-800/50 rounded-xl">
                                             <div className="min-w-0">
                                                 <p className="text-sm font-medium text-gray-900 dark:text-white">{plan.name}</p>
-                                                <p className="text-xs text-gray-400 dark:text-slate-500">{plan.adminLimit} admin · {plan.employeeLimit} employees</p>
+                                                <p className="text-xs text-gray-400 dark:text-slate-500">{plan.adminLimit} admin · {plan.employeeLimit === -1 || plan.employeeLimit < 0 ? 'Unlimited' : plan.employeeLimit} employees</p>
                                             </div>
                                             <div className="text-right flex-shrink-0">
                                                 <p className="text-sm font-bold text-gray-900 dark:text-white">₹{plan.priceMonthly}/mo</p>

@@ -95,20 +95,7 @@ export default function IntegrationsPage({ embedded = false }) {
     }, []);
 
     const loadCompanyPlan = async () => {
-        if (!user.companyId || isAdmin) {
-            setAllowedIntegrations(INTEGRATIONS.map(i => i.id));
-            return;
-        }
-        try {
-            const res = await api.get(`/companies/${user.companyId}`);
-            if (res.data && res.data.plan) {
-                setAllowedIntegrations(res.data.plan.integrations || []);
-            } else {
-                setAllowedIntegrations([]);
-            }
-        } catch {
-            setAllowedIntegrations([]);
-        }
+        setAllowedIntegrations(INTEGRATIONS.map(i => i.id));
     };
 
     const loadEmployees = async () => {
