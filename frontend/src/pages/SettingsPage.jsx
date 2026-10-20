@@ -198,6 +198,7 @@ export default function SettingsPage() {
                     { id: 'community', label: 'Community & Cloud', icon: Sparkles },
                     ...(['admin', 'manager'].includes(user.role) ? [{ id: 'team', label: 'Team', icon: Users }] : []),
                     ...(user.role === 'admin' ? [{ id: 'whatsapp', label: 'WhatsApp Integration', icon: MessageCircle }] : []),
+                    ...(user.role === 'admin' ? [{ id: 'integrations', label: 'Integrations', icon: Plug }] : []),
                     ...(['admin', 'manager'].includes(user.role) && hasModule('SALES') ? [{ id: 'lead-assignment', label: 'Lead Assignment', icon: GitBranch }] : []),
                     ...(user.role === 'admin' ? [{ id: 'calling', label: 'Calling', icon: Phone }] : []),
                     ...(user.role === 'admin' ? [

@@ -21,19 +21,23 @@ import {
     Radio,
     Zap,
     GitFork,
-    Bot
+    Bot,
+    FileText,
+    BarChart3
 } from 'lucide-react';
 
 const navItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/inbox', label: 'Inbox', icon: MessageSquare, match: ['/inbox', '/whatsapp-chats', '/whatsapp-direct'] },
-    { to: '/notifications', label: 'Notifications', icon: Bell, match: ['/notifications'] },
+    { to: '/leads', label: 'Leads', icon: FileText, roles: ['admin', 'manager', 'staff'], match: ['/leads'] },
     { to: '/contacts', label: 'Contacts', icon: Users, match: ['/contacts', '/whatsapp-contacts'] },
     { to: '/pipeline', label: 'Pipeline', icon: Kanban, match: ['/pipeline'] },
     { to: '/broadcasts', label: 'Broadcasts', icon: Radio, match: ['/broadcasts', '/whatsapp-broadcast'] },
     { to: '/automations', label: 'Automations', icon: Zap, match: ['/automations'] },
     { to: '/flows', label: 'Flows', icon: GitFork, match: ['/flows'] },
     { to: '/ai-agents', label: 'AI Agents', icon: Bot, match: ['/ai-agents'] },
+    { to: '/reports', label: 'Reports', icon: BarChart3, roles: ['admin', 'manager'], match: ['/reports'] },
+    { to: '/notifications', label: 'Notifications', icon: Bell, match: ['/notifications'] },
     { to: '/settings', label: 'Settings', icon: Settings, match: ['/settings'] },
     { to: '/users', label: 'Users', icon: Users, match: ['/users'], roles: ['admin'] },
 ];

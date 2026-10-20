@@ -23,7 +23,6 @@ import NotificationsPage from './pages/NotificationsPage';
 import AutomationsPage from './pages/AutomationsPage';
 import FlowsPage from './pages/FlowsPage';
 import AiAgentsPage from './pages/AiAgentsPage';
-import ModuleSettingsPage from './pages/ModuleSettingsPage';
 import SetupPage from './pages/SetupPage';
 
 export default function App() {
@@ -171,14 +170,6 @@ export default function App() {
               <WhatsAppDirectChatPage />
             </ProtectedRoute>
           } />
-          <Route
-            path="module-settings"
-            element={
-              <ProtectedRoute roles={['admin']}>
-                <ModuleSettingsPage />
-              </ProtectedRoute>
-            }
-          />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
